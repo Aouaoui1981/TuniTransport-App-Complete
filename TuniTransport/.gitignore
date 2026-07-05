@@ -37,6 +37,7 @@ yarn-error.*
 *.tsbuildinfo
 
 # EAS
-.eas/
-!/.eas/workflows/*
+.eas/*
+!.eas/workflows/
+
 

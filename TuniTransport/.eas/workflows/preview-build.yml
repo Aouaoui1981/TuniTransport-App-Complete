@@ -1,0 +1,13 @@
+name: Preview Build
+
+on:
+  pull_request:
+    branches: ['main']
+
+jobs:
+  build_android_preview:
+    name: Build Android (preview APK)
+    type: build
+    params:
+      platform: android
+      profile: preview
