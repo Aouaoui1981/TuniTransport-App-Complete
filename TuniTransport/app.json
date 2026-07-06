@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "tunitransport",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "plugins": [
       [
         "expo-splash-screen",
