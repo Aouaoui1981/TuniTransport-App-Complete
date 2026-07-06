@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────────────────
-// TuniTransport — navigation (STEP 6)
+// TuniTransport -- navigation (STEP 6)
 // ──────────────────────────────────────────────────────────────────────────
 import React, { useEffect } from 'react';
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -36,6 +36,7 @@ import ProfileScreen from '../screens/shared/ProfileScreen';
 import RateUserScreen from '../screens/shared/RateUserScreen';
 import EditProfileScreen from '../screens/shared/EditProfileScreen';
 import MapScreen from '../screens/shared/MapScreen';
+import IdentityVerificationScreen from '../screens/shared/IdentityVerificationScreen';
 
 // ── Param lists ──────────────────────────────────────────────────────────
 
@@ -53,6 +54,7 @@ export type RootStackParamList = {
   CreateRoute: undefined;
   RateUser: { shipmentId: string };
   EditProfile: undefined;
+  IdentityVerification: undefined;
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -154,6 +156,7 @@ export default function AppNavigator() {
           <Stack.Screen name="CreateRoute" component={CreateRouteScreen} />
           <Stack.Screen name="RateUser" component={RateUserScreen} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          <Stack.Screen name="IdentityVerification" component={IdentityVerificationScreen} />
         </>
       )}
     </Stack.Navigator>
