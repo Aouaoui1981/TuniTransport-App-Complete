@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────────────────
-// TuniTransport — Profil — STEP 10
+// TuniTransport -- Profil -- STEP 10
 // ──────────────────────────────────────────────────────────────────────────
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
@@ -10,6 +10,7 @@ import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
 import { Card, RatingStars, Avatar } from '../../components';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
+import { IdentityStatus } from '../../types';
 
 const MENU: { icon: keyof typeof Ionicons.glyphMap; label: string; action?: 'editProfile' }[] = [
   { icon: 'person-outline', label: 'Modifier le profil', action: 'editProfile' },
@@ -17,9 +18,39 @@ const MENU: { icon: keyof typeof Ionicons.glyphMap; label: string; action?: 'edi
   { icon: 'notifications-outline', label: 'Notifications' },
   { icon: 'lock-closed-outline', label: 'Sécurité' },
   { icon: 'help-circle-outline', label: 'Aide & Support' },
-  { icon: 'document-text-outline', label: 'Conditions d’utilisation' },
+  { icon: 'document-text-outline', label: "Conditions d'utilisation" },
   { icon: 'information-circle-outline', label: 'À propos' },
 ];
+
+const IDENTITY_META: Record<
+  IdentityStatus,
+  { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string; label: string }
+> = {
+  unsubmitted: {
+    icon: 'document-outline',
+    color: COLORS.textSecondary,
+    bg: COLORS.borderLight,
+    label: 'Vérifier mon identité',
+  },
+  pending: {
+    icon: 'time-outline',
+    color: COLORS.accent,
+    bg: COLORS.accentLight,
+    label: 'Vérification en cours',
+  },
+  verified: {
+    icon: 'checkmark-circle',
+    color: COLORS.success,
+    bg: COLORS.secondaryLight,
+    label: 'Identité vérifiée',
+  },
+  rejected: {
+    icon: 'close-circle-outline',
+    color: COLORS.danger,
+    bg: COLORS.dangerLight,
+    label: 'Document refusé -- appuyez pour réessayer',
+  },
+};
 
 export default function ProfileScreen() {
   const navigation = useAppNavigation();
@@ -78,6 +109,26 @@ export default function ProfileScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Identity verification */}
+        <TouchableOpacity
+          style={[styles.identityCard, { backgroundColor: IDENTITY_META[user.identityStatus].bg }]}
+          onPress={() => navigation.navigate('IdentityVerification')}
+        >
+          <Ionicons
+            name={IDENTITY_META[user.identityStatus].icon}
+            size={22}
+            color={IDENTITY_META[user.identityStatus].color}
+          />
+          <Text style={[styles.identityText, { color: IDENTITY_META[user.identityStatus].color }]}>
+            {IDENTITY_META[user.identityStatus].label}
+          </Text>
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={IDENTITY_META[user.identityStatus].color}
+          />
+        </TouchableOpacity>
 
         {/* Stats */}
         <Card style={styles.statsCard}>
@@ -154,6 +205,16 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   roleText: { fontSize: FONTS.sizes.sm, fontWeight: '800' },
+  identityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  identityText: { flex: 1, fontSize: FONTS.sizes.md, fontWeight: '700' },
   statsCard: {
     flexDirection: 'row',
     alignItems: 'center',
