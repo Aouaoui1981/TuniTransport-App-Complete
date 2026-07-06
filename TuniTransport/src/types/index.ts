@@ -1,6 +1,6 @@
-// ──────────────────────────────────────────────────────────────────────────
-// TuniTransport — core data models
-// ──────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────
+// TuniTransport -- core data models
+// ─────────────────────────────────────
 
 export type UserRole = 'sender' | 'transporter';
 
@@ -16,6 +16,8 @@ export type ShipmentStatus =
   | 'cancelled';
 
 export type BidStatus = 'pending' | 'accepted' | 'rejected';
+
+export type IdentityStatus = 'unsubmitted' | 'pending' | 'verified' | 'rejected';
 
 export interface TruckDetails {
   vehicleType?: string;
@@ -36,6 +38,9 @@ export interface User {
   totalRatings: number;
   createdAt: string;
   truckDetails?: TruckDetails;
+  identityStatus: IdentityStatus;
+  identityDocumentType?: string;
+  identityRejectionReason?: string;
 }
 
 export interface Address {
@@ -104,7 +109,7 @@ export interface Shipment {
 export interface Route {
   id: string;
   // Not explicitly listed in the spec's data model, but required for any
-  // "my routes" query — every route belongs to a transporter.
+  // "my routes" query -- every route belongs to a transporter.
   transporterId: string;
   departureCity: string;
   departureCountry: string;
@@ -135,7 +140,7 @@ export interface Conversation {
   updatedAt: string;
 }
 
-// ── Auth payloads ────────────────────────────────────────────────────────
+// ─── Auth payloads ─────────────────────────────
 
 export interface LoginPayload {
   email: string;
