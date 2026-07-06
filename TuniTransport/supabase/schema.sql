@@ -355,3 +355,62 @@ create policy "shipment_photos_select" on storage.objects
 create policy "shipment_photos_insert" on storage.objects
   for insert to authenticated
   with check (bucket_id = 'shipment-photos');
+  
+-- ═══════════════════════════════════════════
+-- TuniTransport -- Identity Verification (KYC)
+-- ═══════════════════════════════════════════
+
+create type identity_status as enum ('unsubmitted', 'pending', 'verified', 'rejected');
+
+alter table public.profiles
+  add column identity_status identity_status not null default 'unsubmitted',
+  add column identity_document_type text,
+  add column identity_document_front_url text,
+  add column identity_document_back_url text,
+  add column identity_submitted_at timestamptz,
+  add column identity_reviewed_at timestamptz,
+  add column identity_rejection_reason text;
+
+insert into storage.buckets (id, name, public)
+values ('identity-documents', 'identity-documents', false)
+on conflict (id) do nothing;
+
+create policy "Users upload own identity documents"
+on storage.objects for insert
+with check (
+  bucket_id = 'identity-documents'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+create policy "Users view own identity documents"
+on storage.objects for select
+using (
+  bucket_id = 'identity-documents'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+create or replace function public.is_identity_verified()
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select coalesce(
+    (select identity_status = 'verified' from public.profiles where id = auth.uid()),
+    false
+  );
+$$;
+
+create policy "Must be verified to post a shipment"
+on public.shipments as restrictive for insert
+with check (public.is_identity_verified());
+
+create policy "Must be verified to place a bid"
+on public.bids as restrictive for insert
+with check (public.is_identity_verified());
+
+create policy "Must be verified to post a route"
+on public.routes as restrictive for insert
+with check (public.is_identity_verified());
+
+  
