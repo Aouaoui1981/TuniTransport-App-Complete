@@ -18,7 +18,15 @@
           "backgroundColor": "#2563EB"
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "TuniTransport a besoin d'accéder à vos photos pour envoyer votre pièce d'identité.",
+          "cameraPermission": "TuniTransport a besoin d'accéder à votre caméra pour photographier votre pièce d'identité.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
