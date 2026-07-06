@@ -1,5 +1,8 @@
+import * as FileSystem from 'expo-file-system';
+import { decode } from 'base64-arraybuffer';
+
 // ──────────────────────────────────────────────────────────────────────────
-// TuniTransport — Supabase data access (STEP 5)
+// TuniTransport -- Supabase data access (STEP 5)
 // Every function assumes IS_LIVE === true (callers guard with IS_LIVE).
 // ──────────────────────────────────────────────────────────────────────────
 import { supabase } from './supabase';
@@ -34,6 +37,9 @@ export function mapProfile(row: any): User {
     totalRatings: row.total_ratings ?? 0,
     createdAt: row.created_at,
     truckDetails: row.truck_details ?? undefined,
+    identityStatus: row.identity_status ?? 'unsubmitted',
+    identityDocumentType: row.identity_document_type ?? undefined,
+    identityRejectionReason: row.identity_rejection_reason ?? undefined,
   };
 }
 
@@ -172,7 +178,6 @@ export async function createShipment(
     .single();
   if (error) throw error;
 
-  // First tracking event
   await db().from('tracking_events').insert({
     shipment_id: data.id,
     status: 'pending',
@@ -275,7 +280,7 @@ export async function acceptBid(shipmentId: string, bidId: string): Promise<void
 
   await addTrackingEvent(shipmentId, {
     status: 'accepted',
-    description: `Offre acceptée — pris en charge par ${bid.transporter_name}`,
+    description: `Offre acceptée -- pris en charge par ${bid.transporter_name}`,
   });
 }
 
@@ -401,12 +406,49 @@ export async function submitRating(params: {
     comment: params.comment ?? null,
   });
   if (error) throw error;
-  // rating / total_ratings recomputed by DB trigger
 }
 
 export async function savePushToken(userId: string, token: string): Promise<void> {
   const { error } = await db()
     .from('push_tokens')
     .upsert({ user_id: userId, token }, { onConflict: 'user_id,token' });
+  if (error) throw error;
+}
+
+// ── Identity verification (KYC) ───────────────────────────────────────────
+
+export async function uploadIdentityDocument(
+  userId: string,
+  side: 'front' | 'back',
+  localUri: string
+): Promise<string> {
+  const base64 = await FileSystem.readAsStringAsync(localUri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const path = `${userId}/${side}-${Date.now()}.jpg`;
+  const { error } = await db()
+    .storage.from('identity-documents')
+    .upload(path, decode(base64), { contentType: 'image/jpeg', upsert: true });
+  if (error) throw error;
+  return path;
+}
+
+export async function submitIdentityVerification(
+  userId: string,
+  documentType: string,
+  frontPath: string,
+  backPath?: string
+): Promise<void> {
+  const { error } = await db()
+    .from('profiles')
+    .update({
+      identity_status: 'pending',
+      identity_document_type: documentType,
+      identity_document_front_url: frontPath,
+      identity_document_back_url: backPath ?? null,
+      identity_submitted_at: new Date().toISOString(),
+      identity_rejection_reason: null,
+    })
+    .eq('id', userId);
   if (error) throw error;
 }
