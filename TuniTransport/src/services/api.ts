@@ -178,12 +178,13 @@ export async function createShipment(
     .single();
   if (error) throw error;
 
-  await db().from('tracking_events').insert({
+  const { error: teError } = await db().from('tracking_events').insert({
     shipment_id: data.id,
     status: 'pending',
     description: "Envoi créé et publié par l'expéditeur",
     location: `${shipment.pickupAddress.city}, ${shipment.pickupAddress.country}`,
   });
+  if (teError) throw teError;
 
   const created = mapShipment(data);
   created.trackingHistory = [
@@ -248,40 +249,11 @@ export async function createBid(
 }
 
 export async function acceptBid(shipmentId: string, bidId: string): Promise<void> {
-  const client = db();
-  const { data: bid, error: bidError } = await client
-    .from('bids')
-    .select('*')
-    .eq('id', bidId)
-    .single();
-  if (bidError || !bid) throw bidError ?? new Error('Offre introuvable');
-
-  const { error: e1 } = await client
-    .from('shipments')
-    .update({
-      status: 'accepted',
-      transporter_id: bid.transporter_id,
-      transporter_name: bid.transporter_name,
-      price: bid.price,
-      selected_bid_id: bidId,
-    })
-    .eq('id', shipmentId);
-  if (e1) throw e1;
-
-  const { error: e2 } = await client.from('bids').update({ status: 'accepted' }).eq('id', bidId);
-  if (e2) throw e2;
-
-  const { error: e3 } = await client
-    .from('bids')
-    .update({ status: 'rejected' })
-    .eq('shipment_id', shipmentId)
-    .neq('id', bidId);
-  if (e3) throw e3;
-
-  await addTrackingEvent(shipmentId, {
-    status: 'accepted',
-    description: `Offre acceptée -- pris en charge par ${bid.transporter_name}`,
+  const { error } = await db().rpc('accept_bid_transaction', {
+    p_shipment_id: shipmentId,
+    p_bid_id: bidId,
   });
+  if (error) throw error;
 }
 
 // ── Routes ───────────────────────────────────────────────────────────────
@@ -331,7 +303,8 @@ export async function fetchConversations(userId: string): Promise<Conversation[]
     .from('conversations')
     .select('*, conversation_participants(user_id, display_name), messages(*)')
     .in('id', ids)
-    .order('updated_at', { ascending: false });
+    .order('updated_at', { ascending: false })
+    .order('created_at', { foreignTable: 'messages', ascending: true });
   if (error) throw error;
 
   return (data ?? []).map((row: any) => {
@@ -340,9 +313,7 @@ export async function fetchConversations(userId: string): Promise<Conversation[]
     (row.conversation_participants ?? []).forEach((p: any) => {
       participantNames[p.user_id] = p.display_name ?? '';
     });
-    const msgs: Message[] = (row.messages ?? [])
-      .map(mapMessage)
-      .sort((a: Message, b: Message) => a.timestamp.localeCompare(b.timestamp));
+    const msgs: Message[] = (row.messages ?? []).map(mapMessage);
     const last = msgs[msgs.length - 1];
     const unreadCount = msgs.filter((m) => !m.read && m.senderId !== userId).length;
     return {
