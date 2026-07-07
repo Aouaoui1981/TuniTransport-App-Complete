@@ -21,6 +21,7 @@ import { Card, EmptyState } from '../../components';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
+import { IS_LIVE } from '../../services/supabase';
 import { Shipment } from '../../types';
 
 export default function AvailableShipmentsScreen() {
@@ -45,7 +46,27 @@ export default function AvailableShipmentsScreen() {
     setBidMessage('');
   };
 
+  // Live mode requires a verified identity before bidding or accepting.
+  const requireVerifiedIdentity = (): boolean => {
+    if (IS_LIVE && user?.identityStatus !== 'verified') {
+      Alert.alert(
+        'Vérification requise',
+        'Vous devez faire vérifier votre identité avant de prendre des envois.',
+        [
+          { text: 'Plus tard', style: 'cancel' },
+          {
+            text: 'Vérifier mon identité',
+            onPress: () => navigation.navigate('IdentityVerification'),
+          },
+        ]
+      );
+      return false;
+    }
+    return true;
+  };
+
   const submitBid = async (shipment: Shipment) => {
+    if (!requireVerifiedIdentity()) return;
     const price = parseFloat(bidPrice.replace(',', '.'));
     if (!price || price <= 0) {
       Alert.alert('Prix invalide', 'Veuillez saisir un montant en euros.');
@@ -76,6 +97,7 @@ export default function AvailableShipmentsScreen() {
 
   const acceptSmall = (shipment: Shipment) => {
     if (!user) return;
+    if (!requireVerifiedIdentity()) return;
     Alert.alert(
       'Accepter cet envoi',
       `Vous vous engagez à transporter ce colis pour ${shipment.price ?? 0}€.`,

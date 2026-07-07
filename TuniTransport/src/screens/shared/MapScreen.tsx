@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { useData } from '../../context/DataContext';
-import { coordsFor } from '../../services/mockData';
+import { findCityCoords } from '../../services/mockData';
 import { Route } from '../../types';
 
 // Mediterranean framing: south of France down to the Tunisian coast.
@@ -34,10 +34,10 @@ export default function MapScreen() {
       routes
         .map((r) => ({
           route: r,
-          from: coordsFor(r.departureCity),
-          to: coordsFor(r.arrivalCity),
+          from: findCityCoords(r.departureCity),
+          to: findCityCoords(r.arrivalCity),
         }))
-        .filter((d) => d.from && d.to) as {
+        .filter((d) => d.from !== null && d.to !== null) as {
         route: Route;
         from: { latitude: number; longitude: number };
         to: { latitude: number; longitude: number };

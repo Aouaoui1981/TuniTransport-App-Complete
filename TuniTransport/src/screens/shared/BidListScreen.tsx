@@ -24,7 +24,7 @@ export default function BidListScreen() {
   const navigation = useAppNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'BidList'>>();
   const { user } = useAuth();
-  const { getShipmentById, acceptBid, conversations } = useData();
+  const { getShipmentById, acceptBid, ensureConversation } = useData();
   const [accepting, setAccepting] = useState<string | null>(null);
 
   const shipment = getShipmentById(route.params.shipmentId);
@@ -85,15 +85,16 @@ export default function BidListScreen() {
     );
   };
 
-  const openChat = (bid: Bid) => {
-    const conv = conversations.find(
-      (c) =>
-        c.participants.includes(bid.transporterId) && c.participants.includes(shipment.senderId)
-    );
-    if (conv) {
+  const openChat = async (bid: Bid) => {
+    try {
+      const conv = await ensureConversation({
+        otherUserId: bid.transporterId,
+        otherUserName: bid.transporterName,
+        shipmentId: shipment.id,
+      });
       navigation.navigate('Chat', { conversationId: conv.id });
-    } else {
-      Alert.alert('Messagerie', 'Aucune conversation disponible avec ce transporteur.');
+    } catch (e: any) {
+      Alert.alert('Messagerie', e?.message ?? "Impossible d'ouvrir la conversation.");
     }
   };
 

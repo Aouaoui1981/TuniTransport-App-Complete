@@ -2,7 +2,7 @@
 // TuniTransport — shared components (STEP 3)
 // ──────────────────────────────────────────────────────────────────────────
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../utils/theme';
 import { ShipmentStatus } from '../types';
@@ -53,7 +53,7 @@ export function Card({
   onPress,
 }: {
   children: React.ReactNode;
-  style?: ViewStyle | ViewStyle[];
+  style?: StyleProp<ViewStyle>;
   onPress?: () => void;
 }) {
   if (onPress) {

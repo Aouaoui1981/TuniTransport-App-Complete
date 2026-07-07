@@ -24,6 +24,7 @@ import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { createPaymentIntent, IS_STRIPE_LIVE } from '../../services/stripe';
 import { scheduleLocalNotification } from '../../services/notifications';
+import { useData } from '../../context/DataContext';
 
 type Step = 'form' | 'processing' | 'success';
 
@@ -42,6 +43,7 @@ export default function PaymentScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Payment'>>();
   const { shipmentId, amount } = route.params;
+  const { getShipmentById, updateShipment } = useData();
 
   const [step, setStep] = useState<Step>('form');
   const [cardNumber, setCardNumber] = useState('');
@@ -52,6 +54,30 @@ export default function PaymentScreen() {
 
   const goHome = () => {
     navigation.dispatch(CommonActions.navigate({ name: 'Main' }));
+  };
+
+  // Record the payment on the shipment so the "Payer" button disappears and
+  // the payment shows up in the tracking history. Best-effort: a failure here
+  // must not hide the success screen from a user who has actually paid.
+  const markShipmentPaid = async () => {
+    const now = new Date().toISOString();
+    const shipment = getShipmentById(shipmentId);
+    try {
+      await updateShipment(shipmentId, {
+        paidAt: now,
+        trackingHistory: [
+          ...(shipment?.trackingHistory ?? []),
+          {
+            id: `te-paid-${Date.now()}`,
+            status: shipment?.status ?? 'accepted',
+            description: `Paiement de ${amount}€ confirmé par l'expéditeur`,
+            timestamp: now,
+          },
+        ],
+      });
+    } catch {
+      // The next refresh will reconcile with the server.
+    }
   };
 
   const payLive = async () => {
@@ -68,6 +94,7 @@ export default function PaymentScreen() {
       if (initError) throw new Error(initError.message);
       const { error: presentError } = await stripeSdk.presentPaymentSheet();
       if (presentError) throw new Error(presentError.message);
+      await markShipmentPaid();
       setStep('success');
       scheduleLocalNotification('Paiement confirmé', `Votre paiement de ${amount}€ a bien été reçu.`);
     } catch (e: any) {
@@ -84,6 +111,7 @@ export default function PaymentScreen() {
     setStep('processing');
     try {
       await createPaymentIntent(amount, 'eur', shipmentId);
+      await markShipmentPaid();
       setStep('success');
       scheduleLocalNotification('Paiement confirmé', `Votre paiement de ${amount}€ a bien été reçu.`);
     } catch {
