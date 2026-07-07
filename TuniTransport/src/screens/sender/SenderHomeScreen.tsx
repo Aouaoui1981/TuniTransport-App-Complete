@@ -70,7 +70,9 @@ export default function SenderHomeScreen() {
           <TouchableOpacity
             style={[styles.quickCard, { backgroundColor: COLORS.secondaryLight }]}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('Main' as never)}
+            onPress={() =>
+              navigation.navigate('Main', { screen: 'Carte' })
+            }
           >
             <Ionicons name="map" size={26} color={COLORS.secondaryDark} />
             <Text style={[styles.quickTitle, { color: COLORS.secondaryDark }]}>Carte</Text>
@@ -100,7 +102,9 @@ export default function SenderHomeScreen() {
         <SectionHeader
           title="Mes envois récents"
           actionLabel="Voir tout"
-          onAction={() => navigation.navigate('Main' as never)}
+          onAction={() =>
+            navigation.navigate('Main', { screen: 'Envois' })
+          }
         />
 
         {recent.length === 0 ? (

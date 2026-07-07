@@ -4,7 +4,7 @@
 import React, { useEffect } from 'react';
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigatorScreenParams } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, View } from 'react-native';
 
@@ -40,11 +40,20 @@ import IdentityVerificationScreen from '../screens/shared/IdentityVerificationSc
 
 // ── Param lists ──────────────────────────────────────────────────────────
 
+export type MainTabParamList = {
+  Accueil: undefined;
+  Envois: undefined;
+  Demandes: undefined;
+  Carte: undefined;
+  Messages: undefined;
+  Profil: undefined;
+};
+
 export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
   Register: { role?: UserRole } | undefined;
-  Main: undefined;
+  Main: NavigatorScreenParams<MainTabParamList> | undefined;
   ShipmentDetail: { shipmentId: string };
   Tracking: { shipmentId: string };
   BidList: { shipmentId: string };

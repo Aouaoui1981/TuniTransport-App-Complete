@@ -63,6 +63,7 @@ create table public.shipments (
   selected_bid_id  uuid,
   collected_at     timestamptz,
   delivered_at     timestamptz,
+  paid_at          timestamptz,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
@@ -188,6 +189,143 @@ $$;
 create trigger on_rating_inserted
   after insert on public.ratings
   for each row execute function public.recompute_rating();
+
+-- ── RPC: accept a bid atomically (called from src/services/api.ts) ────────
+-- Marks the chosen bid accepted, rejects the others, assigns the transporter
+-- and logs a tracking event — all in one transaction, sender-only.
+create or replace function public.accept_bid_transaction(
+  p_shipment_id uuid,
+  p_bid_id      uuid
+)
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_shipment public.shipments%rowtype;
+  v_bid      public.bids%rowtype;
+begin
+  select * into v_shipment
+  from public.shipments
+  where id = p_shipment_id
+  for update;
+  if not found then
+    raise exception 'Envoi introuvable.';
+  end if;
+  if v_shipment.sender_id <> auth.uid() then
+    raise exception 'Seul l''expéditeur peut accepter une offre.';
+  end if;
+  if v_shipment.status <> 'pending' then
+    raise exception 'Cet envoi n''est plus en attente d''offres.';
+  end if;
+
+  select * into v_bid
+  from public.bids
+  where id = p_bid_id and shipment_id = p_shipment_id
+  for update;
+  if not found then
+    raise exception 'Offre introuvable pour cet envoi.';
+  end if;
+  if v_bid.status <> 'pending' then
+    raise exception 'Cette offre n''est plus disponible.';
+  end if;
+
+  update public.bids set status = 'accepted' where id = p_bid_id;
+  update public.bids
+  set status = 'rejected'
+  where shipment_id = p_shipment_id and id <> p_bid_id and status = 'pending';
+
+  update public.shipments
+  set status           = 'accepted',
+      transporter_id   = v_bid.transporter_id,
+      transporter_name = v_bid.transporter_name,
+      price            = v_bid.price,
+      selected_bid_id  = p_bid_id
+  where id = p_shipment_id;
+
+  insert into public.tracking_events (shipment_id, status, description, location)
+  values (
+    p_shipment_id,
+    'accepted',
+    'Offre acceptée — pris en charge par ' || v_bid.transporter_name,
+    null
+  );
+end;
+$$;
+
+revoke execute on function public.accept_bid_transaction(uuid, uuid) from public;
+grant execute on function public.accept_bid_transaction(uuid, uuid) to authenticated;
+
+-- ── Trigger: protect moderated profile columns ─────────────────────────────
+-- RLS lets users update their own profile row, but reputation and KYC status
+-- must never be self-served. Internal (definer/service) writes still pass.
+create or replace function public.protect_profile_columns()
+returns trigger
+language plpgsql
+as $$
+begin
+  if current_user in ('postgres', 'supabase_admin', 'service_role') then
+    return new;
+  end if;
+  if new.rating is distinct from old.rating
+     or new.total_ratings is distinct from old.total_ratings then
+    raise exception 'La réputation est en lecture seule.';
+  end if;
+  if new.identity_status is distinct from old.identity_status
+     and new.identity_status <> 'pending' then
+    raise exception 'Le statut d''identité est géré par l''équipe de vérification.';
+  end if;
+  if new.identity_reviewed_at is distinct from old.identity_reviewed_at then
+    raise exception 'Champ réservé à l''équipe de vérification.';
+  end if;
+  return new;
+end;
+$$;
+
+-- (created after the KYC columns exist — see end of file)
+
+-- ── Trigger: constrain what a transporter may change on a shipment ────────
+-- Senders manage their own rows via RLS. A transporter may only claim a
+-- pending unassigned shipment (assigning themselves) or advance the status
+-- of a shipment already assigned to them — never touch price or content.
+create or replace function public.enforce_shipment_update()
+returns trigger
+language plpgsql
+as $$
+begin
+  if current_user in ('postgres', 'supabase_admin', 'service_role') then
+    return new;
+  end if;
+  if auth.uid() = old.sender_id then
+    return new;
+  end if;
+  if new.sender_id         is distinct from old.sender_id
+     or new.sender_name    is distinct from old.sender_name
+     or new.type           is distinct from old.type
+     or new.weight         is distinct from old.weight
+     or new.price          is distinct from old.price
+     or new.items          is distinct from old.items
+     or new.description    is distinct from old.description
+     or new.dimensions     is distinct from old.dimensions
+     or new.pickup_address is distinct from old.pickup_address
+     or new.delivery_address is distinct from old.delivery_address
+     or new.paid_at        is distinct from old.paid_at then
+    raise exception 'Modification non autorisée sur cet envoi.';
+  end if;
+  if old.transporter_id is null then
+    if new.transporter_id is distinct from auth.uid() then
+      raise exception 'Vous ne pouvez assigner que vous-même comme transporteur.';
+    end if;
+  elsif old.transporter_id <> auth.uid() then
+    raise exception 'Cet envoi est assigné à un autre transporteur.';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger trg_shipments_guard
+  before update on public.shipments
+  for each row execute function public.enforce_shipment_update();
 
 -- ── Trigger: updated_at maintenance ──────────────────────────────────────
 create or replace function public.set_updated_at()
@@ -413,4 +551,8 @@ create policy "Must be verified to post a route"
 on public.routes as restrictive for insert
 with check (public.is_identity_verified());
 
-  
+-- Guard trigger on profiles (declared earlier, created here because the
+-- identity_* columns it inspects are added just above).
+create trigger trg_profiles_guard
+  before update on public.profiles
+  for each row execute function public.protect_profile_columns();

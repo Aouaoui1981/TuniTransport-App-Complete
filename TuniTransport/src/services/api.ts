@@ -88,6 +88,7 @@ function mapShipment(row: any): Shipment {
     createdAt: row.created_at,
     collectedAt: row.collected_at ?? undefined,
     deliveredAt: row.delivered_at ?? undefined,
+    paidAt: row.paid_at ?? undefined,
     selectedBidId: row.selected_bid_id ?? undefined,
     trackingHistory: (row.tracking_events ?? []).map(mapTrackingEvent),
     bids: (row.bids ?? []).map(mapBid),
@@ -208,6 +209,7 @@ export async function updateShipment(id: string, updates: Partial<Shipment>): Pr
   if (updates.selectedBidId !== undefined) payload.selected_bid_id = updates.selectedBidId;
   if (updates.collectedAt !== undefined) payload.collected_at = updates.collectedAt;
   if (updates.deliveredAt !== undefined) payload.delivered_at = updates.deliveredAt;
+  if (updates.paidAt !== undefined) payload.paid_at = updates.paidAt;
   const { error } = await db().from('shipments').update(payload).eq('id', id);
   if (error) throw error;
 }
@@ -333,6 +335,46 @@ export async function fetchConversations(userId: string): Promise<{
   });
 
   return { conversations, messages: allMessages };
+}
+
+export async function createConversation(params: {
+  me: { id: string; name: string };
+  other: { id: string; name: string };
+  shipmentId?: string;
+}): Promise<Conversation> {
+  const client = db();
+  const { data, error } = await client
+    .from('conversations')
+    .insert({ shipment_id: params.shipmentId ?? null })
+    .select('*')
+    .single();
+  if (error) throw error;
+
+  // Insert self first: the RLS policy then lets us add the other participant.
+  const { error: meError } = await client.from('conversation_participants').insert({
+    conversation_id: data.id,
+    user_id: params.me.id,
+    display_name: params.me.name,
+  });
+  if (meError) throw meError;
+  const { error: otherError } = await client.from('conversation_participants').insert({
+    conversation_id: data.id,
+    user_id: params.other.id,
+    display_name: params.other.name,
+  });
+  if (otherError) throw otherError;
+
+  return {
+    id: data.id,
+    participants: [params.me.id, params.other.id],
+    participantNames: {
+      [params.me.id]: params.me.name,
+      [params.other.id]: params.other.name,
+    },
+    shipmentId: params.shipmentId,
+    unreadCount: 0,
+    updatedAt: data.updated_at ?? data.created_at,
+  };
 }
 
 export async function fetchMessages(conversationId: string): Promise<Message[]> {

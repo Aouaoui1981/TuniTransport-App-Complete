@@ -24,6 +24,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { coordsFor } from '../../services/mockData';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
+import { IS_LIVE } from '../../services/supabase';
 import { ShipmentType } from '../../types';
 
 const PRICE_PER_KG = 4;
@@ -58,6 +59,19 @@ export default function CreateShipmentScreen() {
   const livePrice = useMemo(() => Math.round(weightNum * PRICE_PER_KG * 100) / 100, [weightNum]);
 
   async function handlePublish() {
+    // Live mode requires a verified identity (enforced by RLS): guide the
+    // user to the KYC screen instead of letting the insert fail server-side.
+    if (IS_LIVE && user?.identityStatus !== 'verified') {
+      Alert.alert(
+        'Vérification requise',
+        "Vous devez faire vérifier votre identité avant de publier un envoi.",
+        [
+          { text: 'Plus tard', style: 'cancel' },
+          { text: 'Vérifier mon identité', onPress: () => navigation.navigate('IdentityVerification') },
+        ]
+      );
+      return;
+    }
     if (!pickupCity.trim() || !deliveryCity.trim()) {
       Alert.alert('Champs requis', 'Indiquez la ville de collecte et la ville de livraison.');
       return;

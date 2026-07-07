@@ -21,8 +21,11 @@ export async function createPaymentIntent(
   shipmentId?: string
 ): Promise<PaymentIntentResult> {
   if (IS_STRIPE_LIVE && supabase) {
+    if (!shipmentId) throw new Error('Envoi introuvable pour ce paiement.');
+    // The server derives the amount from the shipment row — the client-side
+    // amount is display-only and deliberately not trusted.
     const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-      body: { amount, currency, shipmentId },
+      body: { shipmentId, currency },
     });
     if (error) throw error;
     return data as PaymentIntentResult;

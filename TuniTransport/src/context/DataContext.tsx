@@ -45,6 +45,11 @@ interface DataContextValue {
   addBid: (bid: Omit<Bid, 'id' | 'createdAt' | 'status'>) => Promise<void>;
   acceptBid: (shipmentId: string, bidId: string) => Promise<void>;
   addMessage: (msg: Pick<Message, 'conversationId' | 'senderId' | 'text'>) => Promise<Message>;
+  ensureConversation: (params: {
+    otherUserId: string;
+    otherUserName: string;
+    shipmentId?: string;
+  }) => Promise<Conversation>;
   addRoute: (route: Omit<Route, 'id'>) => Promise<void>;
   submitRating: (params: {
     shipmentId: string;
@@ -198,18 +203,29 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   // ── updateShipment ──────────────────────────────────────────────────────
 
   const updateShipment = useCallback(async (id: string, updates: Partial<Shipment>) => {
-    setShipments((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+    // Optimistic update with rollback: if the server rejects the write, the
+    // UI must not keep pretending it succeeded.
+    let snapshot: Shipment[] = [];
+    setShipments((prev) => {
+      snapshot = prev;
+      return prev.map((s) => (s.id === id ? { ...s, ...updates } : s));
+    });
     if (IS_LIVE) {
-      await api.updateShipment(id, updates).catch(() => undefined);
-      if (updates.trackingHistory && updates.trackingHistory.length > 0 && updates.status) {
-        const latest = updates.trackingHistory[updates.trackingHistory.length - 1];
-        await api
-          .addTrackingEvent(id, {
-            status: latest.status,
-            description: latest.description,
-            location: latest.location,
-          })
-          .catch(() => undefined);
+      try {
+        await api.updateShipment(id, updates);
+        if (updates.trackingHistory && updates.trackingHistory.length > 0) {
+          const latest = updates.trackingHistory[updates.trackingHistory.length - 1];
+          await api
+            .addTrackingEvent(id, {
+              status: latest.status,
+              description: latest.description,
+              location: latest.location,
+            })
+            .catch(() => undefined); // tracking is informative, not critical
+        }
+      } catch (e) {
+        setShipments(snapshot);
+        throw e;
       }
     }
   }, []);
@@ -232,14 +248,26 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         )
       );
       if (IS_LIVE) {
-        const created = await api.createBid({ ...input, transporterId });
-        setShipments((prev) =>
-          prev.map((s) =>
-            s.id === input.shipmentId
-              ? { ...s, bids: (s.bids ?? []).map((b) => (b.id === local.id ? created : b)) }
-              : s
-          )
-        );
+        try {
+          const created = await api.createBid({ ...input, transporterId });
+          setShipments((prev) =>
+            prev.map((s) =>
+              s.id === input.shipmentId
+                ? { ...s, bids: (s.bids ?? []).map((b) => (b.id === local.id ? created : b)) }
+                : s
+            )
+          );
+        } catch (e) {
+          // Remove the phantom optimistic bid so the UI matches the server.
+          setShipments((prev) =>
+            prev.map((s) =>
+              s.id === input.shipmentId
+                ? { ...s, bids: (s.bids ?? []).filter((b) => b.id !== local.id) }
+                : s
+            )
+          );
+          throw e;
+        }
       }
     },
     [user]
@@ -248,8 +276,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   // ── acceptBid (STEP 11 auction rule) ────────────────────────────────────
 
   const acceptBid = useCallback(async (shipmentId: string, bidId: string) => {
-    setShipments((prev) =>
-      prev.map((s) => {
+    let snapshot: Shipment[] = [];
+    setShipments((prev) => {
+      snapshot = prev;
+      return prev.map((s) => {
         if (s.id !== shipmentId) return s;
         const bid = (s.bids ?? []).find((b) => b.id === bidId);
         if (!bid) return s;
@@ -271,10 +301,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             b.id === bidId ? { ...b, status: 'accepted' } : { ...b, status: 'rejected' }
           ),
         };
-      })
-    );
+      });
+    });
     if (IS_LIVE) {
-      await api.acceptBid(shipmentId, bidId).catch(() => undefined);
+      try {
+        await api.acceptBid(shipmentId, bidId);
+      } catch (e) {
+        // The DB transaction failed: roll back so the sender never pays for
+        // a bid that was not actually accepted.
+        setShipments(snapshot);
+        throw e;
+      }
     }
   }, []);
 
@@ -306,6 +343,52 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  // ── ensureConversation ──────────────────────────────────────────────────
+  // Finds the conversation with the given user (preferring one tied to the
+  // same shipment) or creates it — chat can start from any shipment/bid.
+
+  const ensureConversation = useCallback(
+    async (params: {
+      otherUserId: string;
+      otherUserName: string;
+      shipmentId?: string;
+    }): Promise<Conversation> => {
+      if (!user) throw new Error('Utilisateur non connecté.');
+      const withBoth = conversations.filter(
+        (c) => c.participants.includes(user.id) && c.participants.includes(params.otherUserId)
+      );
+      const existing = params.shipmentId
+        ? withBoth.find((c) => c.shipmentId === params.shipmentId) ?? withBoth[0]
+        : withBoth[0];
+      if (existing) return existing;
+
+      const myName = `${user.firstName} ${user.lastName}`;
+      if (IS_LIVE) {
+        const created = await api.createConversation({
+          me: { id: user.id, name: myName },
+          other: { id: params.otherUserId, name: params.otherUserName },
+          shipmentId: params.shipmentId,
+        });
+        setConversations((prev) => [created, ...prev]);
+        return created;
+      }
+      const local: Conversation = {
+        id: uid('c'),
+        participants: [user.id, params.otherUserId],
+        participantNames: {
+          [user.id]: myName,
+          [params.otherUserId]: params.otherUserName,
+        },
+        shipmentId: params.shipmentId,
+        unreadCount: 0,
+        updatedAt: new Date().toISOString(),
+      };
+      setConversations((prev) => [local, ...prev]);
+      return local;
+    },
+    [user, conversations]
+  );
+
   // ── addRoute ────────────────────────────────────────────────────────────
 
   const addRoute = useCallback(
@@ -316,8 +399,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         [...prev, local].sort((a, b) => a.departureDate.localeCompare(b.departureDate))
       );
       if (IS_LIVE) {
-        const created = await api.createRoute({ ...input, transporterId });
-        setRoutes((prev) => prev.map((r) => (r.id === local.id ? created : r)));
+        try {
+          const created = await api.createRoute({ ...input, transporterId });
+          setRoutes((prev) => prev.map((r) => (r.id === local.id ? created : r)));
+        } catch (e) {
+          setRoutes((prev) => prev.filter((r) => r.id !== local.id));
+          throw e;
+        }
       }
     },
     [user]
@@ -383,6 +471,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       addBid,
       acceptBid,
       addMessage,
+      ensureConversation,
       addRoute,
       submitRating,
       getShipmentById,
@@ -400,6 +489,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       addBid,
       acceptBid,
       addMessage,
+      ensureConversation,
       addRoute,
       submitRating,
       getShipmentById,
