@@ -11,6 +11,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IS_LIVE } from '../services/supabase';
 import * as api from '../services/api';
 import {
@@ -60,6 +61,13 @@ interface DataContextValue {
 
 const DataContext = createContext<DataContextValue | undefined>(undefined);
 
+const CACHE_KEYS = {
+  SHIPMENTS: 'tt_cache_shipments',
+  CONVERSATIONS: 'tt_cache_conversations',
+  MESSAGES: 'tt_cache_messages',
+  ROUTES: 'tt_cache_routes',
+};
+
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -69,37 +77,82 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   // ── Initial load / reload on auth change ───────────────────────────────
 
-  const loadAll = useCallback(async () => {
-    if (IS_LIVE) {
-      if (!user) {
-        setShipments([]);
-        setConversations([]);
-        setMessages([]);
-        setRoutes([]);
-        return;
+  const loadAll = useCallback(
+    async (isMounted: () => boolean) => {
+      if (IS_LIVE) {
+        if (!user) {
+          if (isMounted()) {
+            setShipments([]);
+            setConversations([]);
+            setMessages([]);
+            setRoutes([]);
+          }
+          return;
+        }
+
+        // Try loading from cache first for immediate UI update
+        try {
+          const [cSh, cRt, cCv, cMs] = await Promise.all([
+            AsyncStorage.getItem(`${CACHE_KEYS.SHIPMENTS}_${user.id}`),
+            AsyncStorage.getItem(CACHE_KEYS.ROUTES),
+            AsyncStorage.getItem(`${CACHE_KEYS.CONVERSATIONS}_${user.id}`),
+            AsyncStorage.getItem(`${CACHE_KEYS.MESSAGES}_${user.id}`),
+          ]);
+          if (!isMounted()) return;
+          if (cSh) setShipments(JSON.parse(cSh));
+          if (cRt) setRoutes(JSON.parse(cRt));
+          if (cCv) setConversations(JSON.parse(cCv));
+          if (cMs) setMessages(JSON.parse(cMs));
+        } catch (e) {
+          console.warn('Failed to load data from cache', e);
+        }
+
+        const [sh, rt, cvRes] = await Promise.all([
+          api.fetchShipments(user.id, user.role).catch(() => [] as Shipment[]),
+          api.fetchRoutes().catch(() => [] as Route[]),
+          api
+            .fetchConversations(user.id)
+            .catch(() => ({ conversations: [] as Conversation[], messages: [] as Message[] })),
+        ]);
+
+        if (!isMounted()) return;
+
+        setShipments(sh);
+        setRoutes(rt);
+        setConversations(cvRes.conversations);
+        setMessages(cvRes.messages);
+
+        // Update cache in the background
+        try {
+          await Promise.all([
+            AsyncStorage.setItem(`${CACHE_KEYS.SHIPMENTS}_${user.id}`, JSON.stringify(sh)),
+            AsyncStorage.setItem(CACHE_KEYS.ROUTES, JSON.stringify(rt)),
+            AsyncStorage.setItem(
+              `${CACHE_KEYS.CONVERSATIONS}_${user.id}`,
+              JSON.stringify(cvRes.conversations)
+            ),
+            AsyncStorage.setItem(`${CACHE_KEYS.MESSAGES}_${user.id}`, JSON.stringify(cvRes.messages)),
+          ]);
+        } catch (e) {
+          console.warn('Failed to save data to cache', e);
+        }
+      } else {
+        if (!isMounted()) return;
+        setShipments(MOCK_SHIPMENTS.map((s) => ({ ...s })));
+        setConversations(MOCK_CONVERSATIONS.map((c) => ({ ...c })));
+        setMessages(MOCK_MESSAGES.map((m) => ({ ...m })));
+        setRoutes(MOCK_ROUTES.map((r) => ({ ...r })));
       }
-      const [sh, rt, cv] = await Promise.all([
-        api.fetchShipments(user.id, user.role).catch(() => [] as Shipment[]),
-        api.fetchRoutes().catch(() => [] as Route[]),
-        api.fetchConversations(user.id).catch(() => [] as Conversation[]),
-      ]);
-      setShipments(sh);
-      setRoutes(rt);
-      setConversations(cv);
-      const msgLists = await Promise.all(
-        cv.map((c) => api.fetchMessages(c.id).catch(() => [] as Message[]))
-      );
-      setMessages(msgLists.flat());
-    } else {
-      setShipments(MOCK_SHIPMENTS.map((s) => ({ ...s })));
-      setConversations(MOCK_CONVERSATIONS.map((c) => ({ ...c })));
-      setMessages(MOCK_MESSAGES.map((m) => ({ ...m })));
-      setRoutes(MOCK_ROUTES.map((r) => ({ ...r })));
-    }
-  }, [user]);
+    },
+    [user]
+  );
 
   useEffect(() => {
-    loadAll();
+    let mounted = true;
+    loadAll(() => mounted);
+    return () => {
+      mounted = false;
+    };
   }, [isAuthenticated, loadAll]);
 
   // ── addShipment (status pending + first tracking event) ────────────────
@@ -335,7 +388,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       getShipmentById,
       getConversationById,
       getMessagesByConversation,
-      refresh: loadAll,
+      refresh: () => loadAll(() => true),
     }),
     [
       shipments,
