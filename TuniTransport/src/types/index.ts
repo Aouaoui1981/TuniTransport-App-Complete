@@ -101,6 +101,7 @@ export interface Shipment {
   createdAt: string;
   collectedAt?: string;
   deliveredAt?: string;
+  paidAt?: string;
   selectedBidId?: string;
   trackingHistory: TrackingEvent[];
   bids?: Bid[];

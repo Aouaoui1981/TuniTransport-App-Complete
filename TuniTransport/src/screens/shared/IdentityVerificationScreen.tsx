@@ -66,8 +66,10 @@ export default function IdentityVerificationScreen() {
 
   if (!user) return null;
 
-  const meta = STATUS_META[user.identityStatus];
-  const canResubmit = user.identityStatus !== 'verified';
+  // Sessions persisted before the KYC feature may lack identityStatus.
+  const identityStatus = user.identityStatus ?? 'unsubmitted';
+  const meta = STATUS_META[identityStatus];
+  const canResubmit = identityStatus !== 'verified';
   const canSubmitForm = !!frontUri && (documentType === 'passport' || !!backUri);
 
   const captureFrom = async (source: 'camera' | 'library', side: 'front' | 'back') => {
@@ -143,12 +145,12 @@ export default function IdentityVerificationScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.statusTitle, { color: meta.color }]}>{meta.title}</Text>
             <Text style={styles.statusSubtitle}>
-              {user.identityStatus === 'unsubmitted' &&
+              {identityStatus === 'unsubmitted' &&
                 "Envoyez une pièce d'identité pour débloquer toutes les fonctionnalités."}
-              {user.identityStatus === 'pending' &&
+              {identityStatus === 'pending' &&
                 'Votre document est en cours de vérification par notre équipe.'}
-              {user.identityStatus === 'verified' && 'Votre identité a été confirmée. Merci !'}
-              {user.identityStatus === 'rejected' &&
+              {identityStatus === 'verified' && 'Votre identité a été confirmée. Merci !'}
+              {identityStatus === 'rejected' &&
                 (user.identityRejectionReason || 'Veuillez soumettre un nouveau document.')}
             </Text>
           </View>

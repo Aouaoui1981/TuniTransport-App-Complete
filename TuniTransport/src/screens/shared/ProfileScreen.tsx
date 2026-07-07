@@ -60,6 +60,8 @@ export default function ProfileScreen() {
 
   const isSender = user.role === 'sender';
   const roleColor = isSender ? COLORS.primary : COLORS.secondary;
+  // Sessions persisted before the KYC feature may lack identityStatus.
+  const identityMeta = IDENTITY_META[user.identityStatus ?? 'unsubmitted'];
   const memberSince = new Date(user.createdAt).toLocaleDateString('fr-FR', {
     month: 'long',
     year: 'numeric',
@@ -112,22 +114,14 @@ export default function ProfileScreen() {
 
         {/* Identity verification */}
         <TouchableOpacity
-          style={[styles.identityCard, { backgroundColor: IDENTITY_META[user.identityStatus].bg }]}
+          style={[styles.identityCard, { backgroundColor: identityMeta.bg }]}
           onPress={() => navigation.navigate('IdentityVerification')}
         >
-          <Ionicons
-            name={IDENTITY_META[user.identityStatus].icon}
-            size={22}
-            color={IDENTITY_META[user.identityStatus].color}
-          />
-          <Text style={[styles.identityText, { color: IDENTITY_META[user.identityStatus].color }]}>
-            {IDENTITY_META[user.identityStatus].label}
+          <Ionicons name={identityMeta.icon} size={22} color={identityMeta.color} />
+          <Text style={[styles.identityText, { color: identityMeta.color }]}>
+            {identityMeta.label}
           </Text>
-          <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={IDENTITY_META[user.identityStatus].color}
-          />
+          <Ionicons name="chevron-forward" size={18} color={identityMeta.color} />
         </TouchableOpacity>
 
         {/* Stats */}

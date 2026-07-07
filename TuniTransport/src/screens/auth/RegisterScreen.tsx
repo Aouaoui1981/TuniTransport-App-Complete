@@ -50,7 +50,7 @@ export default function RegisterScreen() {
     }
     setSubmitting(true);
     try {
-      await register({
+      const result = await register({
         email: email.trim(),
         password,
         firstName: firstName.trim(),
@@ -58,8 +58,15 @@ export default function RegisterScreen() {
         phone: phone.trim(),
         role,
       });
+      if (result.emailConfirmationRequired) {
+        Alert.alert(
+          'Compte créé !',
+          'Vérifiez votre e-mail pour confirmer votre inscription, puis connectez-vous.',
+          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+        );
+      }
     } catch (e: any) {
-      Alert.alert('Inscription', e?.message ?? 'Une erreur est survenue.');
+      Alert.alert('Inscription impossible', e?.message ?? 'Une erreur est survenue.');
     } finally {
       setSubmitting(false);
     }

@@ -24,6 +24,12 @@ export function coordsFor(city: string) {
   return CITY_COORDS[city.trim()] ?? { latitude: 0, longitude: 0 };
 }
 
+// Strict variant for map drawing: unknown cities yield no coordinates at all
+// instead of a bogus (0, 0) point in the Atlantic.
+export function findCityCoords(city: string) {
+  return CITY_COORDS[city.trim()] ?? null;
+}
+
 // ── Users ────────────────────────────────────────────────────────────────
 
 export const MOCK_USERS: User[] = [
@@ -37,6 +43,7 @@ export const MOCK_USERS: User[] = [
     rating: 4.7,
     totalRatings: 12,
     createdAt: '2025-11-04T10:00:00.000Z',
+    identityStatus: 'verified',
   },
   {
     id: 'u-transporter-1',
@@ -49,6 +56,7 @@ export const MOCK_USERS: User[] = [
     totalRatings: 36,
     createdAt: '2025-09-18T10:00:00.000Z',
     truckDetails: { vehicleType: 'Fourgon Renault Master', maxCapacityKg: 800 },
+    identityStatus: 'verified',
   },
   {
     id: 'u-transporter-2',
@@ -60,6 +68,7 @@ export const MOCK_USERS: User[] = [
     rating: 4.6,
     totalRatings: 21,
     createdAt: '2025-10-02T10:00:00.000Z',
+    identityStatus: 'verified',
   },
   {
     id: 'u-transporter-3',
@@ -71,6 +80,7 @@ export const MOCK_USERS: User[] = [
     rating: 4.9,
     totalRatings: 48,
     createdAt: '2025-08-11T10:00:00.000Z',
+    identityStatus: 'verified',
   },
 ];
 

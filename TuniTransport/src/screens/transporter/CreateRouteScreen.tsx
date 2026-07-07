@@ -18,6 +18,7 @@ import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
+import { IS_LIVE } from '../../services/supabase';
 
 const FERRY_COMPANIES = ['Corsica Linea', 'CTN', 'GNV'] as const;
 const CROSSING_DAYS = 1; // typical France → Tunisia ferry crossing
@@ -44,6 +45,20 @@ export default function CreateRouteScreen() {
 
   const submit = async () => {
     if (!user) return;
+    if (IS_LIVE && user.identityStatus !== 'verified') {
+      Alert.alert(
+        'Vérification requise',
+        'Vous devez faire vérifier votre identité avant de publier un trajet.',
+        [
+          { text: 'Plus tard', style: 'cancel' },
+          {
+            text: 'Vérifier mon identité',
+            onPress: () => navigation.navigate('IdentityVerification'),
+          },
+        ]
+      );
+      return;
+    }
     const kg = parseInt(capacity, 10);
     const dep = parseDate(departureDate);
     if (!departureCity.trim() || !arrivalCity.trim()) {

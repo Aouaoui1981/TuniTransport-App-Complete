@@ -100,7 +100,9 @@ export default function TransporterHomeScreen() {
         <SectionHeader
           title="Demandes disponibles"
           actionLabel="Voir tout"
-          onAction={() => navigation.navigate('Main' as never)}
+          onAction={() =>
+            navigation.navigate('Main', { screen: 'Demandes' })
+          }
         />
         {pendingShipments.length === 0 ? (
           <Card>

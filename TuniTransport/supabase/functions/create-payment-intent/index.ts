@@ -3,10 +3,15 @@
 //
 // Deploy :  supabase functions deploy create-payment-intent
 // Secret :  supabase secrets set STRIPE_SECRET_KEY=sk_live_...
+// (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are injected automatically.)
 //
-// Calls the Stripe REST API directly with fetch (no SDK needed in Deno).
-// Amounts are received in euros and converted to cents for Stripe.
+// Security model: the client sends only a shipmentId. The function
+// authenticates the caller from the JWT, verifies they are the shipment's
+// sender, and derives the amount from the shipment row — a tampered client
+// can never choose its own price.
 // ──────────────────────────────────────────────────────────────────────────
+
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,22 +32,53 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return json({ error: 'STRIPE_SECRET_KEY non configurée.' }, 500);
     }
 
-    const { amount, currency = 'eur', shipmentId } = await req.json();
+    // ── Authenticate the caller from the Authorization header ────────────
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    const token = (req.headers.get('Authorization') ?? '').replace('Bearer ', '');
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+    if (userError || !userData?.user) {
+      return json({ error: 'Non autorisé.' }, 401);
+    }
 
-    const parsedAmount = Number(amount);
-    if (!parsedAmount || parsedAmount <= 0) {
-      return json({ error: 'Montant invalide.' }, 400);
+    const { shipmentId, currency = 'eur' } = await req.json();
+    if (!shipmentId) {
+      return json({ error: 'shipmentId requis.' }, 400);
+    }
+
+    // ── Derive the amount from the shipment (never from the client) ──────
+    const { data: shipment, error: shipmentError } = await supabaseAdmin
+      .from('shipments')
+      .select('id, sender_id, price, status, paid_at')
+      .eq('id', shipmentId)
+      .single();
+    if (shipmentError || !shipment) {
+      return json({ error: 'Envoi introuvable.' }, 404);
+    }
+    if (shipment.sender_id !== userData.user.id) {
+      return json({ error: "Seul l'expéditeur peut payer cet envoi." }, 403);
+    }
+    if (shipment.paid_at) {
+      return json({ error: 'Cet envoi a déjà été payé.' }, 409);
+    }
+    if (shipment.status !== 'accepted') {
+      return json({ error: "Cet envoi n'est pas prêt pour le paiement." }, 400);
+    }
+    const amount = Number(shipment.price);
+    if (!amount || amount <= 0) {
+      return json({ error: 'Montant invalide pour cet envoi.' }, 400);
     }
 
     // Stripe expects amounts in the smallest currency unit (cents).
     const body = new URLSearchParams({
-      amount: String(Math.round(parsedAmount * 100)),
+      amount: String(Math.round(amount * 100)),
       currency,
       'automatic_payment_methods[enabled]': 'true',
+      'metadata[shipment_id]': String(shipmentId),
+      'metadata[sender_id]': String(userData.user.id),
     });
-    if (shipmentId) {
-      body.set('metadata[shipment_id]', String(shipmentId));
-    }
 
     const stripeResponse = await fetch('https://api.stripe.com/v1/payment_intents', {
       method: 'POST',
@@ -63,7 +99,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({
       id: intent.id,
       clientSecret: intent.client_secret,
-      amount: parsedAmount,
+      amount,
       currency,
       status: intent.status,
     });

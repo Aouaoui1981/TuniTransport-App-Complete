@@ -28,7 +28,7 @@ export default function ShipmentDetailScreen() {
   const navigation = useAppNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'ShipmentDetail'>>();
   const { user } = useAuth();
-  const { getShipmentById, conversations } = useData();
+  const { getShipmentById, ensureConversation } = useData();
 
   const shipment = getShipmentById(route.params.shipmentId);
 
@@ -60,18 +60,17 @@ export default function ShipmentDetailScreen() {
   const isLarge = shipment.type === 'large';
   const shortId = shipment.id.slice(-4).toUpperCase();
 
-  const openChatWithTransporter = () => {
-    const conv = conversations.find(
-      (c) =>
-        (c.shipmentId && c.shipmentId === shipment.id) ||
-        (shipment.transporterId &&
-          c.participants.includes(shipment.transporterId) &&
-          c.participants.includes(shipment.senderId))
-    );
-    if (conv) {
+  const openChatWithTransporter = async () => {
+    if (!shipment.transporterId || !shipment.transporterName) return;
+    try {
+      const conv = await ensureConversation({
+        otherUserId: shipment.transporterId,
+        otherUserName: shipment.transporterName,
+        shipmentId: shipment.id,
+      });
       navigation.navigate('Chat', { conversationId: conv.id });
-    } else {
-      Alert.alert('Messagerie', 'Aucune conversation disponible pour cet envoi.');
+    } catch (e: any) {
+      Alert.alert('Messagerie', e?.message ?? "Impossible d'ouvrir la conversation.");
     }
   };
 
@@ -279,7 +278,7 @@ export default function ShipmentDetailScreen() {
 
         {/* 7 — Actions */}
         <View style={styles.actions}>
-          {isSender && shipment.status === 'accepted' && shipment.price != null ? (
+          {isSender && shipment.status === 'accepted' && shipment.price != null && !shipment.paidAt ? (
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: COLORS.primary }]}
               onPress={() =>
@@ -292,6 +291,19 @@ export default function ShipmentDetailScreen() {
               <Ionicons name="card" size={18} color={COLORS.white} />
               <Text style={styles.actionText}>Payer {shipment.price}€</Text>
             </TouchableOpacity>
+          ) : null}
+
+          {isSender && shipment.paidAt ? (
+            <View style={styles.paidBanner}>
+              <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+              <Text style={styles.paidText}>
+                Payé le{' '}
+                {new Date(shipment.paidAt).toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'long',
+                })}
+              </Text>
+            </View>
           ) : null}
 
           {isSender && shipment.status === 'delivered' ? (
@@ -414,6 +426,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actions: { gap: SPACING.sm, marginTop: SPACING.xs },
+  paidBanner: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.secondaryLight,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.lg,
+  },
+  paidText: { color: COLORS.success, fontWeight: '700', fontSize: FONTS.sizes.lg },
   actionBtn: {
     flexDirection: 'row',
     gap: SPACING.sm,

@@ -19,12 +19,17 @@ import { User, LoginPayload, RegisterPayload } from '../types';
 
 const DEMO_SESSION_KEY = 'tt_demo_user';
 
+export interface RegisterResult {
+  /** true when the Supabase project requires e-mail confirmation before login */
+  emailConfirmationRequired: boolean;
+}
+
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (payload: LoginPayload) => Promise<void>;
-  register: (payload: RegisterPayload) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<RegisterResult>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
 }
@@ -54,12 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function restore() {
       try {
         if (IS_LIVE && supabase) {
-          const { data } = await supabase.auth.getSession();
-          const sessionUser = data.session?.user;
-          if (sessionUser) {
-            const profile = await fetchProfile(sessionUser.id);
-            if (profile) setUser({ ...profile, email: sessionUser.email ?? profile.email });
-          }
+          // Register the listener first: even if the initial profile fetch
+          // fails (network hiccup), later auth events still reach the app.
           const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (session?.user) {
               const profile = await fetchProfile(session.user.id);
@@ -71,10 +72,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
           });
           unsub = () => listener.subscription.unsubscribe();
+
+          const { data } = await supabase.auth.getSession();
+          const sessionUser = data.session?.user;
+          if (sessionUser) {
+            const profile = await fetchProfile(sessionUser.id);
+            if (profile) setUser({ ...profile, email: sessionUser.email ?? profile.email });
+          }
         } else {
           const raw = await AsyncStorage.getItem(DEMO_SESSION_KEY);
           if (raw) setUser(JSON.parse(raw) as User);
         }
+      } catch {
+        // Session restore is best-effort: a failure must never block the app.
       } finally {
         setIsLoading(false);
       }
@@ -109,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── register ───────────────────────────────────────────────────────────
 
-  const register = useCallback(async (payload: RegisterPayload) => {
+  const register = useCallback(async (payload: RegisterPayload): Promise<RegisterResult> => {
     setIsLoading(true);
     try {
       if (IS_LIVE && supabase) {
@@ -129,28 +139,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (data.session && data.user) {
           const profile = await fetchProfile(data.user.id);
           if (profile) setUser({ ...profile, email: data.user.email ?? payload.email });
-        } else {
-          // E-mail confirmation flow enabled on the project
-          throw new Error(
-            'Compte créé ! Vérifiez votre e-mail pour confirmer votre inscription.'
-          );
+          return { emailConfirmationRequired: false };
         }
-      } else {
-        await new Promise((r) => setTimeout(r, 700));
-        const demoUser: User = {
-          id: `u-demo-${Date.now()}`,
-          email: payload.email,
-          firstName: payload.firstName,
-          lastName: payload.lastName,
-          phone: payload.phone,
-          role: payload.role,
-          rating: 0,
-          totalRatings: 0,
-          createdAt: new Date().toISOString(),
-        };
-        await AsyncStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(demoUser));
-        setUser(demoUser);
+        // E-mail confirmation flow enabled on the project: account created,
+        // the user must confirm before logging in. Not an error.
+        return { emailConfirmationRequired: true };
       }
+      await new Promise((r) => setTimeout(r, 700));
+      const demoUser: User = {
+        id: `u-demo-${Date.now()}`,
+        email: payload.email,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        phone: payload.phone,
+        role: payload.role,
+        rating: 0,
+        totalRatings: 0,
+        createdAt: new Date().toISOString(),
+        identityStatus: 'unsubmitted',
+      };
+      await AsyncStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(demoUser));
+      setUser(demoUser);
+      return { emailConfirmationRequired: false };
     } finally {
       setIsLoading(false);
     }
