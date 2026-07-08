@@ -68,6 +68,7 @@ interface BidRow {
   message?: string;
   created_at: string;
   status: BidStatus;
+  terms_accepted_at?: string;
 }
 
 interface ShipmentRow {
@@ -93,6 +94,9 @@ interface ShipmentRow {
   selected_bid_id?: string;
   tracking_events?: TrackingEventRow[];
   bids?: BidRow[];
+  terms_accepted_at?: string;
+  non_commercial_declared_at?: string;
+  transporter_terms_accepted_at?: string;
 }
 
 interface RouteRow {
@@ -186,6 +190,7 @@ function mapBid(row: BidRow): Bid {
     message: row.message ?? undefined,
     createdAt: row.created_at,
     status: row.status,
+    termsAcceptedAt: row.terms_accepted_at ?? undefined,
   };
 }
 
@@ -213,6 +218,9 @@ function mapShipment(row: ShipmentRow): Shipment {
     selectedBidId: row.selected_bid_id ?? undefined,
     trackingHistory: (row.tracking_events ?? []).map(mapTrackingEvent),
     bids: (row.bids ?? []).map(mapBid),
+    termsAcceptedAt: row.terms_accepted_at ?? undefined,
+    nonCommercialDeclaredAt: row.non_commercial_declared_at ?? undefined,
+    transporterTermsAcceptedAt: row.transporter_terms_accepted_at ?? undefined,
   };
 }
 
@@ -295,6 +303,8 @@ export async function createShipment(
       dimensions: shipment.dimensions ?? null,
       pickup_address: shipment.pickupAddress,
       delivery_address: shipment.deliveryAddress,
+      terms_accepted_at: shipment.termsAcceptedAt ?? null,
+      non_commercial_declared_at: shipment.nonCommercialDeclaredAt ?? null,
     })
     .select(SHIPMENT_SELECT)
     .single();
@@ -331,6 +341,8 @@ export async function updateShipment(id: string, updates: Partial<Shipment>): Pr
   if (updates.collectedAt !== undefined) payload.collected_at = updates.collectedAt;
   if (updates.deliveredAt !== undefined) payload.delivered_at = updates.deliveredAt;
   if (updates.paidAt !== undefined) payload.paid_at = updates.paidAt;
+  if (updates.transporterTermsAcceptedAt !== undefined)
+    payload.transporter_terms_accepted_at = updates.transporterTermsAcceptedAt;
   const { error } = await db().from('shipments').update(payload).eq('id', id);
   if (error) throw error;
 }
@@ -364,6 +376,7 @@ export async function createBid(
       estimated_delivery: bid.estimatedDelivery,
       message: bid.message ?? null,
       status: 'pending',
+      terms_accepted_at: bid.termsAcceptedAt ?? null,
     })
     .select('*')
     .single();

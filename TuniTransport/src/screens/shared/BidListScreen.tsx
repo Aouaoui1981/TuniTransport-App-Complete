@@ -145,8 +145,8 @@ export default function BidListScreen() {
         {isSender && shipment.status === 'pending' && item.status === 'pending' ? (
           <View style={styles.actionsRow}>
             <TouchableOpacity style={styles.msgBtn} onPress={() => openChat(item)}>
-              <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
-              <Text style={styles.msgBtnText}>Message</Text>
+              <Ionicons name="chatbubbles-outline" size={16} color={COLORS.primary} />
+              <Text style={styles.msgBtnText}>Négocier</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.acceptBtn, accepting === item.id && { opacity: 0.6 }]}
@@ -182,6 +182,15 @@ export default function BidListScreen() {
           <View style={[styles.dot, { backgroundColor: COLORS.secondary }]} />
           <Text style={styles.routeText}>{shipment.deliveryAddress.city}</Text>
         </View>
+        {shipment.type === 'large' && bids.length > 0 ? (
+          <View style={styles.negotiateBanner}>
+            <Ionicons name="chatbubbles" size={16} color={COLORS.primary} />
+            <Text style={styles.negotiateBannerText}>
+              Les devis sont négociables : discutez du prix avec le transporteur via la messagerie
+              avant d’accepter une offre.
+            </Text>
+          </View>
+        ) : null}
       </View>
       <FlatList
         data={bids}
@@ -209,6 +218,16 @@ const styles = StyleSheet.create({
   routeRow: { flexDirection: 'row', alignItems: 'center' },
   dot: { width: 7, height: 7, borderRadius: 4, marginRight: SPACING.xs },
   routeText: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary, fontWeight: '600' },
+  negotiateBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.primaryLight,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+  negotiateBannerText: { flex: 1, fontSize: FONTS.sizes.sm, color: COLORS.primaryDark, lineHeight: 18 },
   list: { padding: SPACING.xl, gap: SPACING.md, flexGrow: 1 },
   card: { gap: SPACING.sm },
   bestBadge: {

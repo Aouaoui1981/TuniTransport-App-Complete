@@ -771,3 +771,20 @@ begin
 end;
 $$;
 
+
+-- ═══════════════════════════════════════════
+-- TuniTransport -- Consentement légal (traçabilité juridique)
+-- ═══════════════════════════════════════════
+-- Horodatages des consentements bloquants (Conditions générales, Objets
+-- interdits, Décharge de responsabilité) et de la déclaration « non
+-- commercial » du tarif au poids -- cf. docs/PRICING_AND_LEGAL.md.
+-- Projet existant : exécutez uniquement cette section ; projet neuf : le
+-- script complet suffit.
+
+alter table public.shipments
+  add column if not exists terms_accepted_at             timestamptz,
+  add column if not exists non_commercial_declared_at    timestamptz,
+  add column if not exists transporter_terms_accepted_at timestamptz;
+
+alter table public.bids
+  add column if not exists terms_accepted_at timestamptz;
