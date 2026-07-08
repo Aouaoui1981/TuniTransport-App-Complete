@@ -15,6 +15,7 @@ import {
   Message,
   TrackingEvent,
   UserRole,
+  ShipmentLocation,
 } from '../types';
 
 function db() {
@@ -287,6 +288,95 @@ export async function createRoute(route: Omit<Route, 'id'>): Promise<Route> {
     .single();
   if (error) throw error;
   return mapRoute(data);
+}
+
+// ── Live tracking (positions GPS) ────────────────────────────────────────
+
+function mapShipmentLocation(row: any): ShipmentLocation {
+  return {
+    id: row.id,
+    shipmentId: row.shipment_id,
+    transporterId: row.transporter_id,
+    latitude: Number(row.latitude),
+    longitude: Number(row.longitude),
+    heading: row.heading != null ? Number(row.heading) : undefined,
+    speed: row.speed != null ? Number(row.speed) : undefined,
+    accuracy: row.accuracy != null ? Number(row.accuracy) : undefined,
+    recordedAt: row.recorded_at,
+  };
+}
+
+// Dernière position de plusieurs envois en UNE seule requête (RPC groupée
+// `get_latest_shipment_locations`) — jamais une requête par envoi (N+1).
+export async function fetchLatestLocations(
+  shipmentIds: string[]
+): Promise<Record<string, ShipmentLocation>> {
+  if (shipmentIds.length === 0) return {};
+  const { data, error } = await db().rpc('get_latest_shipment_locations', {
+    p_shipment_ids: shipmentIds,
+  });
+  if (error) throw error;
+  const byShipment: Record<string, ShipmentLocation> = {};
+  (data ?? []).forEach((row: any) => {
+    const loc = mapShipmentLocation(row);
+    byShipment[loc.shipmentId] = loc;
+  });
+  return byShipment;
+}
+
+export async function fetchLocationHistory(
+  shipmentId: string,
+  limit = 100
+): Promise<ShipmentLocation[]> {
+  const { data, error } = await db()
+    .from('shipment_locations')
+    .select('*')
+    .eq('shipment_id', shipmentId)
+    .order('recorded_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map(mapShipmentLocation).reverse();
+}
+
+export async function publishShipmentLocation(
+  location: Omit<ShipmentLocation, 'id' | 'recordedAt'>
+): Promise<void> {
+  const { error } = await db().from('shipment_locations').insert({
+    shipment_id: location.shipmentId,
+    transporter_id: location.transporterId,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    heading: location.heading ?? null,
+    speed: location.speed ?? null,
+    accuracy: location.accuracy ?? null,
+  });
+  if (error) throw error;
+}
+
+// Abonnement Realtime aux nouvelles positions d'un envoi. Retourne la
+// fonction de désinscription — à appeler impérativement au démontage.
+export function subscribeToShipmentLocation(
+  shipmentId: string,
+  onLocation: (location: ShipmentLocation) => void,
+  onStatusChange?: (connected: boolean) => void
+): () => void {
+  if (!supabase) return () => {};
+  const channel = supabase
+    .channel(`shipment-location-${shipmentId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'shipment_locations',
+        filter: `shipment_id=eq.${shipmentId}`,
+      },
+      (payload) => onLocation(mapShipmentLocation(payload.new))
+    )
+    .subscribe((status) => onStatusChange?.(status === 'SUBSCRIBED'));
+  return () => {
+    supabase?.removeChannel(channel);
+  };
 }
 
 // ── Conversations & messages ─────────────────────────────────────────────

@@ -117,6 +117,29 @@ android.config.googleMaps.apiKey
 par une clé obtenue sur [Google Cloud Console](https://console.cloud.google.com/)
 (API « Maps SDK for Android » activée).
 
+### Suivi en direct (live tracking)
+
+L'écran **Suivi en direct** (`LiveTrackingScreen`, accessible depuis l'écran de
+suivi d'un envoi) affiche la position du transporteur en temps réel sur la carte :
+
+- **Base de données** : table `shipment_locations` + RPC groupée
+  `get_latest_shipment_locations(uuid[])` — la dernière position de N envois
+  est lue en **une seule requête** (pas de N+1). Un trigger de rétention ne
+  conserve que les 200 derniers points par envoi, et la table est publiée sur
+  Supabase Realtime (la RLS s'applique aussi aux événements temps réel).
+  Projet existant : exécutez la section « Suivi en direct » ajoutée à la fin
+  de `supabase/schema.sql` ; projet neuf : le script complet suffit.
+- **Frontend** : `src/hooks/useLiveTracking.ts` — abonnement Realtime avec
+  repli par sondage, commits d'état throttlés (max 1 re-render / 2 s) et
+  pattern `isMounted` (aucun setState/timer après démontage). Le transporteur
+  assigné publie sa position via `expo-location` (interrupteur « Partager ma
+  position »).
+- **Cache** : `src/services/routeCache.ts` — les tracés d'itinéraires
+  (arcs orthodromiques, données statiques) sont calculés une fois puis mis en
+  cache RAM + AsyncStorage avec un TTL de 7 jours.
+- **Mode démo** : sans Supabase, un véhicule simulé avance le long du tracé
+  pour les envois `collected` / `in_transit` / `arrived`.
+
 ---
 
 ## 5. Structure du projet

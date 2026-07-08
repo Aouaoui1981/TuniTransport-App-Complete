@@ -3,13 +3,21 @@
 const React = require('react');
 const { View, Text } = require('react-native');
 
-const MapStub = ({ children, style }) =>
-  React.createElement(
+// forwardRef + imperative no-ops so screens can call map methods
+// (fitToCoordinates, animateToRegion…) without crashing on web.
+const MapStub = React.forwardRef(({ children, style }, ref) => {
+  React.useImperativeHandle(ref, () => ({
+    animateToRegion: () => {},
+    animateCamera: () => {},
+    fitToCoordinates: () => {},
+  }));
+  return React.createElement(
     View,
     { style: [{ backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' }, style] },
     React.createElement(Text, { style: { color: '#2563EB' } }, 'Map (native only)'),
     children
   );
+});
 
 const Null = () => null;
 

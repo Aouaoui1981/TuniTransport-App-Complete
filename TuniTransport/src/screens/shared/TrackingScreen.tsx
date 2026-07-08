@@ -3,7 +3,7 @@
 // Vertical timeline, newest first, per-status icons, latest highlighted.
 // ──────────────────────────────────────────────────────────────────────────
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
@@ -11,7 +11,8 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
 import { Card, statusLabel } from '../../components';
 import { useData } from '../../context/DataContext';
-import { RootStackParamList } from '../../navigation/AppNavigator';
+import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
+import { TRACKABLE_STATUSES } from '../../hooks/useLiveTracking';
 import { ShipmentStatus } from '../../types';
 
 const STATUS_ICONS: Record<ShipmentStatus, keyof typeof Ionicons.glyphMap> = {
@@ -36,6 +37,7 @@ function formatDateTime(iso: string): string {
 
 export default function TrackingScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'Tracking'>>();
+  const navigation = useAppNavigation();
   const { getShipmentById } = useData();
   const shipment = getShipmentById(route.params.shipmentId);
 
@@ -83,6 +85,16 @@ export default function TrackingScreen() {
                 Transporteur : {shipment.transporterName}
               </Text>
             </View>
+          ) : null}
+          {TRACKABLE_STATUSES.includes(shipment.status) ? (
+            <TouchableOpacity
+              style={styles.liveBtn}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('LiveTracking', { shipmentId: shipment.id })}
+            >
+              <Ionicons name="navigate" size={16} color={COLORS.white} />
+              <Text style={styles.liveBtnText}>Suivi en direct sur la carte</Text>
+            </TouchableOpacity>
           ) : null}
         </Card>
 
@@ -172,6 +184,16 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.sm,
   },
   summaryTransporterText: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary },
+  liveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.md,
+  },
+  liveBtnText: { fontSize: FONTS.sizes.md, fontWeight: '700', color: COLORS.white },
   timelineCard: { paddingVertical: SPACING.lg },
   timelineRow: { flexDirection: 'row', gap: SPACING.md },
   timelineLeft: { alignItems: 'center', width: 32 },

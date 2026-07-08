@@ -61,6 +61,22 @@ export interface Item {
   weight: number;
 }
 
+export interface GeoPoint {
+  latitude: number;
+  longitude: number;
+}
+
+// Position GPS publiée par le transporteur pendant le transport (live tracking).
+export interface ShipmentLocation extends GeoPoint {
+  id: string;
+  shipmentId: string;
+  transporterId: string;
+  heading?: number; // degrés, 0 = nord
+  speed?: number; // m/s
+  accuracy?: number; // mètres
+  recordedAt: string;
+}
+
 export interface TrackingEvent {
   id: string;
   status: ShipmentStatus;

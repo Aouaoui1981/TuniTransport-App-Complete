@@ -19,6 +19,12 @@
       ],
       "expo-notifications",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "TuniTransport utilise votre position pour le suivi en direct de vos livraisons."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "TuniTransport a besoin d'accéder à vos photos pour envoyer votre pièce d'identité.",

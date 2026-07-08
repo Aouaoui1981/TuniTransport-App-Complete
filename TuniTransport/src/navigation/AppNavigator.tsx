@@ -28,6 +28,7 @@ import CreateRouteScreen from '../screens/transporter/CreateRouteScreen';
 // Shared screens
 import ShipmentDetailScreen from '../screens/shared/ShipmentDetailScreen';
 import TrackingScreen from '../screens/shared/TrackingScreen';
+import LiveTrackingScreen from '../screens/shared/LiveTrackingScreen';
 import BidListScreen from '../screens/shared/BidListScreen';
 import MessagesScreen from '../screens/shared/MessagesScreen';
 import ChatScreen from '../screens/shared/ChatScreen';
@@ -56,6 +57,7 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   ShipmentDetail: { shipmentId: string };
   Tracking: { shipmentId: string };
+  LiveTracking: { shipmentId: string };
   BidList: { shipmentId: string };
   Chat: { conversationId: string };
   Payment: { shipmentId: string; amount: number };
@@ -158,6 +160,7 @@ export default function AppNavigator() {
           <Stack.Screen name="Main" component={MainTabs} />
           <Stack.Screen name="ShipmentDetail" component={ShipmentDetailScreen} />
           <Stack.Screen name="Tracking" component={TrackingScreen} />
+          <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
           <Stack.Screen name="BidList" component={BidListScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
           <Stack.Screen name="Payment" component={PaymentScreen} />
