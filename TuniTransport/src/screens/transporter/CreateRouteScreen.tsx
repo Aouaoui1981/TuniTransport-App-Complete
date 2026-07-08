@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
+import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -92,8 +93,8 @@ export default function CreateRouteScreen() {
       Alert.alert('Trajet ajouté', 'Votre trajet est maintenant visible.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? 'Impossible d’ajouter le trajet.');
+    } catch (e) {
+      Alert.alert('Erreur', getErrorMessage(e, 'Impossible d’ajouter le trajet.'));
     } finally {
       setSaving(false);
     }

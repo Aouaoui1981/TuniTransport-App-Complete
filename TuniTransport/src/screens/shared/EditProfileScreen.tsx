@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
+import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { Avatar } from '../../components';
 import { useAuth } from '../../context/AuthContext';
@@ -45,8 +46,8 @@ export default function EditProfileScreen() {
       Alert.alert('Profil mis à jour', 'Vos informations ont été enregistrées.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? 'Impossible d’enregistrer les modifications.');
+    } catch (e) {
+      Alert.alert('Erreur', getErrorMessage(e, 'Impossible d’enregistrer les modifications.'));
     } finally {
       setSaving(false);
     }

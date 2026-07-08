@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
 
+import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
 import { Card, StatusBadge, RatingStars, SectionHeader, Avatar } from '../../components';
 import { useData } from '../../context/DataContext';
@@ -69,8 +70,8 @@ export default function ShipmentDetailScreen() {
         shipmentId: shipment.id,
       });
       navigation.navigate('Chat', { conversationId: conv.id });
-    } catch (e: any) {
-      Alert.alert('Messagerie', e?.message ?? "Impossible d'ouvrir la conversation.");
+    } catch (e) {
+      Alert.alert('Messagerie', getErrorMessage(e, "Impossible d'ouvrir la conversation."));
     }
   };
 

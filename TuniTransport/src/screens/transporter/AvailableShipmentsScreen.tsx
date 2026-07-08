@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
 
+import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
 import { Card, EmptyState } from '../../components';
 import { useData } from '../../context/DataContext';
@@ -98,8 +99,8 @@ export default function AvailableShipmentsScreen() {
       });
       closeBidForm();
       Alert.alert('Offre envoyée', 'Votre offre a été transmise à l’expéditeur.');
-    } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? 'Impossible d’envoyer l’offre.');
+    } catch (e) {
+      Alert.alert('Erreur', getErrorMessage(e, 'Impossible d’envoyer l’offre.'));
     } finally {
       setSending(false);
     }
@@ -133,8 +134,8 @@ export default function AvailableShipmentsScreen() {
                 ],
               });
               Alert.alert('Envoi accepté', 'L’expéditeur a été notifié.');
-            } catch (e: any) {
-              Alert.alert('Erreur', e?.message ?? 'Action impossible.');
+            } catch (e) {
+              Alert.alert('Erreur', getErrorMessage(e, 'Action impossible.'));
             }
           },
         },

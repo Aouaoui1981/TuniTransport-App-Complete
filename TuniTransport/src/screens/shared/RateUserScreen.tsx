@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
 
+import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { Avatar } from '../../components';
 import { useData } from '../../context/DataContext';
@@ -65,8 +66,8 @@ export default function RateUserScreen() {
       Alert.alert('Merci !', 'Votre évaluation a bien été enregistrée.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? 'Impossible d’enregistrer l’évaluation.');
+    } catch (e) {
+      Alert.alert('Erreur', getErrorMessage(e, 'Impossible d’enregistrer l’évaluation.'));
     } finally {
       setSaving(false);
     }
