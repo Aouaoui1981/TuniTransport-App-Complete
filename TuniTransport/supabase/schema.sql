@@ -647,3 +647,101 @@ create trigger trg_shipment_locations_prune
 -- Diffusion temps réel (la RLS s'applique aussi aux événements Realtime).
 alter publication supabase_realtime add table public.shipment_locations;
 
+-- ═══════════════════════════════════════════
+-- TuniTransport -- Passerelle de paiement (Stripe)
+-- ═══════════════════════════════════════════
+-- Grand livre des paiements. Toutes les écritures passent par les fonctions
+-- Edge (service role) : create-checkout-session / create-payment-intent
+-- créent les tentatives, stripe-webhook enregistre l'issue et confirme la
+-- réservation. Les clients ne peuvent que LIRE leurs propres paiements.
+
+create type payment_status as enum
+  ('pending', 'processing', 'succeeded', 'failed', 'refunded', 'canceled');
+
+-- Compte Stripe Connect du transporteur (renseigné lors de l'onboarding,
+-- géré côté serveur uniquement — voir le garde-fou plus bas).
+alter table public.profiles
+  add column stripe_account_id text;
+
+create table public.payments (
+  id                       uuid primary key default gen_random_uuid(),
+  shipment_id              uuid not null references public.shipments(id) on delete cascade,
+  sender_id                uuid not null references public.profiles(id) on delete cascade,
+  transporter_id           uuid references public.profiles(id) on delete set null,
+  provider                 text not null default 'stripe',
+  checkout_session_id      text unique,
+  payment_intent_id        text unique,
+  -- Montants en centimes (entiers) : commission + part transporteur = total.
+  amount_cents             integer not null check (amount_cents > 0),
+  currency                 text not null default 'eur',
+  platform_fee_cents       integer not null check (platform_fee_cents >= 0),
+  transporter_amount_cents integer not null check (transporter_amount_cents >= 0),
+  destination_account_id   text,
+  status                   payment_status not null default 'pending',
+  error_code               text,
+  error_message            text,
+  paid_at                  timestamptz,
+  created_at               timestamptz not null default now(),
+  updated_at               timestamptz not null default now(),
+  check (platform_fee_cents + transporter_amount_cents = amount_cents)
+);
+
+create index idx_payments_shipment on public.payments(shipment_id);
+create index idx_payments_sender   on public.payments(sender_id);
+
+-- Au plus UN paiement réussi par envoi, garanti par la base elle-même.
+create unique index idx_payments_one_success
+  on public.payments(shipment_id) where status = 'succeeded';
+
+create trigger trg_payments_updated
+  before update on public.payments
+  for each row execute function public.set_updated_at();
+
+alter table public.payments enable row level security;
+
+-- Lecture seule pour les deux parties ; aucune policy d'écriture : seules
+-- les fonctions Edge (service role) créent et font évoluer les paiements.
+create policy "payments_select_actors" on public.payments
+  for select to authenticated
+  using (sender_id = auth.uid() or transporter_id = auth.uid());
+
+-- Déduplication des webhooks Stripe (livraisons répétées) : l'id de
+-- l'événement est réclamé avant traitement, l'unicité de la clé primaire
+-- rend le traitement idempotent. Table service-role uniquement (pas de policy).
+create table public.webhook_events (
+  id          text primary key,
+  type        text not null,
+  received_at timestamptz not null default now()
+);
+
+alter table public.webhook_events enable row level security;
+
+-- Garde-fou : stripe_account_id est géré par l'équipe / l'onboarding serveur,
+-- jamais modifiable par l'utilisateur lui-même (nouvelle version du trigger
+-- déclaré plus haut, avec la vérification supplémentaire).
+create or replace function public.protect_profile_columns()
+returns trigger
+language plpgsql
+as $$
+begin
+  if current_user in ('postgres', 'supabase_admin', 'service_role') then
+    return new;
+  end if;
+  if new.rating is distinct from old.rating
+     or new.total_ratings is distinct from old.total_ratings then
+    raise exception 'La réputation est en lecture seule.';
+  end if;
+  if new.identity_status is distinct from old.identity_status
+     and new.identity_status <> 'pending' then
+    raise exception 'Le statut d''identité est géré par l''équipe de vérification.';
+  end if;
+  if new.identity_reviewed_at is distinct from old.identity_reviewed_at then
+    raise exception 'Champ réservé à l''équipe de vérification.';
+  end if;
+  if new.stripe_account_id is distinct from old.stripe_account_id then
+    raise exception 'Le compte de paiement est géré par la plateforme.';
+  end if;
+  return new;
+end;
+$$;
+

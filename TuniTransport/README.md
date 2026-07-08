@@ -75,22 +75,61 @@ la couche `services/`.
    ```
 5. Redémarrez `npx expo start` — l'app bascule automatiquement en mode live.
 
-### Fonction Edge Stripe
+### Passerelle de paiement (Stripe)
+
+La passerelle vit dans `supabase/functions/` (Deno, TypeScript) avec des
+modules partagés dans `_shared/` (env strict, client Stripe REST avec
+idempotence + retries, split financier, vérification de signature webhook,
+accès données) :
+
+- **`create-payment-intent`** — PaymentIntent pour le Payment Sheet natif
+  (flux in-app actuel).
+- **`create-checkout-session`** — session Stripe Checkout hébergée
+  (flux web / redirection).
+- **`stripe-webhook`** — source de vérité : vérifie la signature HMAC,
+  déduplique les livraisons (`webhook_events`), enregistre l'issue dans le
+  grand livre `payments` et **confirme automatiquement la réservation**
+  (`paid_at` + événement de suivi) au `payment_intent.succeeded` /
+  `checkout.session.completed`. Les échecs (`payment_failed`, session
+  expirée, remboursement) sont journalisés avec le code d'erreur Stripe.
+
+**Split financier** : chaque transaction est découpée en centimes entiers
+entre la commission plateforme (`PLATFORM_FEE_PERCENT`, 10 % par défaut) et
+la part du transporteur. Si le transporteur a un compte Stripe Connect
+(`profiles.stripe_account_id`, géré côté serveur), le versement est routé à
+la charge via `transfer_data[destination]` + `application_fee_amount` ;
+sinon le montant reste sur la plateforme et le dû est tracé dans `payments`.
 
 ```bash
 npx supabase login
 npx supabase link --project-ref xxxxx
-npx supabase secrets set STRIPE_SECRET_KEY=sk_live_...   # ou sk_test_... en test
+
+# Secrets — les clés ne vivent QUE dans les variables d'environnement serveur
+npx supabase secrets set STRIPE_SECRET_KEY=sk_live_...      # ou sk_test_... en test
+npx supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...    # Dashboard → Webhooks
+npx supabase secrets set PLATFORM_FEE_PERCENT=10            # optionnel (défaut 10)
+
 npx supabase functions deploy create-payment-intent
+npx supabase functions deploy create-checkout-session
+npx supabase functions deploy stripe-webhook --no-verify-jwt   # auth = signature Stripe
 ```
+
+Déclarez ensuite l'endpoint dans le Dashboard Stripe (**Developers →
+Webhooks**) : `https://xxxxx.supabase.co/functions/v1/stripe-webhook`, avec
+les événements `payment_intent.succeeded`, `payment_intent.payment_failed`,
+`checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+`checkout.session.async_payment_failed`, `checkout.session.expired`,
+`charge.refunded`.
 
 Puis ajoutez la clé **publique** Stripe dans `.env` :
 ```
 EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 ```
 
-⚠️ La clé secrète Stripe ne doit **jamais** apparaître dans le code client ni dans
-`.env` — elle vit uniquement côté serveur via `supabase secrets set`.
+⚠️ La clé secrète Stripe et le secret du webhook ne doivent **jamais**
+apparaître dans le code client ni dans `.env` — ils vivent uniquement côté
+serveur via `supabase secrets set` (chargés par `_shared/env.ts`, qui échoue
+immédiatement si une variable requise manque).
 
 ---
 
@@ -150,7 +189,7 @@ src/types/                 — modèles de données (User, Shipment, Bid, Route,
 src/utils/theme.ts         — COLORS, SPACING, RADIUS, FONTS, SHADOWS
 src/components/            — StatusBadge, RatingStars, Card, SectionHeader, EmptyState
 src/context/                — AuthContext, DataContext (API identique démo/live)
-src/services/               — supabase, api, stripe, notifications, mockData
+src/services/               — supabase, api, payments, stripe, notifications, mockData
 src/navigation/              — stack racine + tabs par rôle (expéditeur/transporteur)
 src/screens/auth/            — Welcome, Login, Register
 src/screens/sender/          — SenderHome, Shipments, CreateShipment
@@ -158,7 +197,9 @@ src/screens/transporter/     — TransporterHome, AvailableShipments, CreateRout
 src/screens/shared/          — ShipmentDetail, Tracking, BidList, Messages, Chat,
                                 Payment, Profile, RateUser, EditProfile, Map
 supabase/schema.sql           — tables, enums, triggers, RLS, buckets
-supabase/functions/           — create-payment-intent (Deno)
+supabase/functions/           — passerelle de paiement (Deno) : _shared/,
+                                create-payment-intent, create-checkout-session,
+                                stripe-webhook
 assets/                       — icône, splash, favicon (placeholders — voir §6)
 ```
 
