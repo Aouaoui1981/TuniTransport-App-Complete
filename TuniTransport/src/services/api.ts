@@ -291,7 +291,7 @@ export async function createRoute(route: Omit<Route, 'id'>): Promise<Route> {
 
 // ── Conversations & messages ─────────────────────────────────────────────
 
-export async function fetchConversations(userId: string): Promise<Conversation[]> {
+export async function fetchConversations(userId: string): Promise<{ conversations: Conversation[]; messages: Message[] }> {
   const client = db();
   const { data: parts, error: pErr } = await client
     .from('conversation_participants')
@@ -299,7 +299,7 @@ export async function fetchConversations(userId: string): Promise<Conversation[]
     .eq('user_id', userId);
   if (pErr) throw pErr;
   const ids = (parts ?? []).map((p: any) => p.conversation_id);
-  if (ids.length === 0) return [];
+  if (ids.length === 0) return { conversations: [], messages: [] };
 
   const { data, error } = await client
     .from('conversations')
@@ -309,13 +309,15 @@ export async function fetchConversations(userId: string): Promise<Conversation[]
     .order('created_at', { foreignTable: 'messages', ascending: true });
   if (error) throw error;
 
-  return (data ?? []).map((row: any) => {
+  const allMessages: Message[] = [];
+  const conversations = (data ?? []).map((row: any) => {
     const participants: string[] = (row.conversation_participants ?? []).map((p: any) => p.user_id);
     const participantNames: Record<string, string> = {};
     (row.conversation_participants ?? []).forEach((p: any) => {
       participantNames[p.user_id] = p.display_name ?? '';
     });
     const msgs: Message[] = (row.messages ?? []).map(mapMessage);
+    allMessages.push(...msgs);
     const last = msgs[msgs.length - 1];
     const unreadCount = msgs.filter((m) => !m.read && m.senderId !== userId).length;
     return {
@@ -328,6 +330,8 @@ export async function fetchConversations(userId: string): Promise<Conversation[]
       updatedAt: row.updated_at,
     } as Conversation;
   });
+
+  return { conversations, messages: allMessages };
 }
 
 export async function createConversation(params: {

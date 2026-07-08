@@ -48,6 +48,7 @@ export default function ChatScreen() {
   const [text, setText] = useState('');
   const listRef = useRef<FlatList<Message>>(null);
   const replyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMounted = useRef(true);
 
   const otherId = useMemo(
     () => conversation?.participants.find((p) => p !== user?.id),
@@ -56,7 +57,9 @@ export default function ChatScreen() {
   const otherName = (otherId && conversation?.participantNames[otherId]) || 'Contact';
 
   useEffect(() => {
+    isMounted.current = true;
     return () => {
+      isMounted.current = false;
       if (replyTimer.current) clearTimeout(replyTimer.current);
     };
   }, []);
@@ -77,10 +80,13 @@ export default function ChatScreen() {
       text: trimmed,
     });
 
+    if (!isMounted.current) return;
+
     // Demo mode: simulate the other participant answering ~2s later.
     if (!IS_LIVE && otherId) {
       if (replyTimer.current) clearTimeout(replyTimer.current);
       replyTimer.current = setTimeout(() => {
+        if (!isMounted.current) return;
         const reply = DEMO_REPLIES[Math.floor(Math.random() * DEMO_REPLIES.length)];
         addMessage({ conversationId: conversation.id, senderId: otherId, text: reply });
       }, 2000);

@@ -4,7 +4,7 @@
 // Live mode: createPaymentIntent → Stripe Payment Sheet (dynamic require so
 // the demo build keeps working inside Expo Go without the native module).
 // ──────────────────────────────────────────────────────────────────────────
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -49,6 +49,14 @@ export default function PaymentScreen() {
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const shortId = shipmentId.slice(-4).toUpperCase();
 
@@ -95,11 +103,15 @@ export default function PaymentScreen() {
       const { error: presentError } = await stripeSdk.presentPaymentSheet();
       if (presentError) throw new Error(presentError.message);
       await markShipmentPaid();
-      setStep('success');
-      scheduleLocalNotification('Paiement confirmé', `Votre paiement de ${amount}€ a bien été reçu.`);
+      if (isMounted.current) {
+        setStep('success');
+        scheduleLocalNotification('Paiement confirmé', `Votre paiement de ${amount}€ a bien été reçu.`);
+      }
     } catch (e: any) {
-      setStep('form');
-      Alert.alert('Paiement annulé', e?.message ?? 'Le paiement n’a pas abouti.');
+      if (isMounted.current) {
+        setStep('form');
+        Alert.alert('Paiement annulé', e?.message ?? 'Le paiement n’a pas abouti.');
+      }
     }
   };
 
@@ -112,11 +124,15 @@ export default function PaymentScreen() {
     try {
       await createPaymentIntent(amount, 'eur', shipmentId);
       await markShipmentPaid();
-      setStep('success');
-      scheduleLocalNotification('Paiement confirmé', `Votre paiement de ${amount}€ a bien été reçu.`);
+      if (isMounted.current) {
+        setStep('success');
+        scheduleLocalNotification('Paiement confirmé', `Votre paiement de ${amount}€ a bien été reçu.`);
+      }
     } catch {
-      setStep('form');
-      Alert.alert('Erreur', 'Le paiement n’a pas abouti. Réessayez.');
+      if (isMounted.current) {
+        setStep('form');
+        Alert.alert('Erreur', 'Le paiement n’a pas abouti. Réessayez.');
+      }
     }
   };
 

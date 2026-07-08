@@ -51,9 +51,11 @@ function buildDemoUser(email: string): User {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const isMounted = React.useRef(true);
 
   // Restore session on mount
   useEffect(() => {
+    isMounted.current = true;
     let unsub: (() => void) | undefined;
 
     async function restore() {
@@ -64,11 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (session?.user) {
               const profile = await fetchProfile(session.user.id);
-              if (profile) {
+              if (profile && isMounted.current) {
                 setUser({ ...profile, email: session.user.email ?? profile.email });
               }
             } else {
-              setUser(null);
+              if (isMounted.current) {
+                setUser(null);
+              }
             }
           });
           unsub = () => listener.subscription.unsubscribe();
@@ -77,21 +81,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const sessionUser = data.session?.user;
           if (sessionUser) {
             const profile = await fetchProfile(sessionUser.id);
-            if (profile) setUser({ ...profile, email: sessionUser.email ?? profile.email });
+            if (profile && isMounted.current) {
+              setUser({ ...profile, email: sessionUser.email ?? profile.email });
+            }
           }
         } else {
           const raw = await AsyncStorage.getItem(DEMO_SESSION_KEY);
-          if (raw) setUser(JSON.parse(raw) as User);
+          if (raw && isMounted.current) {
+            setUser(JSON.parse(raw) as User);
+          }
         }
       } catch {
         // Session restore is best-effort: a failure must never block the app.
       } finally {
-        setIsLoading(false);
+        if (isMounted.current) {
+          setIsLoading(false);
+        }
       }
     }
 
     restore();
-    return () => unsub?.();
+    return () => {
+      isMounted.current = false;
+      unsub?.();
+    };
   }, []);
 
   // ── login ──────────────────────────────────────────────────────────────
