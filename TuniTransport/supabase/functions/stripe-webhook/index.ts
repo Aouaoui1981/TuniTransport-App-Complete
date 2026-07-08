@@ -80,7 +80,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return null;
     }
   );
-  if (isFirstDelivery === null) return json({ error: 'Erreur interne.' }, 500);
+  if (isFirstDelivery === null) return errorResponse(new Error('Erreur interne.'));
   if (!isFirstDelivery) return json({ received: true, duplicate: true });
 
   try {
@@ -90,7 +90,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Undo the claim so Stripe's retry is not swallowed as a "duplicate".
     console.error(`[webhook] processing failed for ${event.type} (${event.id}):`, err);
     await releaseWebhookEvent(admin, event.id).catch(() => {});
-    return json({ error: 'Traitement du webhook échoué.' }, 500);
+    return errorResponse(err);
   }
 });
 
@@ -103,6 +103,11 @@ async function handleEvent(
     case 'payment_intent.succeeded': {
       const intent = event.data.object as unknown as PaymentIntentObject;
       await settleSuccess(admin, { paymentIntentId: intent.id });
+      break;
+    }
+    case 'payment_intent.processing': {
+      const intent = event.data.object as unknown as PaymentIntentObject;
+      await markPaymentStatus(admin, { paymentIntentId: intent.id }, 'processing');
       break;
     }
     case 'checkout.session.completed': {
@@ -165,6 +170,7 @@ async function handleEvent(
 
     default:
       // Not ours to handle — acknowledge so Stripe stops retrying.
+      console.warn(`[webhook] unhandled event type: ${event.type}`);
       break;
   }
 }
