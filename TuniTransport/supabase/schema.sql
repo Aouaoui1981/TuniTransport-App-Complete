@@ -285,41 +285,67 @@ $$;
 -- (created after the KYC columns exist — see end of file)
 
 -- ── Trigger: constrain what a transporter may change on a shipment ────────
--- Senders manage their own rows via RLS. A transporter may only claim a
--- pending unassigned shipment (assigning themselves) or advance the status
--- of a shipment already assigned to them — never touch price or content.
+-- ── Trigger: constrain shipment updates (Security Hardening) ─────────────
+-- Protects financial and assignment integrity. Sensitive columns are locked
+-- for everyone but the system (service_role/RPC). Senders are locked once
+-- a bid is accepted. Transporters can only update delivery status.
 create or replace function public.enforce_shipment_update()
 returns trigger
 language plpgsql
 as $$
 begin
+  -- 1. Trusted roles (migrations, Edge Functions, internal RPCs) bypass checks.
   if current_user in ('postgres', 'supabase_admin', 'service_role') then
     return new;
   end if;
+
+  -- 2. Read-only columns for all authenticated users.
+  -- These MUST be changed via Edge Functions or Security Definer RPCs.
+  if new.paid_at is distinct from old.paid_at
+     or new.price is distinct from old.price
+     or new.transporter_id is distinct from old.transporter_id
+     or new.selected_bid_id is distinct from old.selected_bid_id
+     or new.sender_id is distinct from old.sender_id then
+    raise exception 'Les données financières et d''assignation sont en lecture seule.';
+  end if;
+
+  -- 3. Sender Role checks.
   if auth.uid() = old.sender_id then
+    -- Senders can only edit details while pending (no bids accepted yet).
+    if old.status <> 'pending' then
+      -- Once accepted, allow only status change to 'cancelled' if nothing else changes.
+      if new.status is distinct from old.status and new.status = 'cancelled' then
+        if new.type is distinct from old.type or new.weight is distinct from old.weight
+           or new.items is distinct from old.items or new.description is distinct from old.description
+           or new.dimensions is distinct from old.dimensions
+           or new.pickup_address is distinct from old.pickup_address
+           or new.delivery_address is distinct from old.delivery_address then
+          raise exception 'Seul le statut peut être modifié après acceptation.';
+        end if;
+        return new;
+      end if;
+      raise exception 'L''envoi ne peut plus être modifié après acceptation.';
+    end if;
     return new;
   end if;
-  if new.sender_id         is distinct from old.sender_id
-     or new.sender_name    is distinct from old.sender_name
-     or new.type           is distinct from old.type
-     or new.weight         is distinct from old.weight
-     or new.price          is distinct from old.price
-     or new.items          is distinct from old.items
-     or new.description    is distinct from old.description
-     or new.dimensions     is distinct from old.dimensions
-     or new.pickup_address is distinct from old.pickup_address
-     or new.delivery_address is distinct from old.delivery_address
-     or new.paid_at        is distinct from old.paid_at then
-    raise exception 'Modification non autorisée sur cet envoi.';
-  end if;
-  if old.transporter_id is null then
-    if new.transporter_id is distinct from auth.uid() then
-      raise exception 'Vous ne pouvez assigner que vous-même comme transporteur.';
+
+  -- 4. Transporter Role checks.
+  if auth.uid() = old.transporter_id then
+    -- Transporters can ONLY update the shipment status (tracking).
+    if new.sender_name is distinct from old.sender_name
+       or new.type is distinct from old.type
+       or new.weight is distinct from old.weight
+       or new.items is distinct from old.items
+       or new.description is distinct from old.description
+       or new.dimensions is distinct from old.dimensions
+       or new.pickup_address is distinct from old.pickup_address
+       or new.delivery_address is distinct from old.delivery_address then
+      raise exception 'Modification non autorisée : les transporteurs ne peuvent mettre à jour que le statut.';
     end if;
-  elsif old.transporter_id <> auth.uid() then
-    raise exception 'Cet envoi est assigné à un autre transporteur.';
+    return new;
   end if;
-  return new;
+
+  raise exception 'Accès non autorisé.';
 end;
 $$;
 

@@ -62,12 +62,18 @@ async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   return [...new Uint8Array(signature)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** Constant-time hex comparison — no early exit an attacker could time. */
+/** Constant-time comparison of hex strings — no early exit to block timing attacks. */
 function timingSafeEqualHex(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  // Use a fixed-length comparison where possible to avoid leaking length via timing.
+  // We compare up to the length of the expected signature (b).
+  const lenA = a.length;
+  const lenB = b.length;
+  let diff = lenA ^ lenB;
+  for (let i = 0; i < lenB; i++) {
+    // Compare char codes, using a dummy value if a is shorter than i.
+    const charA = i < lenA ? a.charCodeAt(i) : 0;
+    const charB = b.charCodeAt(i);
+    diff |= charA ^ charB;
   }
   return diff === 0;
 }
