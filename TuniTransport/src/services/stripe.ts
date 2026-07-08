@@ -1,44 +1,12 @@
 // ──────────────────────────────────────────────────────────────────────────
-// TuniTransport — Stripe service (STEP 5)
-// Live mode: Supabase Edge Function. Demo mode: simulated intent (~1s).
+// TuniTransport — Stripe service (compatibility re-export)
+// The payment gateway now lives in ./payments — import from there directly;
+// this module keeps the historical import path working.
 // ──────────────────────────────────────────────────────────────────────────
-import { supabase, IS_LIVE } from './supabase';
-
-export const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
-export const IS_STRIPE_LIVE = IS_LIVE && Boolean(STRIPE_PUBLISHABLE_KEY);
-
-export interface PaymentIntentResult {
-  id: string;
-  clientSecret: string;
-  amount: number;
-  currency: string;
-  status: string;
-}
-
-export async function createPaymentIntent(
-  amount: number,
-  currency: string = 'eur',
-  shipmentId?: string
-): Promise<PaymentIntentResult> {
-  if (IS_STRIPE_LIVE && supabase) {
-    if (!shipmentId) throw new Error('Envoi introuvable pour ce paiement.');
-    // The server derives the amount from the shipment row — the client-side
-    // amount is display-only and deliberately not trusted.
-    const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-      body: { shipmentId, currency },
-    });
-    if (error) throw error;
-    return data as PaymentIntentResult;
-  }
-
-  // Demo mode — simulate a PaymentIntent after ~1s
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  const fakeId = `pi_demo_${Date.now()}`;
-  return {
-    id: fakeId,
-    clientSecret: `${fakeId}_secret_demo`,
-    amount,
-    currency,
-    status: 'requires_payment_method',
-  };
-}
+export {
+  STRIPE_PUBLISHABLE_KEY,
+  IS_STRIPE_LIVE,
+  createPaymentIntent,
+  PaymentApiError,
+} from './payments';
+export type { PaymentIntentResult } from './payments';

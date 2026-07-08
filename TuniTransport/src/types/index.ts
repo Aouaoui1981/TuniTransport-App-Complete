@@ -157,6 +157,38 @@ export interface Conversation {
   updatedAt: string;
 }
 
+// ─── Payments ──────────────────────────────────
+
+export type PaymentStatus =
+  | 'pending'
+  | 'processing'
+  | 'succeeded'
+  | 'failed'
+  | 'refunded'
+  | 'canceled';
+
+// Ledger row managed exclusively by the payment Edge Functions (read-only
+// for clients). Amounts are integer cents; platform fee + transporter
+// amount always equal the charged total.
+export interface Payment {
+  id: string;
+  shipmentId: string;
+  senderId: string;
+  transporterId?: string;
+  provider: string;
+  checkoutSessionId?: string;
+  paymentIntentId?: string;
+  amountCents: number;
+  currency: string;
+  platformFeeCents: number;
+  transporterAmountCents: number;
+  status: PaymentStatus;
+  errorCode?: string;
+  errorMessage?: string;
+  paidAt?: string;
+  createdAt: string;
+}
+
 // ─── Auth payloads ─────────────────────────────
 
 export interface LoginPayload {

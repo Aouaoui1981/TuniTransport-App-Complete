@@ -22,7 +22,11 @@ import { useRoute, RouteProp, CommonActions, useNavigation } from '@react-naviga
 
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { RootStackParamList } from '../../navigation/AppNavigator';
-import { createPaymentIntent, IS_STRIPE_LIVE } from '../../services/stripe';
+import {
+  createPaymentIntent,
+  waitForPaymentConfirmation,
+  IS_STRIPE_LIVE,
+} from '../../services/payments';
 import { scheduleLocalNotification } from '../../services/notifications';
 import { useData } from '../../context/DataContext';
 
@@ -43,7 +47,7 @@ export default function PaymentScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Payment'>>();
   const { shipmentId, amount } = route.params;
-  const { getShipmentById, updateShipment } = useData();
+  const { getShipmentById, updateShipment, refresh } = useData();
 
   const [step, setStep] = useState<Step>('form');
   const [cardNumber, setCardNumber] = useState('');
@@ -102,7 +106,16 @@ export default function PaymentScreen() {
       if (initError) throw new Error(initError.message);
       const { error: presentError } = await stripeSdk.presentPaymentSheet();
       if (presentError) throw new Error(presentError.message);
-      await markShipmentPaid();
+      // The stripe-webhook Edge Function is the source of truth: it marks the
+      // shipment paid and logs the tracking event. Wait for it, then pull the
+      // fresh server state; only fall back to the local marking if the
+      // confirmation hasn't landed yet (webhook latency / not configured).
+      const confirmation = await waitForPaymentConfirmation(shipmentId);
+      if (confirmation === 'succeeded') {
+        await refresh();
+      } else {
+        await markShipmentPaid();
+      }
       if (isMounted.current) {
         setStep('success');
         scheduleLocalNotification('Paiement confirmé', `Votre paiement de ${amount}€ a bien été reçu.`);
