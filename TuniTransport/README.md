@@ -64,7 +64,11 @@ la couche `services/`.
 
 ## 3. Activer le mode live — Supabase
 
-1. Créez un projet sur [supabase.com](https://supabase.com).
+> 📖 **Guide détaillé pas à pas** (avec la création du compte et du projet
+> Supabase, écran par écran) : [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md)
+
+1. Créez un projet sur [supabase.com](https://supabase.com) (voir l'étape 1
+   du guide détaillé ci-dessus).
 2. Dans **SQL Editor**, exécutez le contenu de `supabase/schema.sql` (tables,
    enums, triggers, RLS, buckets Storage — tout est inclus, un seul script).
 3. Dans **Project Settings → API**, copiez `Project URL` et `anon public key`.
