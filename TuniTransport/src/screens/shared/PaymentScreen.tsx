@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +21,7 @@ import { useRoute, RouteProp, CommonActions, useNavigation } from '@react-naviga
 
 import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import {
   createPaymentIntent,
@@ -124,14 +124,14 @@ export default function PaymentScreen() {
     } catch (e) {
       if (isMounted.current) {
         setStep('form');
-        Alert.alert('Paiement annulé', getErrorMessage(e, 'Le paiement n’a pas abouti.'));
+        showAlert('Paiement annulé', getErrorMessage(e, 'Le paiement n’a pas abouti.'));
       }
     }
   };
 
   const payDemo = async () => {
     if (cardNumber.replace(/\s/g, '').length < 16 || expiry.length < 5 || cvc.length < 3) {
-      Alert.alert('Carte incomplète', 'Veuillez renseigner les informations de la carte.');
+      showAlert('Carte incomplète', 'Veuillez renseigner les informations de la carte.');
       return;
     }
     setStep('processing');
@@ -145,7 +145,7 @@ export default function PaymentScreen() {
     } catch {
       if (isMounted.current) {
         setStep('form');
-        Alert.alert('Erreur', 'Le paiement n’a pas abouti. Réessayez.');
+        showAlert('Erreur', 'Le paiement n’a pas abouti. Réessayez.');
       }
     }
   };

@@ -9,13 +9,13 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
@@ -47,7 +47,7 @@ export default function CreateRouteScreen() {
   const submit = async () => {
     if (!user) return;
     if (IS_LIVE && user.identityStatus !== 'verified') {
-      Alert.alert(
+      showAlert(
         'Vérification requise',
         'Vous devez faire vérifier votre identité avant de publier un trajet.',
         [
@@ -63,15 +63,15 @@ export default function CreateRouteScreen() {
     const kg = parseInt(capacity, 10);
     const dep = parseDate(departureDate);
     if (!departureCity.trim() || !arrivalCity.trim()) {
-      Alert.alert('Champs requis', 'Veuillez renseigner les villes de départ et d’arrivée.');
+      showAlert('Champs requis', 'Veuillez renseigner les villes de départ et d’arrivée.');
       return;
     }
     if (!kg || kg <= 0) {
-      Alert.alert('Capacité invalide', 'Veuillez saisir une capacité en kg.');
+      showAlert('Capacité invalide', 'Veuillez saisir une capacité en kg.');
       return;
     }
     if (!dep) {
-      Alert.alert('Date invalide', 'Format attendu : JJ/MM/AAAA.');
+      showAlert('Date invalide', 'Format attendu : JJ/MM/AAAA.');
       return;
     }
     const arr = new Date(dep);
@@ -90,11 +90,11 @@ export default function CreateRouteScreen() {
         availableCapacity: kg,
         ferryCompany: company,
       });
-      Alert.alert('Trajet ajouté', 'Votre trajet est maintenant visible.', [
+      showAlert('Trajet ajouté', 'Votre trajet est maintenant visible.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (e) {
-      Alert.alert('Erreur', getErrorMessage(e, 'Impossible d’ajouter le trajet.'));
+      showAlert('Erreur', getErrorMessage(e, 'Impossible d’ajouter le trajet.'));
     } finally {
       setSaving(false);
     }

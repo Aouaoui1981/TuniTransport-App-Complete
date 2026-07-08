@@ -12,12 +12,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { UserRole } from '../../types';
@@ -42,11 +42,11 @@ export default function RegisterScreen() {
 
   async function handleRegister() {
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim() || !password) {
-      Alert.alert('Champs requis', 'Veuillez remplir tous les champs.');
+      showAlert('Champs requis', 'Veuillez remplir tous les champs.');
       return;
     }
     if (password.length < 6) {
-      Alert.alert('Mot de passe trop court', 'Au moins 6 caractères sont requis.');
+      showAlert('Mot de passe trop court', 'Au moins 6 caractères sont requis.');
       return;
     }
     setSubmitting(true);
@@ -60,14 +60,14 @@ export default function RegisterScreen() {
         role,
       });
       if (result.emailConfirmationRequired) {
-        Alert.alert(
+        showAlert(
           'Compte créé !',
           'Vérifiez votre e-mail pour confirmer votre inscription, puis connectez-vous.',
           [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
         );
       }
     } catch (e) {
-      Alert.alert('Inscription impossible', getErrorMessage(e));
+      showAlert('Inscription impossible', getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

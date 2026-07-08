@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { useData } from '../../context/DataContext';
 import { findCityCoords } from '../../services/mockData';
+import { useAppNavigation } from '../../navigation/AppNavigator';
 import { Route } from '../../types';
 
 // Mediterranean framing: south of France down to the Tunisian coast.
@@ -26,6 +27,7 @@ function formatDate(iso: string): string {
 }
 
 export default function MapScreen() {
+  const navigation = useAppNavigation();
   const { routes } = useData();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -48,10 +50,19 @@ export default function MapScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Carte des itinéraires</Text>
-        <Text style={styles.subtitle}>
-          {routes.length} trajet{routes.length > 1 ? 's' : ''} France → Tunisie
-        </Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate('Main', { screen: 'Accueil' })}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="arrow-back" size={22} color={COLORS.text} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>Carte des itinéraires</Text>
+          <Text style={styles.subtitle}>
+            {routes.length} trajet{routes.length > 1 ? 's' : ''} France → Tunisie
+          </Text>
+        </View>
       </View>
 
       <View style={styles.mapWrap}>
@@ -122,7 +133,23 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  header: { paddingHorizontal: SPACING.xl, paddingTop: SPACING.lg, paddingBottom: SPACING.md },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.md,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.sm,
+  },
   title: { fontSize: FONTS.sizes.xxl, fontWeight: '800', color: COLORS.text },
   subtitle: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary, marginTop: 2 },
   mapWrap: {

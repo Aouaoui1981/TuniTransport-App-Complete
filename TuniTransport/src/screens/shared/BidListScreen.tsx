@@ -4,12 +4,13 @@
 // Accepting a bid assigns the transporter and opens the payment path.
 // ──────────────────────────────────────────────────────────────────────────
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
 
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { Card, RatingStars, Avatar, EmptyState } from '../../components';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -49,7 +50,7 @@ export default function BidListScreen() {
   }
 
   const onAccept = (bid: Bid) => {
-    Alert.alert(
+    showAlert(
       'Accepter cette offre',
       `${bid.transporterName} transportera votre envoi pour ${bid.price}€.`,
       [
@@ -60,7 +61,7 @@ export default function BidListScreen() {
             setAccepting(bid.id);
             try {
               await acceptBid(shipment.id, bid.id);
-              Alert.alert(
+              showAlert(
                 'Offre acceptée',
                 `${bid.transporterName} a été assigné à votre envoi.`,
                 [
@@ -76,7 +77,7 @@ export default function BidListScreen() {
                 ]
               );
             } catch (e) {
-              Alert.alert('Erreur', getErrorMessage(e, 'Impossible d’accepter l’offre.'));
+              showAlert('Erreur', getErrorMessage(e, 'Impossible d’accepter l’offre.'));
             } finally {
               setAccepting(null);
             }
@@ -95,7 +96,7 @@ export default function BidListScreen() {
       });
       navigation.navigate('Chat', { conversationId: conv.id });
     } catch (e) {
-      Alert.alert('Messagerie', getErrorMessage(e, "Impossible d'ouvrir la conversation."));
+      showAlert('Messagerie', getErrorMessage(e, "Impossible d'ouvrir la conversation."));
     }
   };
 

@@ -9,7 +9,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +16,7 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 
 import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { Avatar } from '../../components';
 import { useData } from '../../context/DataContext';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
@@ -51,7 +51,7 @@ export default function RateUserScreen() {
 
   const submit = async () => {
     if (stars === 0) {
-      Alert.alert('Note requise', 'Veuillez sélectionner un nombre d’étoiles.');
+      showAlert('Note requise', 'Veuillez sélectionner un nombre d’étoiles.');
       return;
     }
     setSaving(true);
@@ -63,11 +63,11 @@ export default function RateUserScreen() {
         tags: tags.length ? tags : undefined,
         comment: comment.trim() || undefined,
       });
-      Alert.alert('Merci !', 'Votre évaluation a bien été enregistrée.', [
+      showAlert('Merci !', 'Votre évaluation a bien été enregistrée.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (e) {
-      Alert.alert('Erreur', getErrorMessage(e, 'Impossible d’enregistrer l’évaluation.'));
+      showAlert('Erreur', getErrorMessage(e, 'Impossible d’enregistrer l’évaluation.'));
     } finally {
       setSaving(false);
     }

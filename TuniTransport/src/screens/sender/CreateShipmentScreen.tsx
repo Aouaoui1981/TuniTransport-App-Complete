@@ -12,13 +12,13 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { Card } from '../../components';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
@@ -63,7 +63,7 @@ export default function CreateShipmentScreen() {
     // Live mode requires a verified identity (enforced by RLS): guide the
     // user to the KYC screen instead of letting the insert fail server-side.
     if (IS_LIVE && user?.identityStatus !== 'verified') {
-      Alert.alert(
+      showAlert(
         'Vérification requise',
         "Vous devez faire vérifier votre identité avant de publier un envoi.",
         [
@@ -74,23 +74,23 @@ export default function CreateShipmentScreen() {
       return;
     }
     if (!pickupCity.trim() || !deliveryCity.trim()) {
-      Alert.alert('Champs requis', 'Indiquez la ville de collecte et la ville de livraison.');
+      showAlert('Champs requis', 'Indiquez la ville de collecte et la ville de livraison.');
       return;
     }
     if (isSmall && weightNum <= 0) {
-      Alert.alert('Poids requis', 'Indiquez le poids total de votre colis en kg.');
+      showAlert('Poids requis', 'Indiquez le poids total de votre colis en kg.');
       return;
     }
     if (!isSmall && !description.trim()) {
-      Alert.alert('Description requise', "Décrivez l'objet à transporter.");
+      showAlert('Description requise', "Décrivez l'objet à transporter.");
       return;
     }
     if (!pickupStreet.trim() || !pickupContact.trim() || !pickupPhone.trim()) {
-      Alert.alert('Adresse de collecte', 'Complétez l’adresse, le contact et le téléphone de collecte.');
+      showAlert('Adresse de collecte', 'Complétez l’adresse, le contact et le téléphone de collecte.');
       return;
     }
     if (!deliveryStreet.trim() || !deliveryContact.trim() || !deliveryPhone.trim()) {
-      Alert.alert('Adresse de livraison', 'Complétez l’adresse, le contact et le téléphone de livraison.');
+      showAlert('Adresse de livraison', 'Complétez l’adresse, le contact et le téléphone de livraison.');
       return;
     }
 
@@ -123,7 +123,7 @@ export default function CreateShipmentScreen() {
           ...coordsFor(deliveryCity),
         },
       });
-      Alert.alert(
+      showAlert(
         'Envoi publié !',
         isSmall
           ? `Votre colis de ${weightNum} kg (${livePrice}€) est visible par les transporteurs.`
@@ -131,7 +131,7 @@ export default function CreateShipmentScreen() {
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (e) {
-      Alert.alert('Erreur', getErrorMessage(e, "L'envoi n'a pas pu être créé."));
+      showAlert('Erreur', getErrorMessage(e, "L'envoi n'a pas pu être créé."));
     } finally {
       setSubmitting(false);
     }
@@ -237,7 +237,7 @@ export default function CreateShipmentScreen() {
                 style={styles.photoHint}
                 activeOpacity={0.7}
                 onPress={() =>
-                  Alert.alert('Photos', 'L’ajout de photos sera bientôt disponible.')
+                  showAlert('Photos', 'L’ajout de photos sera bientôt disponible.')
                 }
               >
                 <Ionicons name="camera-outline" size={18} color={COLORS.textLight} />

@@ -8,9 +8,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Image,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
@@ -88,7 +89,7 @@ export default function IdentityVerificationScreen() {
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Permission requise', "Autorisez l'accès pour continuer.");
+      showAlert('Permission requise', "Autorisez l'accès pour continuer.");
       return;
     }
     const result =
@@ -103,7 +104,12 @@ export default function IdentityVerificationScreen() {
   };
 
   const pickImage = (side: 'front' | 'back') => {
-    Alert.alert('Ajouter une photo', 'Choisissez une source', [
+    // No camera capture in the browser: open the file picker directly.
+    if (Platform.OS === 'web') {
+      captureFrom('library', side);
+      return;
+    }
+    showAlert('Ajouter une photo', 'Choisissez une source', [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Caméra', onPress: () => captureFrom('camera', side) },
       { text: 'Galerie', onPress: () => captureFrom('library', side) },
@@ -112,7 +118,7 @@ export default function IdentityVerificationScreen() {
 
   const submit = async () => {
     if (!IS_LIVE) {
-      Alert.alert(
+      showAlert(
         'Mode démo',
         "La vérification d'identité nécessite une connexion Supabase (mode live)."
       );
@@ -136,7 +142,7 @@ export default function IdentityVerificationScreen() {
       }
 
       if (isMounted.current) {
-        Alert.alert(
+        showAlert(
           'Document envoyé',
           "Votre pièce d'identité a été envoyée. Vous serez notifié une fois la vérification effectuée.",
           [{ text: 'OK', onPress: () => navigation.goBack() }]
@@ -144,7 +150,7 @@ export default function IdentityVerificationScreen() {
       }
     } catch (e) {
       if (isMounted.current) {
-        Alert.alert('Erreur', getErrorMessage(e, "Impossible d'envoyer le document."));
+        showAlert('Erreur', getErrorMessage(e, "Impossible d'envoyer le document."));
       }
     } finally {
       if (isMounted.current) {

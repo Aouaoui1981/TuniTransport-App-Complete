@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { Avatar } from '../../components';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -87,10 +87,10 @@ export default function ChatScreen() {
       if (phone) {
         await Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
       } else {
-        Alert.alert('Appel', 'Le numéro de ce contact n’est pas disponible.');
+        showAlert('Appel', 'Le numéro de ce contact n’est pas disponible.');
       }
     } catch {
-      Alert.alert('Appel', 'Impossible de lancer l’appel sur cet appareil.');
+      showAlert('Appel', 'Impossible de lancer l’appel sur cet appareil.');
     }
   };
 
@@ -171,7 +171,7 @@ export default function ChatScreen() {
         <View style={styles.inputBar}>
           <TouchableOpacity
             onPress={() =>
-              Alert.alert('Pièces jointes', 'L’envoi de pièces jointes sera bientôt disponible.')
+              showAlert('Pièces jointes', 'L’envoi de pièces jointes sera bientôt disponible.')
             }
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >

@@ -12,11 +12,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { supabase, IS_LIVE } from '../../services/supabase';
@@ -38,14 +38,14 @@ export default function LoginScreen() {
   async function handleForgotPassword() {
     const trimmed = email.trim();
     if (!trimmed) {
-      Alert.alert(
+      showAlert(
         'E-mail requis',
         'Saisissez votre adresse e-mail ci-dessus, puis appuyez à nouveau sur « Mot de passe oublié ? ».'
       );
       return;
     }
     if (!IS_LIVE || !supabase) {
-      Alert.alert(
+      showAlert(
         'Mode démo',
         'La réinitialisation du mot de passe n’est pas disponible en mode démo. Connectez-vous avec n’importe quel mot de passe.'
       );
@@ -54,25 +54,25 @@ export default function LoginScreen() {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(trimmed);
       if (error) throw error;
-      Alert.alert(
+      showAlert(
         'E-mail envoyé',
         `Si un compte existe pour ${trimmed}, un lien de réinitialisation vient d’être envoyé.`
       );
     } catch {
-      Alert.alert('Erreur', 'Impossible d’envoyer l’e-mail de réinitialisation. Réessayez.');
+      showAlert('Erreur', 'Impossible d’envoyer l’e-mail de réinitialisation. Réessayez.');
     }
   }
 
   async function handleLogin() {
     if (!email.trim() || !password) {
-      Alert.alert('Champs requis', 'Veuillez saisir votre e-mail et votre mot de passe.');
+      showAlert('Champs requis', 'Veuillez saisir votre e-mail et votre mot de passe.');
       return;
     }
     setSubmitting(true);
     try {
       await login({ email: email.trim(), password });
     } catch (e) {
-      Alert.alert('Connexion impossible', getErrorMessage(e));
+      showAlert('Connexion impossible', getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }
