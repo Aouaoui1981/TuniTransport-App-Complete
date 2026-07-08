@@ -7,10 +7,17 @@
 // ──────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Location from 'expo-location';
+import * as TaskManager from 'expo-task-manager';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { IS_LIVE } from '../services/supabase';
 import * as api from '../services/api';
 import { getRoutePath, pointAlongPath } from '../services/routeCache';
+import {
+  LOCATION_TRACKING_TASK,
+  STORAGE_KEY_TRACKING_INFO,
+  TrackingInfo,
+} from '../services/locationTask';
 import { GeoPoint, Shipment, ShipmentLocation, ShipmentStatus } from '../types';
 
 const COMMIT_THROTTLE_MS = 2000; // coalesce les rafales Realtime
@@ -196,71 +203,72 @@ export function useTransporterLocationPublisher(
   const [error, setError] = useState<string | null>(null);
 
   const isMounted = useRef(true);
-  const watchRef = useRef<Location.LocationSubscription | null>(null);
-  const lastPublishAt = useRef(0);
 
+  // Check if already tracking on mount
   useEffect(() => {
     isMounted.current = true;
+    Location.hasStartedLocationUpdatesAsync(LOCATION_TRACKING_TASK).then((started) => {
+      if (isMounted.current) setIsSharing(started);
+    });
     return () => {
       isMounted.current = false;
-      watchRef.current?.remove();
-      watchRef.current = null;
     };
   }, []);
 
-  const stopSharing = useCallback(() => {
-    watchRef.current?.remove();
-    watchRef.current = null;
-    if (isMounted.current) setIsSharing(false);
+  const stopSharing = useCallback(async () => {
+    try {
+      await Location.stopLocationUpdatesAsync(LOCATION_TRACKING_TASK);
+      await AsyncStorage.removeItem(STORAGE_KEY_TRACKING_INFO);
+      if (isMounted.current) setIsSharing(false);
+    } catch (err) {
+      console.error('Failed to stop location updates:', err);
+    }
   }, []);
 
   const startSharing = useCallback(async () => {
-    if (!shipmentId || !transporterId || watchRef.current) return;
+    if (!shipmentId || !transporterId) return;
+
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
+      // 1. Request foreground permissions
+      const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
+      if (fgStatus !== 'granted') {
         if (isMounted.current) setError('Permission de localisation refusée.');
         return;
       }
-      const subscription = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.Balanced,
-          timeInterval: 8000,
-          distanceInterval: 25,
-        },
-        (position) => {
-          if (Date.now() - lastPublishAt.current < PUBLISH_MIN_INTERVAL_MS) return;
-          lastPublishAt.current = Date.now();
-          if (!IS_LIVE) return; // démo : la simulation locale fait foi
-          api
-            .publishShipmentLocation({
-              shipmentId,
-              transporterId,
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              heading:
-                position.coords.heading != null && position.coords.heading >= 0
-                  ? position.coords.heading
-                  : undefined,
-              speed:
-                position.coords.speed != null && position.coords.speed >= 0
-                  ? position.coords.speed
-                  : undefined,
-              accuracy: position.coords.accuracy ?? undefined,
-            })
-            .catch(() => undefined); // une position perdue n'est pas critique
+
+      // 2. Request background permissions
+      const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
+      if (bgStatus !== 'granted') {
+        if (isMounted.current) {
+          setError('Permission de localisation en arrière-plan refusée.');
         }
-      );
-      if (!isMounted.current) {
-        // L'écran a été quitté pendant la demande de permission.
-        subscription.remove();
         return;
       }
-      watchRef.current = subscription;
-      setError(null);
-      setIsSharing(true);
-    } catch {
-      if (isMounted.current) setError("Impossible d'activer le partage de position.");
+
+      // 3. Store tracking info for the background task
+      const info: TrackingInfo = { shipmentId, transporterId };
+      await AsyncStorage.setItem(STORAGE_KEY_TRACKING_INFO, JSON.stringify(info));
+
+      // 4. Start background updates
+      // Optimized for battery: Balanced accuracy, 50m distance, 30s interval
+      await Location.startLocationUpdatesAsync(LOCATION_TRACKING_TASK, {
+        accuracy: Location.Accuracy.Balanced,
+        distanceInterval: 50,
+        deferredUpdatesInterval: 30000,
+        foregroundService: {
+          notificationTitle: 'Suivi TuniTransport actif',
+          notificationBody: 'Votre position est partagée avec l’expéditeur.',
+          notificationColor: '#2563EB',
+        },
+      pausesUpdatesAutomatically: true,
+      });
+
+      if (isMounted.current) {
+        setError(null);
+        setIsSharing(true);
+      }
+    } catch (err) {
+      if (isMounted.current) setError("Impossible d'activer le suivi en arrière-plan.");
     }
   }, [shipmentId, transporterId]);
 

@@ -609,6 +609,7 @@ create or replace function public.get_latest_shipment_locations(p_shipment_ids u
 returns setof public.shipment_locations
 language sql
 stable
+security invoker
 as $$
   select distinct on (shipment_id) *
   from public.shipment_locations
