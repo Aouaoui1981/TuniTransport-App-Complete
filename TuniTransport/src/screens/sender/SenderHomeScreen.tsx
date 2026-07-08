@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { Shipment } from '../../types';
+import { PRICE_PER_KG } from '../../utils/pricing';
 
 export default function SenderHomeScreen() {
   const { user } = useAuth();
@@ -57,7 +58,7 @@ export default function SenderHomeScreen() {
           >
             <Ionicons name="cube" size={26} color={COLORS.primary} />
             <Text style={[styles.quickTitle, { color: COLORS.primaryDark }]}>Petit colis</Text>
-            <Text style={styles.quickSub}>4€/kg</Text>
+            <Text style={styles.quickSub}>{PRICE_PER_KG}€/kg</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -67,7 +68,7 @@ export default function SenderHomeScreen() {
           >
             <Ionicons name="bicycle" size={26} color={COLORS.accent} />
             <Text style={[styles.quickTitle, { color: '#B45309' }]}>Gros objet</Text>
-            <Text style={styles.quickSub}>Enchères</Text>
+            <Text style={styles.quickSub}>Prix négociable</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

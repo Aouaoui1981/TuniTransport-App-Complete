@@ -12,19 +12,24 @@ import { Card, RatingStars, Avatar } from '../../components';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { IdentityStatus } from '../../types';
+import { LEGAL_PAGES, LegalPageKey } from '../../content/legal';
 
 const MENU: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   action?: 'editProfile' | 'notifications';
+  legalPage?: LegalPageKey;
 }[] = [
   { icon: 'person-outline', label: 'Modifier le profil', action: 'editProfile' },
   { icon: 'card-outline', label: 'Moyens de paiement' },
   { icon: 'notifications-outline', label: 'Notifications', action: 'notifications' },
   { icon: 'lock-closed-outline', label: 'Sécurité' },
-  { icon: 'help-circle-outline', label: 'Aide & Support' },
-  { icon: 'document-text-outline', label: "Conditions d'utilisation" },
-  { icon: 'information-circle-outline', label: 'À propos' },
+  { icon: 'help-circle-outline', label: 'Aide & Support', legalPage: 'contact' },
+  { icon: LEGAL_PAGES.terms.icon, label: LEGAL_PAGES.terms.title, legalPage: 'terms' },
+  { icon: LEGAL_PAGES.privacy.icon, label: LEGAL_PAGES.privacy.title, legalPage: 'privacy' },
+  { icon: LEGAL_PAGES.prohibited.icon, label: LEGAL_PAGES.prohibited.title, legalPage: 'prohibited' },
+  { icon: LEGAL_PAGES.disclaimer.icon, label: LEGAL_PAGES.disclaimer.title, legalPage: 'disclaimer' },
+  { icon: LEGAL_PAGES.about.icon, label: LEGAL_PAGES.about.title, legalPage: 'about' },
 ];
 
 const IDENTITY_META: Record<
@@ -77,6 +82,8 @@ export default function ProfileScreen() {
       navigation.navigate('EditProfile');
     } else if (item.action === 'notifications') {
       navigation.navigate('Notifications');
+    } else if (item.legalPage) {
+      navigation.navigate('Legal', { page: item.legalPage });
     } else {
       showAlert(item.label, 'Cette section sera bientôt disponible.');
     }

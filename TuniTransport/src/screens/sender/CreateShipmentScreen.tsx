@@ -1,6 +1,10 @@
 // ──────────────────────────────────────────────────────────────────────────
 // TuniTransport — CreateShipmentScreen (STEP 8)
-// small: live price = weight × 4€/kg  ·  large: auction (bids)
+// small: live price = weight × 4€/kg (effets personnels non commerciaux,
+// déclaration obligatoire) · large: accord personnalisé (devis négociable
+// des transporteurs et/ou entente directe via la messagerie).
+// La publication exige l'acceptation des Conditions, Objets interdits et
+// Décharge de responsabilité (checkbox bloquante).
 // ──────────────────────────────────────────────────────────────────────────
 import React, { useMemo, useState } from 'react';
 import {
@@ -22,6 +26,8 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { showAlert } from '../../utils/alert';
 import { Card } from '../../components';
+import { LegalConsent, ConsentCheckbox } from '../../components/LegalConsent';
+import { PRICE_PER_KG, computeWeightPrice, OVERSIZED_EXAMPLES } from '../../utils/pricing';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { coordsFor } from '../../services/mockData';
@@ -31,7 +37,6 @@ import { uploadShipmentPhoto } from '../../services/api';
 import { ShipmentType } from '../../types';
 import { getErrorMessage } from '../../utils/errors';
 
-const PRICE_PER_KG = 4;
 const MAX_PHOTOS = 5;
 
 export default function CreateShipmentScreen() {
@@ -59,11 +64,15 @@ export default function CreateShipmentScreen() {
   // Photos (large items)
   const [photoUris, setPhotoUris] = useState<string[]>([]);
 
+  // Consentements obligatoires
+  const [nonCommercial, setNonCommercial] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
 
   const isSmall = type === 'small';
   const weightNum = parseFloat(weight.replace(',', '.')) || 0;
-  const livePrice = useMemo(() => Math.round(weightNum * PRICE_PER_KG * 100) / 100, [weightNum]);
+  const livePrice = useMemo(() => computeWeightPrice(weightNum), [weightNum]);
 
   const captureFrom = async (source: 'camera' | 'library') => {
     const perm =
@@ -143,6 +152,20 @@ export default function CreateShipmentScreen() {
     }
     if (!deliveryStreet.trim() || !deliveryContact.trim() || !deliveryPhone.trim()) {
       showAlert('Adresse de livraison', 'Complétez l’adresse, le contact et le téléphone de livraison.');
+      return;
+    }
+    if (isSmall && !nonCommercial) {
+      showAlert(
+        'Déclaration requise',
+        `Le tarif de ${PRICE_PER_KG}€/kg est réservé aux effets personnels sans caractère commercial. Cochez la déclaration pour continuer.`
+      );
+      return;
+    }
+    if (!legalAccepted) {
+      showAlert(
+        'Consentement requis',
+        'Vous devez accepter les Conditions générales, la liste des Objets interdits et la Décharge de responsabilité avant de publier un envoi.'
+      );
       return;
     }
 
@@ -231,7 +254,7 @@ export default function CreateShipmentScreen() {
             >
               <Ionicons name="bicycle" size={26} color={!isSmall ? COLORS.accent : COLORS.textLight} />
               <Text style={[styles.typeTitle, !isSmall && { color: COLORS.accent }]}>Gros objet</Text>
-              <Text style={styles.typeSub}>Enchères des transporteurs</Text>
+              <Text style={styles.typeSub}>Accord personnalisé · prix négociable</Text>
             </TouchableOpacity>
           </View>
 
@@ -274,6 +297,16 @@ export default function CreateShipmentScreen() {
                 </View>
                 <Text style={styles.priceValue}>{livePrice > 0 ? `${livePrice}€` : '—'}</Text>
               </View>
+              <View style={styles.declarationBox}>
+                <ConsentCheckbox checked={nonCommercial} onToggle={() => setNonCommercial(!nonCommercial)}>
+                  Je certifie que ce colis contient uniquement des effets personnels, sans caractère
+                  commercial.
+                </ConsentCheckbox>
+                <Text style={styles.declarationHint}>
+                  Le tarif fixe de {PRICE_PER_KG}€/kg est réservé aux bagages personnels et ordinaires.
+                  Les envois à caractère commercial ne sont pas éligibles.
+                </Text>
+              </View>
             </Card>
           ) : (
             <Card style={styles.section}>
@@ -281,7 +314,7 @@ export default function CreateShipmentScreen() {
               <View style={[styles.inputWrap, styles.multilineWrap]}>
                 <TextInput
                   style={[styles.input, styles.multiline]}
-                  placeholder="Description (ex : vélo électrique, réfrigérateur…)"
+                  placeholder={`Description (ex : ${OVERSIZED_EXAMPLES[3].toLowerCase()}, ${OVERSIZED_EXAMPLES[0].toLowerCase()}…)`}
                   placeholderTextColor={COLORS.textLight}
                   multiline
                   value={description}
@@ -320,7 +353,9 @@ export default function CreateShipmentScreen() {
               <View style={styles.auctionInfo}>
                 <Ionicons name="information-circle" size={18} color={COLORS.accent} />
                 <Text style={styles.auctionInfoText}>
-                  Les transporteurs proposeront leurs prix. Vous choisirez la meilleure offre.
+                  Objet hors gabarit : le prix résulte d'un accord personnalisé. Les transporteurs
+                  proposent un devis négociable, et vous pouvez discuter du prix directement avec eux
+                  via la messagerie avant d'accepter.
                 </Text>
               </View>
             </Card>
@@ -353,6 +388,15 @@ export default function CreateShipmentScreen() {
               onChangeText={setDeliveryPhone}
             />
           </Card>
+
+          {/* Consentement légal obligatoire (expéditeur) */}
+          <View style={{ marginBottom: SPACING.lg }}>
+            <LegalConsent
+              checked={legalAccepted}
+              onToggle={() => setLegalAccepted(!legalAccepted)}
+              onOpenPage={(page) => navigation.navigate('Legal', { page })}
+            />
+          </View>
 
           <TouchableOpacity
             style={[
@@ -467,6 +511,8 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
   },
   priceLabel: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.primaryDark },
+  declarationBox: { marginTop: SPACING.md, gap: SPACING.sm },
+  declarationHint: { fontSize: FONTS.sizes.xs, color: COLORS.textLight, lineHeight: 16 },
   priceFormula: { fontSize: FONTS.sizes.xs, color: COLORS.primaryDark, marginTop: 2, opacity: 0.8 },
   priceValue: { fontSize: FONTS.sizes.xxxl, fontWeight: '800', color: COLORS.primary },
 
