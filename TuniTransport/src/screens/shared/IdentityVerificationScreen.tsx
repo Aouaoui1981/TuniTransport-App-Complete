@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────
 // TuniTransport -- Vérification d'identité (KYC)
 // ──────────────────────────────────────────────────────────────────────────
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -63,6 +63,14 @@ export default function IdentityVerificationScreen() {
   const [frontUri, setFrontUri] = useState<string | null>(null);
   const [backUri, setBackUri] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   if (!user) return null;
 
@@ -123,15 +131,21 @@ export default function IdentityVerificationScreen() {
         await updateUser({ identityStatus: 'pending', identityDocumentType: documentType } as any);
       } catch {}
 
-      Alert.alert(
-        'Document envoyé',
-        "Votre pièce d'identité a été envoyée. Vous serez notifié une fois la vérification effectuée.",
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
-      );
+      if (isMounted.current) {
+        Alert.alert(
+          'Document envoyé',
+          "Votre pièce d'identité a été envoyée. Vous serez notifié une fois la vérification effectuée.",
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+      }
     } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? "Impossible d'envoyer le document.");
+      if (isMounted.current) {
+        Alert.alert('Erreur', e?.message ?? "Impossible d'envoyer le document.");
+      }
     } finally {
-      setSubmitting(false);
+      if (isMounted.current) {
+        setSubmitting(false);
+      }
     }
   };
 

@@ -9,8 +9,10 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IS_LIVE } from '../services/supabase';
 import * as api from '../services/api';
 import {
@@ -31,6 +33,11 @@ import {
 
 let seq = 0;
 const uid = (prefix: string) => `${prefix}-${Date.now()}-${++seq}`;
+
+const CACHE_KEY_SHIPMENTS = 'TT_CACHE_SHIPMENTS';
+const CACHE_KEY_CONVERSATIONS = 'TT_CACHE_CONVERSATIONS';
+const CACHE_KEY_MESSAGES = 'TT_CACHE_MESSAGES';
+const CACHE_KEY_ROUTES = 'TT_CACHE_ROUTES';
 
 interface DataContextValue {
   shipments: Shipment[];
@@ -71,6 +78,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
+  const isMounted = useRef(true);
+  const [isReady, setIsReady] = useState(false);
 
   // ── Initial load / reload on auth change ───────────────────────────────
 
@@ -81,20 +90,33 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setConversations([]);
         setMessages([]);
         setRoutes([]);
+        await Promise.all([
+          AsyncStorage.removeItem(CACHE_KEY_SHIPMENTS),
+          AsyncStorage.removeItem(CACHE_KEY_CONVERSATIONS),
+          AsyncStorage.removeItem(CACHE_KEY_MESSAGES),
+          AsyncStorage.removeItem(CACHE_KEY_ROUTES),
+        ]).catch(() => {});
         return;
       }
-      const [sh, rt, cv] = await Promise.all([
-        api.fetchShipments(user.id, user.role).catch(() => [] as Shipment[]),
-        api.fetchRoutes().catch(() => [] as Route[]),
-        api.fetchConversations(user.id).catch(() => [] as Conversation[]),
-      ]);
-      setShipments(sh);
-      setRoutes(rt);
-      setConversations(cv);
-      const msgLists = await Promise.all(
-        cv.map((c) => api.fetchMessages(c.id).catch(() => [] as Message[]))
-      );
-      setMessages(msgLists.flat());
+      try {
+        const [sh, rt, convData] = await Promise.all([
+          api.fetchShipments(user.id, user.role).catch(() => [] as Shipment[]),
+          api.fetchRoutes().catch(() => [] as Route[]),
+          api.fetchConversations(user.id).catch(() => ({ conversations: [], messages: [] })),
+        ]);
+        if (!isMounted.current) return;
+
+        const { conversations: cv, messages: ms } = 'conversations' in convData
+          ? convData
+          : { conversations: convData as unknown as Conversation[], messages: [] };
+
+        setShipments(sh);
+        setRoutes(rt);
+        setConversations(cv);
+        setMessages(ms);
+      } catch (e) {
+        console.error('loadAll error:', e);
+      }
     } else {
       setShipments(MOCK_SHIPMENTS.map((s) => ({ ...s })));
       setConversations(MOCK_CONVERSATIONS.map((c) => ({ ...c })));
@@ -104,8 +126,60 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    loadAll();
+    isMounted.current = true;
+    const rehydrate = async () => {
+      try {
+        const [s, c, m, r] = await Promise.all([
+          AsyncStorage.getItem(CACHE_KEY_SHIPMENTS),
+          AsyncStorage.getItem(CACHE_KEY_CONVERSATIONS),
+          AsyncStorage.getItem(CACHE_KEY_MESSAGES),
+          AsyncStorage.getItem(CACHE_KEY_ROUTES),
+        ]);
+        if (!isMounted.current) return;
+        if (s) setShipments(JSON.parse(s));
+        if (c) setConversations(JSON.parse(c));
+        if (m) setMessages(JSON.parse(m));
+        if (r) setRoutes(JSON.parse(r));
+      } catch (e) {
+        console.warn('DataContext rehydration error:', e);
+      }
+    };
+    rehydrate().then(() => {
+      if (isMounted.current) {
+        setIsReady(true);
+        loadAll();
+      }
+    });
+    return () => {
+      isMounted.current = false;
+    };
   }, [isAuthenticated, loadAll]);
+
+  // ── Sync to cache on changes ───────────────────────────────────────────
+
+  useEffect(() => {
+    if (IS_LIVE && user && isReady) {
+      AsyncStorage.setItem(CACHE_KEY_SHIPMENTS, JSON.stringify(shipments)).catch(() => {});
+    }
+  }, [shipments, user, isReady]);
+
+  useEffect(() => {
+    if (IS_LIVE && user && isReady) {
+      AsyncStorage.setItem(CACHE_KEY_CONVERSATIONS, JSON.stringify(conversations)).catch(() => {});
+    }
+  }, [conversations, user, isReady]);
+
+  useEffect(() => {
+    if (IS_LIVE && user && isReady) {
+      AsyncStorage.setItem(CACHE_KEY_MESSAGES, JSON.stringify(messages)).catch(() => {});
+    }
+  }, [messages, user, isReady]);
+
+  useEffect(() => {
+    if (IS_LIVE && user && isReady) {
+      AsyncStorage.setItem(CACHE_KEY_ROUTES, JSON.stringify(routes)).catch(() => {});
+    }
+  }, [routes, user, isReady]);
 
   // ── addShipment (status pending + first tracking event) ────────────────
 
@@ -138,7 +212,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
       if (IS_LIVE) {
         const created = await api.createShipment({ ...input, senderId, senderName, status: 'pending' });
-        setShipments((prev) => [created, ...prev]);
+        if (isMounted.current) {
+          setShipments((prev) => [created, ...prev]);
+        }
         return created;
       }
       setShipments((prev) => [local, ...prev]);
@@ -171,7 +247,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             .catch(() => undefined); // tracking is informative, not critical
         }
       } catch (e) {
-        setShipments(snapshot);
+        if (isMounted.current) {
+          setShipments(snapshot);
+        }
         throw e;
       }
     }
@@ -197,22 +275,26 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       if (IS_LIVE) {
         try {
           const created = await api.createBid({ ...input, transporterId });
-          setShipments((prev) =>
-            prev.map((s) =>
-              s.id === input.shipmentId
-                ? { ...s, bids: (s.bids ?? []).map((b) => (b.id === local.id ? created : b)) }
-                : s
-            )
-          );
+          if (isMounted.current) {
+            setShipments((prev) =>
+              prev.map((s) =>
+                s.id === input.shipmentId
+                  ? { ...s, bids: (s.bids ?? []).map((b) => (b.id === local.id ? created : b)) }
+                  : s
+              )
+            );
+          }
         } catch (e) {
           // Remove the phantom optimistic bid so the UI matches the server.
-          setShipments((prev) =>
-            prev.map((s) =>
-              s.id === input.shipmentId
-                ? { ...s, bids: (s.bids ?? []).filter((b) => b.id !== local.id) }
-                : s
-            )
-          );
+          if (isMounted.current) {
+            setShipments((prev) =>
+              prev.map((s) =>
+                s.id === input.shipmentId
+                  ? { ...s, bids: (s.bids ?? []).filter((b) => b.id !== local.id) }
+                  : s
+              )
+            );
+          }
           throw e;
         }
       }
@@ -256,7 +338,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         // The DB transaction failed: roll back so the sender never pays for
         // a bid that was not actually accepted.
-        setShipments(snapshot);
+        if (isMounted.current) {
+          setShipments(snapshot);
+        }
         throw e;
       }
     }
@@ -282,7 +366,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       );
       if (IS_LIVE) {
         const created = await api.sendMessage(input).catch(() => local);
-        setMessages((prev) => prev.map((m) => (m.id === local.id ? created : m)));
+        if (isMounted.current) {
+          setMessages((prev) => prev.map((m) => (m.id === local.id ? created : m)));
+        }
         return created;
       }
       return local;
@@ -316,7 +402,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           other: { id: params.otherUserId, name: params.otherUserName },
           shipmentId: params.shipmentId,
         });
-        setConversations((prev) => [created, ...prev]);
+        if (isMounted.current) {
+          setConversations((prev) => [created, ...prev]);
+        }
         return created;
       }
       const local: Conversation = {
@@ -348,9 +436,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       if (IS_LIVE) {
         try {
           const created = await api.createRoute({ ...input, transporterId });
-          setRoutes((prev) => prev.map((r) => (r.id === local.id ? created : r)));
+          if (isMounted.current) {
+            setRoutes((prev) => prev.map((r) => (r.id === local.id ? created : r)));
+          }
         } catch (e) {
-          setRoutes((prev) => prev.filter((r) => r.id !== local.id));
+          if (isMounted.current) {
+            setRoutes((prev) => prev.filter((r) => r.id !== local.id));
+          }
           throw e;
         }
       }
