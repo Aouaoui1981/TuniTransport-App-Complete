@@ -67,9 +67,23 @@ Points de blocage (checkbox obligatoire, opération refusée sinon) :
 Le consentement couvre trois documents : Conditions générales, Objets
 interdits, Décharge de responsabilité.
 
-> Recommandation backend (étape suivante) : persister l'horodatage du
-> consentement (`terms_accepted_at`, `non_commercial_declared_at`) sur les
-> tables `shipments` et `bids` pour la traçabilité juridique.
+### Persistance du consentement (mode live)
+
+Les horodatages de consentement sont enregistrés en base au moment de
+l'action (section « Consentement légal » de `supabase/schema.sql`) :
+
+| Colonne | Table | Posé quand |
+| --- | --- | --- |
+| `terms_accepted_at` | `shipments` | l'expéditeur publie un envoi |
+| `non_commercial_declared_at` | `shipments` | déclaration « non commercial » (colis au poids) |
+| `transporter_terms_accepted_at` | `shipments` | le transporteur prend en charge un colis standard |
+| `terms_accepted_at` | `bids` | le transporteur envoie un devis |
+
+Côté client, les champs `termsAcceptedAt` / `nonCommercialDeclaredAt` /
+`transporterTermsAcceptedAt` (types `Shipment` et `Bid`) sont renseignés par
+les écrans au moment où la checkbox bloquante est validée, et transitent par
+`api.ts` (`createShipment`, `updateShipment`, `createBid`). En mode démo, ils
+restent en mémoire comme le reste des données simulées.
 
 ## 3. Pages de l'application
 

@@ -179,7 +179,10 @@ export default function CreateShipmentScreen() {
           ? await Promise.all(shipmentPhotos.map((uri) => uploadShipmentPhoto(user.id, uri)))
           : shipmentPhotos;
 
+      const consentAt = new Date().toISOString();
       await addShipment({
+        termsAcceptedAt: consentAt,
+        nonCommercialDeclaredAt: isSmall ? consentAt : undefined,
         senderId: user?.id ?? '',
         senderName: user ? `${user.firstName} ${user.lastName}` : '',
         type,

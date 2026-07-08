@@ -96,6 +96,9 @@ export interface Bid {
   message?: string;
   createdAt: string;
   status: BidStatus;
+  // Horodatage du consentement légal du transporteur au moment du devis
+  // (traçabilité juridique — cf. docs/PRICING_AND_LEGAL.md).
+  termsAcceptedAt?: string;
 }
 
 export interface Shipment {
@@ -121,6 +124,13 @@ export interface Shipment {
   selectedBidId?: string;
   trackingHistory: TrackingEvent[];
   bids?: Bid[];
+  // Horodatages des consentements légaux (traçabilité juridique) :
+  // acceptation des conditions par l'expéditeur à la publication,
+  // déclaration « non commercial » (colis au poids), et acceptation des
+  // conditions par le transporteur à la prise en charge d'un colis standard.
+  termsAcceptedAt?: string;
+  nonCommercialDeclaredAt?: string;
+  transporterTermsAcceptedAt?: string;
 }
 
 export interface Route {

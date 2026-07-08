@@ -118,6 +118,7 @@ export default function AvailableShipmentsScreen() {
         price,
         estimatedDelivery: estimated.toISOString(),
         message: bidMessage.trim() || undefined,
+        termsAcceptedAt: new Date().toISOString(),
       });
       closeBidForm();
       showAlert(
@@ -152,6 +153,7 @@ export default function AvailableShipmentsScreen() {
         status: 'accepted',
         transporterId: user.id,
         transporterName: `${user.firstName} ${user.lastName}`,
+        transporterTermsAcceptedAt: new Date().toISOString(),
         trackingHistory: [
           ...shipment.trackingHistory,
           {
