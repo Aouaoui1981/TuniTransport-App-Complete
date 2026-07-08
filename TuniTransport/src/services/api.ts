@@ -16,6 +16,13 @@ import {
   TrackingEvent,
   UserRole,
   ShipmentLocation,
+  TruckDetails,
+  ShipmentStatus,
+  BidStatus,
+  ShipmentType,
+  Address,
+  Item,
+  IdentityStatus,
 } from '../types';
 
 function db() {
@@ -23,9 +30,122 @@ function db() {
   return supabase;
 }
 
+// ── Row types ────────────────────────────────────────────────────────────
+
+interface ProfileRow {
+  id: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  role: string;
+  avatar_url?: string;
+  rating?: number;
+  total_ratings?: number;
+  created_at: string;
+  truck_details?: TruckDetails;
+  identity_status?: string;
+  identity_document_type?: string;
+  identity_rejection_reason?: string;
+}
+
+interface TrackingEventRow {
+  id: string;
+  status: ShipmentStatus;
+  description: string;
+  location?: string;
+  created_at: string;
+}
+
+interface BidRow {
+  id: string;
+  transporter_id: string;
+  transporter_name?: string;
+  transporter_rating?: number;
+  shipment_id: string;
+  price: number;
+  estimated_delivery: string;
+  message?: string;
+  created_at: string;
+  status: BidStatus;
+}
+
+interface ShipmentRow {
+  id: string;
+  sender_id: string;
+  sender_name?: string;
+  transporter_id?: string;
+  transporter_name?: string;
+  type: ShipmentType;
+  status: ShipmentStatus;
+  weight?: number;
+  price?: number;
+  items?: Item[];
+  description?: string;
+  photos?: string[];
+  dimensions?: string;
+  pickup_address: Address;
+  delivery_address: Address;
+  created_at: string;
+  collected_at?: string;
+  delivered_at?: string;
+  paid_at?: string;
+  selected_bid_id?: string;
+  tracking_events?: TrackingEventRow[];
+  bids?: BidRow[];
+}
+
+interface RouteRow {
+  id: string;
+  transporter_id: string;
+  departure_city: string;
+  departure_country: string;
+  arrival_city: string;
+  arrival_country: string;
+  departure_date: string;
+  estimated_arrival_date: string;
+  available_capacity: number;
+  ferry_company: string;
+}
+
+interface MessageRow {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  text: string;
+  created_at: string;
+  read?: boolean;
+}
+
+interface ConversationParticipantRow {
+  user_id: string;
+  display_name: string;
+}
+
+interface ConversationRow {
+  id: string;
+  shipment_id?: string;
+  updated_at: string;
+  created_at: string;
+  conversation_participants?: ConversationParticipantRow[];
+  messages?: MessageRow[];
+}
+
+interface ShipmentLocationRow {
+  id: string;
+  shipment_id: string;
+  transporter_id: string;
+  latitude: number;
+  longitude: number;
+  heading?: number;
+  speed?: number;
+  accuracy?: number;
+  recorded_at: string;
+}
+
 // ── Mappers (snake_case → camelCase) ─────────────────────────────────────
 
-export function mapProfile(row: any): User {
+export function mapProfile(row: ProfileRow): User {
   return {
     id: row.id,
     email: row.email ?? '',
@@ -38,13 +158,13 @@ export function mapProfile(row: any): User {
     totalRatings: row.total_ratings ?? 0,
     createdAt: row.created_at,
     truckDetails: row.truck_details ?? undefined,
-    identityStatus: row.identity_status ?? 'unsubmitted',
+    identityStatus: (row.identity_status as IdentityStatus) ?? 'unsubmitted',
     identityDocumentType: row.identity_document_type ?? undefined,
     identityRejectionReason: row.identity_rejection_reason ?? undefined,
   };
 }
 
-function mapTrackingEvent(row: any): TrackingEvent {
+function mapTrackingEvent(row: TrackingEventRow): TrackingEvent {
   return {
     id: row.id,
     status: row.status,
@@ -54,7 +174,7 @@ function mapTrackingEvent(row: any): TrackingEvent {
   };
 }
 
-function mapBid(row: any): Bid {
+function mapBid(row: BidRow): Bid {
   return {
     id: row.id,
     transporterId: row.transporter_id,
@@ -69,7 +189,7 @@ function mapBid(row: any): Bid {
   };
 }
 
-function mapShipment(row: any): Shipment {
+function mapShipment(row: ShipmentRow): Shipment {
   return {
     id: row.id,
     senderId: row.sender_id,
@@ -96,7 +216,7 @@ function mapShipment(row: any): Shipment {
   };
 }
 
-function mapRoute(row: any): Route {
+function mapRoute(row: RouteRow): Route {
   return {
     id: row.id,
     transporterId: row.transporter_id,
@@ -111,7 +231,7 @@ function mapRoute(row: any): Route {
   };
 }
 
-function mapMessage(row: any): Message {
+function mapMessage(row: MessageRow): Message {
   return {
     id: row.id,
     conversationId: row.conversation_id,
@@ -292,7 +412,7 @@ export async function createRoute(route: Omit<Route, 'id'>): Promise<Route> {
 
 // ── Live tracking (positions GPS) ────────────────────────────────────────
 
-function mapShipmentLocation(row: any): ShipmentLocation {
+function mapShipmentLocation(row: ShipmentLocationRow): ShipmentLocation {
   return {
     id: row.id,
     shipmentId: row.shipment_id,
@@ -317,7 +437,7 @@ export async function fetchLatestLocations(
   });
   if (error) throw error;
   const byShipment: Record<string, ShipmentLocation> = {};
-  (data ?? []).forEach((row: any) => {
+  (data as ShipmentLocationRow[] ?? []).forEach((row) => {
     const loc = mapShipmentLocation(row);
     byShipment[loc.shipmentId] = loc;
   });
@@ -381,14 +501,16 @@ export function subscribeToShipmentLocation(
 
 // ── Conversations & messages ─────────────────────────────────────────────
 
-export async function fetchConversations(userId: string): Promise<{ conversations: Conversation[]; messages: Message[] }> {
+export async function fetchConversations(
+  userId: string
+): Promise<{ conversations: Conversation[]; messages: Message[] }> {
   const client = db();
   const { data: parts, error: pErr } = await client
     .from('conversation_participants')
     .select('conversation_id')
     .eq('user_id', userId);
   if (pErr) throw pErr;
-  const ids = (parts ?? []).map((p: any) => p.conversation_id);
+  const ids = (parts as { conversation_id: string }[] ?? []).map((p) => p.conversation_id);
   if (ids.length === 0) return { conversations: [], messages: [] };
 
   const { data, error } = await client
@@ -400,10 +522,10 @@ export async function fetchConversations(userId: string): Promise<{ conversation
   if (error) throw error;
 
   const allMessages: Message[] = [];
-  const conversations = (data ?? []).map((row: any) => {
-    const participants: string[] = (row.conversation_participants ?? []).map((p: any) => p.user_id);
+  const conversations = ((data as unknown as ConversationRow[]) ?? []).map((row) => {
+    const participants: string[] = (row.conversation_participants ?? []).map((p) => p.user_id);
     const participantNames: Record<string, string> = {};
-    (row.conversation_participants ?? []).forEach((p: any) => {
+    (row.conversation_participants ?? []).forEach((p) => {
       participantNames[p.user_id] = p.display_name ?? '';
     });
     const msgs: Message[] = (row.messages ?? []).map(mapMessage);

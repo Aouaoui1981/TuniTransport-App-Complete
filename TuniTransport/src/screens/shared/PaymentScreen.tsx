@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRoute, RouteProp, CommonActions, useNavigation } from '@react-navigation/native';
 
+import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import {
@@ -120,10 +121,10 @@ export default function PaymentScreen() {
         setStep('success');
         scheduleLocalNotification('Paiement confirmé', `Votre paiement de ${amount}€ a bien été reçu.`);
       }
-    } catch (e: any) {
+    } catch (e) {
       if (isMounted.current) {
         setStep('form');
-        Alert.alert('Paiement annulé', e?.message ?? 'Le paiement n’a pas abouti.');
+        Alert.alert('Paiement annulé', getErrorMessage(e, 'Le paiement n’a pas abouti.'));
       }
     }
   };

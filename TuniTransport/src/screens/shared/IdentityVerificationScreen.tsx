@@ -16,10 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
+import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
+import { User } from '../../types';
 import { uploadIdentityDocument, submitIdentityVerification } from '../../services/api';
 import { IdentityStatus } from '../../types';
 
@@ -128,8 +130,10 @@ export default function IdentityVerificationScreen() {
       await submitIdentityVerification(user.id, documentType, front, back);
 
       try {
-        await updateUser({ identityStatus: 'pending', identityDocumentType: documentType } as any);
-      } catch {}
+        await updateUser({ identityStatus: 'pending', identityDocumentType: documentType } as Partial<User>);
+      } catch (e) {
+        console.error('Erreur lors de la mise à jour du profil local:', e);
+      }
 
       if (isMounted.current) {
         Alert.alert(
@@ -138,9 +142,9 @@ export default function IdentityVerificationScreen() {
           [{ text: 'OK', onPress: () => navigation.goBack() }]
         );
       }
-    } catch (e: any) {
+    } catch (e) {
       if (isMounted.current) {
-        Alert.alert('Erreur', e?.message ?? "Impossible d'envoyer le document.");
+        Alert.alert('Erreur', getErrorMessage(e, "Impossible d'envoyer le document."));
       }
     } finally {
       if (isMounted.current) {

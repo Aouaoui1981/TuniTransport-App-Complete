@@ -26,6 +26,7 @@ import { coordsFor } from '../../services/mockData';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
 import { ShipmentType } from '../../types';
+import { getErrorMessage } from '../../utils/errors';
 
 const PRICE_PER_KG = 4;
 
@@ -129,8 +130,8 @@ export default function CreateShipmentScreen() {
           : 'Votre annonce est publiée — les transporteurs peuvent maintenant faire leurs offres.',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
-    } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? "L'envoi n'a pas pu être créé.");
+    } catch (e) {
+      Alert.alert('Erreur', getErrorMessage(e, "L'envoi n'a pas pu être créé."));
     } finally {
       setSubmitting(false);
     }

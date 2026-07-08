@@ -21,6 +21,7 @@ import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { UserRole } from '../../types';
+import { getErrorMessage } from '../../utils/errors';
 
 export default function RegisterScreen() {
   const navigation = useAppNavigation();
@@ -65,8 +66,8 @@ export default function RegisterScreen() {
           [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
         );
       }
-    } catch (e: any) {
-      Alert.alert('Inscription impossible', e?.message ?? 'Une erreur est survenue.');
+    } catch (e) {
+      Alert.alert('Inscription impossible', getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

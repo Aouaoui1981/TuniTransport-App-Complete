@@ -20,6 +20,7 @@ import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { supabase, IS_LIVE } from '../../services/supabase';
+import { getErrorMessage } from '../../utils/errors';
 
 const DEMO_ACCOUNTS = [
   { icon: 'cube' as const, label: 'Expéditeur démo', email: 'sender@demo.com', color: COLORS.primary },
@@ -70,8 +71,8 @@ export default function LoginScreen() {
     setSubmitting(true);
     try {
       await login({ email: email.trim(), password });
-    } catch (e: any) {
-      Alert.alert('Connexion impossible', e?.message ?? 'Une erreur est survenue.');
+    } catch (e) {
+      Alert.alert('Connexion impossible', getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

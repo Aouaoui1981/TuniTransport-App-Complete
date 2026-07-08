@@ -15,6 +15,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { Bid } from '../../types';
+import { getErrorMessage } from '../../utils/errors';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
@@ -74,8 +75,8 @@ export default function BidListScreen() {
                   { text: 'Plus tard', style: 'cancel', onPress: () => navigation.goBack() },
                 ]
               );
-            } catch (e: any) {
-              Alert.alert('Erreur', e?.message ?? 'Impossible d’accepter l’offre.');
+            } catch (e) {
+              Alert.alert('Erreur', getErrorMessage(e, 'Impossible d’accepter l’offre.'));
             } finally {
               setAccepting(null);
             }
@@ -93,8 +94,8 @@ export default function BidListScreen() {
         shipmentId: shipment.id,
       });
       navigation.navigate('Chat', { conversationId: conv.id });
-    } catch (e: any) {
-      Alert.alert('Messagerie', e?.message ?? "Impossible d'ouvrir la conversation.");
+    } catch (e) {
+      Alert.alert('Messagerie', getErrorMessage(e, "Impossible d'ouvrir la conversation."));
     }
   };
 
