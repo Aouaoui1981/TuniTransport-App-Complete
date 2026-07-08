@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +25,8 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
+import { fetchProfile } from '../../services/api';
+import { MOCK_USERS } from '../../services/mockData';
 import { Message } from '../../types';
 
 const DEMO_REPLIES = [
@@ -69,6 +73,26 @@ export default function ChatScreen() {
     const t = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
     return () => clearTimeout(t);
   }, [messages.length]);
+
+  const callOther = async () => {
+    try {
+      let phone: string | undefined;
+      if (!otherId) {
+        phone = undefined;
+      } else if (IS_LIVE) {
+        phone = (await fetchProfile(otherId))?.phone;
+      } else {
+        phone = MOCK_USERS.find((u) => u.id === otherId)?.phone;
+      }
+      if (phone) {
+        await Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
+      } else {
+        Alert.alert('Appel', 'Le numéro de ce contact n’est pas disponible.');
+      }
+    } catch {
+      Alert.alert('Appel', 'Impossible de lancer l’appel sur cet appareil.');
+    }
+  };
 
   const send = async () => {
     const trimmed = text.trim();
@@ -124,7 +148,7 @@ export default function ChatScreen() {
             <Text style={styles.onlineText}>En ligne</Text>
           </View>
         </View>
-        <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity onPress={callOther} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="call-outline" size={22} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
@@ -145,7 +169,12 @@ export default function ChatScreen() {
 
         {/* Input bar */}
         <View style={styles.inputBar}>
-          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity
+            onPress={() =>
+              Alert.alert('Pièces jointes', 'L’envoi de pièces jointes sera bientôt disponible.')
+            }
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Ionicons name="add-circle-outline" size={26} color={COLORS.textSecondary} />
           </TouchableOpacity>
           <TextInput

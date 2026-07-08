@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
+import { supabase, IS_LIVE } from '../../services/supabase';
 
 const DEMO_ACCOUNTS = [
   { icon: 'cube' as const, label: 'Expéditeur démo', email: 'sender@demo.com', color: COLORS.primary },
@@ -32,6 +33,34 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  async function handleForgotPassword() {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      Alert.alert(
+        'E-mail requis',
+        'Saisissez votre adresse e-mail ci-dessus, puis appuyez à nouveau sur « Mot de passe oublié ? ».'
+      );
+      return;
+    }
+    if (!IS_LIVE || !supabase) {
+      Alert.alert(
+        'Mode démo',
+        'La réinitialisation du mot de passe n’est pas disponible en mode démo. Connectez-vous avec n’importe quel mot de passe.'
+      );
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmed);
+      if (error) throw error;
+      Alert.alert(
+        'E-mail envoyé',
+        `Si un compte existe pour ${trimmed}, un lien de réinitialisation vient d’être envoyé.`
+      );
+    } catch {
+      Alert.alert('Erreur', 'Impossible d’envoyer l’e-mail de réinitialisation. Réessayez.');
+    }
+  }
 
   async function handleLogin() {
     if (!email.trim() || !password) {
@@ -98,7 +127,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.forgot}>
+          <TouchableOpacity style={styles.forgot} onPress={handleForgotPassword}>
             <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
           </TouchableOpacity>
 

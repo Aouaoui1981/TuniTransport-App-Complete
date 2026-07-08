@@ -54,7 +54,10 @@ export default function TransporterHomeScreen() {
               )}
             </View>
           </View>
-          <TouchableOpacity style={styles.bell}>
+          <TouchableOpacity
+            style={styles.bell}
+            onPress={() => navigation.navigate('Notifications')}
+          >
             <Ionicons name="notifications-outline" size={22} color={COLORS.text} />
             {hasUnread && <View style={styles.bellDot} />}
           </TouchableOpacity>

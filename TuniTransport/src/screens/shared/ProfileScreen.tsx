@@ -12,10 +12,14 @@ import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { IdentityStatus } from '../../types';
 
-const MENU: { icon: keyof typeof Ionicons.glyphMap; label: string; action?: 'editProfile' }[] = [
+const MENU: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  action?: 'editProfile' | 'notifications';
+}[] = [
   { icon: 'person-outline', label: 'Modifier le profil', action: 'editProfile' },
   { icon: 'card-outline', label: 'Moyens de paiement' },
-  { icon: 'notifications-outline', label: 'Notifications' },
+  { icon: 'notifications-outline', label: 'Notifications', action: 'notifications' },
   { icon: 'lock-closed-outline', label: 'Sécurité' },
   { icon: 'help-circle-outline', label: 'Aide & Support' },
   { icon: 'document-text-outline', label: "Conditions d'utilisation" },
@@ -70,6 +74,8 @@ export default function ProfileScreen() {
   const onMenuPress = (item: (typeof MENU)[number]) => {
     if (item.action === 'editProfile') {
       navigation.navigate('EditProfile');
+    } else if (item.action === 'notifications') {
+      navigation.navigate('Notifications');
     } else {
       Alert.alert(item.label, 'Cette section sera bientôt disponible.');
     }
