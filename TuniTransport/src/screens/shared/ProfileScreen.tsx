@@ -2,11 +2,12 @@
 // TuniTransport -- Profil -- STEP 10
 // ──────────────────────────────────────────────────────────────────────────
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { Card, RatingStars, Avatar } from '../../components';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
@@ -77,12 +78,12 @@ export default function ProfileScreen() {
     } else if (item.action === 'notifications') {
       navigation.navigate('Notifications');
     } else {
-      Alert.alert(item.label, 'Cette section sera bientôt disponible.');
+      showAlert(item.label, 'Cette section sera bientôt disponible.');
     }
   };
 
   const confirmLogout = () => {
-    Alert.alert('Se déconnecter', 'Voulez-vous vraiment vous déconnecter ?', [
+    showAlert('Se déconnecter', 'Voulez-vous vraiment vous déconnecter ?', [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Se déconnecter', style: 'destructive', onPress: () => logout() },
     ]);
@@ -97,7 +98,7 @@ export default function ProfileScreen() {
             <Avatar name={`${user.firstName} ${user.lastName}`} size={84} color={roleColor} />
             <TouchableOpacity
               style={[styles.cameraBtn, { backgroundColor: roleColor }]}
-              onPress={() => Alert.alert('Photo de profil', 'Cette option sera bientôt disponible.')}
+              onPress={() => showAlert('Photo de profil', 'Cette option sera bientôt disponible.')}
             >
               <Ionicons name="camera" size={14} color={COLORS.white} />
             </TouchableOpacity>

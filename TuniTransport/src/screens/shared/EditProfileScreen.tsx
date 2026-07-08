@@ -9,13 +9,13 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { Avatar } from '../../components';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
@@ -33,7 +33,7 @@ export default function EditProfileScreen() {
 
   const save = async () => {
     if (!firstName.trim() || !lastName.trim()) {
-      Alert.alert('Champs requis', 'Le prénom et le nom sont obligatoires.');
+      showAlert('Champs requis', 'Le prénom et le nom sont obligatoires.');
       return;
     }
     setSaving(true);
@@ -43,11 +43,11 @@ export default function EditProfileScreen() {
         lastName: lastName.trim(),
         phone: phone.trim(),
       });
-      Alert.alert('Profil mis à jour', 'Vos informations ont été enregistrées.', [
+      showAlert('Profil mis à jour', 'Vos informations ont été enregistrées.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (e) {
-      Alert.alert('Erreur', getErrorMessage(e, 'Impossible d’enregistrer les modifications.'));
+      showAlert('Erreur', getErrorMessage(e, 'Impossible d’enregistrer les modifications.'));
     } finally {
       setSaving(false);
     }

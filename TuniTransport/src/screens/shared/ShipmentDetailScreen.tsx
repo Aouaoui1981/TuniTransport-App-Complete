@@ -3,13 +3,14 @@
 // Status → Route → Items/Description → Bids → Tracking → Transporter → Actions
 // ──────────────────────────────────────────────────────────────────────────
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
 
 import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { Card, StatusBadge, RatingStars, SectionHeader, Avatar } from '../../components';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -71,7 +72,7 @@ export default function ShipmentDetailScreen() {
       });
       navigation.navigate('Chat', { conversationId: conv.id });
     } catch (e) {
-      Alert.alert('Messagerie', getErrorMessage(e, "Impossible d'ouvrir la conversation."));
+      showAlert('Messagerie', getErrorMessage(e, "Impossible d'ouvrir la conversation."));
     }
   };
 

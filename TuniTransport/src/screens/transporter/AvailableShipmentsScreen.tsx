@@ -9,7 +9,6 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -19,6 +18,7 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 
 import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
+import { showAlert } from '../../utils/alert';
 import { Card, EmptyState } from '../../components';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -60,7 +60,7 @@ export default function AvailableShipmentsScreen() {
   // Live mode requires a verified identity before bidding or accepting.
   const requireVerifiedIdentity = (): boolean => {
     if (IS_LIVE && user?.identityStatus !== 'verified') {
-      Alert.alert(
+      showAlert(
         'Vérification requise',
         'Vous devez faire vérifier votre identité avant de prendre des envois.',
         [
@@ -80,7 +80,7 @@ export default function AvailableShipmentsScreen() {
     if (!requireVerifiedIdentity()) return;
     const price = parseFloat(bidPrice.replace(',', '.'));
     if (!price || price <= 0) {
-      Alert.alert('Prix invalide', 'Veuillez saisir un montant en euros.');
+      showAlert('Prix invalide', 'Veuillez saisir un montant en euros.');
       return;
     }
     if (!user) return;
@@ -98,9 +98,9 @@ export default function AvailableShipmentsScreen() {
         message: bidMessage.trim() || undefined,
       });
       closeBidForm();
-      Alert.alert('Offre envoyée', 'Votre offre a été transmise à l’expéditeur.');
+      showAlert('Offre envoyée', 'Votre offre a été transmise à l’expéditeur.');
     } catch (e) {
-      Alert.alert('Erreur', getErrorMessage(e, 'Impossible d’envoyer l’offre.'));
+      showAlert('Erreur', getErrorMessage(e, 'Impossible d’envoyer l’offre.'));
     } finally {
       setSending(false);
     }
@@ -109,7 +109,7 @@ export default function AvailableShipmentsScreen() {
   const acceptSmall = (shipment: Shipment) => {
     if (!user) return;
     if (!requireVerifiedIdentity()) return;
-    Alert.alert(
+    showAlert(
       'Accepter cet envoi',
       `Vous vous engagez à transporter ce colis pour ${shipment.price ?? 0}€.`,
       [
@@ -133,9 +133,9 @@ export default function AvailableShipmentsScreen() {
                   },
                 ],
               });
-              Alert.alert('Envoi accepté', 'L’expéditeur a été notifié.');
+              showAlert('Envoi accepté', 'L’expéditeur a été notifié.');
             } catch (e) {
-              Alert.alert('Erreur', getErrorMessage(e, 'Action impossible.'));
+              showAlert('Erreur', getErrorMessage(e, 'Action impossible.'));
             }
           },
         },

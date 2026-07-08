@@ -491,7 +491,7 @@ export function subscribeToShipmentLocation(
         table: 'shipment_locations',
         filter: `shipment_id=eq.${shipmentId}`,
       },
-      (payload) => onLocation(mapShipmentLocation(payload.new))
+      (payload) => onLocation(mapShipmentLocation(payload.new as ShipmentLocationRow))
     )
     .subscribe((status) => onStatusChange?.(status === 'SUBSCRIBED'));
   return () => {
