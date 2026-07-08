@@ -20,6 +20,9 @@ import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
 import { showAlert } from '../../utils/alert';
 import { Card, EmptyState } from '../../components';
+import { LegalConsent } from '../../components/LegalConsent';
+import { LegalPageKey } from '../../content/legal';
+import { PRICE_PER_KG } from '../../utils/pricing';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation, MainTabParamList } from '../../navigation/AppNavigator';
@@ -37,6 +40,12 @@ export default function AvailableShipmentsScreen() {
   const [bidPrice, setBidPrice] = useState('');
   const [bidMessage, setBidMessage] = useState('');
   const [sending, setSending] = useState(false);
+  // Shipment id whose inline accept panel (small parcel) is open
+  const [acceptingOn, setAcceptingOn] = useState<string | null>(null);
+  // Consentement légal obligatoire avant offre ou prise en charge
+  const [legalAccepted, setLegalAccepted] = useState(false);
+
+  const openLegalPage = (page: LegalPageKey) => navigation.navigate('Legal', { page });
 
   // "Faire une offre" on the detail screen lands here with the shipment id:
   // open its inline bid form directly.
@@ -55,6 +64,12 @@ export default function AvailableShipmentsScreen() {
     setBiddingOn(null);
     setBidPrice('');
     setBidMessage('');
+    setLegalAccepted(false);
+  };
+
+  const closeAcceptPanel = () => {
+    setAcceptingOn(null);
+    setLegalAccepted(false);
   };
 
   // Live mode requires a verified identity before bidding or accepting.
@@ -83,6 +98,13 @@ export default function AvailableShipmentsScreen() {
       showAlert('Prix invalide', 'Veuillez saisir un montant en euros.');
       return;
     }
+    if (!legalAccepted) {
+      showAlert(
+        'Consentement requis',
+        'Vous devez accepter les Conditions générales, la liste des Objets interdits et la Décharge de responsabilité avant de faire une offre.'
+      );
+      return;
+    }
     if (!user) return;
     setSending(true);
     try {
@@ -98,7 +120,10 @@ export default function AvailableShipmentsScreen() {
         message: bidMessage.trim() || undefined,
       });
       closeBidForm();
-      showAlert('Offre envoyée', 'Votre offre a été transmise à l’expéditeur.');
+      showAlert(
+        'Offre envoyée',
+        'Votre offre a été transmise à l’expéditeur. Elle reste négociable : il pourra en discuter avec vous via la messagerie avant de l’accepter.'
+      );
     } catch (e) {
       showAlert('Erreur', getErrorMessage(e, 'Impossible d’envoyer l’offre.'));
     } finally {
@@ -106,46 +131,49 @@ export default function AvailableShipmentsScreen() {
     }
   };
 
-  const acceptSmall = (shipment: Shipment) => {
-    if (!user) return;
+  const openAcceptPanel = (shipment: Shipment) => {
     if (!requireVerifiedIdentity()) return;
-    showAlert(
-      'Accepter cet envoi',
-      `Vous vous engagez à transporter ce colis pour ${shipment.price ?? 0}€.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Accepter',
-          onPress: async () => {
-            try {
-              await updateShipment(shipment.id, {
-                status: 'accepted',
-                transporterId: user.id,
-                transporterName: `${user.firstName} ${user.lastName}`,
-                trackingHistory: [
-                  ...shipment.trackingHistory,
-                  {
-                    id: `te-${Date.now()}`,
-                    status: 'accepted',
-                    description: `Envoi accepté par ${user.firstName} ${user.lastName}`,
-                    location: shipment.pickupAddress.city,
-                    timestamp: new Date().toISOString(),
-                  },
-                ],
-              });
-              showAlert('Envoi accepté', 'L’expéditeur a été notifié.');
-            } catch (e) {
-              showAlert('Erreur', getErrorMessage(e, 'Action impossible.'));
-            }
+    closeBidForm();
+    setAcceptingOn(shipment.id);
+    setLegalAccepted(false);
+  };
+
+  const confirmAcceptSmall = async (shipment: Shipment) => {
+    if (!user) return;
+    if (!legalAccepted) {
+      showAlert(
+        'Consentement requis',
+        'Vous devez accepter les Conditions générales, la liste des Objets interdits et la Décharge de responsabilité avant de prendre en charge cet envoi.'
+      );
+      return;
+    }
+    try {
+      await updateShipment(shipment.id, {
+        status: 'accepted',
+        transporterId: user.id,
+        transporterName: `${user.firstName} ${user.lastName}`,
+        trackingHistory: [
+          ...shipment.trackingHistory,
+          {
+            id: `te-${Date.now()}`,
+            status: 'accepted',
+            description: `Envoi accepté par ${user.firstName} ${user.lastName}`,
+            location: shipment.pickupAddress.city,
+            timestamp: new Date().toISOString(),
           },
-        },
-      ]
-    );
+        ],
+      });
+      closeAcceptPanel();
+      showAlert('Envoi accepté', 'L’expéditeur a été notifié.');
+    } catch (e) {
+      showAlert('Erreur', getErrorMessage(e, 'Action impossible.'));
+    }
   };
 
   const renderItem = ({ item }: { item: Shipment }) => {
     const isLarge = item.type === 'large';
     const isBidding = biddingOn === item.id;
+    const isAccepting = acceptingOn === item.id;
     return (
       <Card style={styles.card}>
         {/* Header row */}
@@ -197,7 +225,7 @@ export default function AvailableShipmentsScreen() {
         <Text style={styles.sender}>Expéditeur : {item.senderName}</Text>
 
         {/* Actions */}
-        {!isBidding ? (
+        {!isBidding && !isAccepting ? (
           <View style={styles.actionsRow}>
             <TouchableOpacity
               style={styles.secondaryBtn}
@@ -206,19 +234,50 @@ export default function AvailableShipmentsScreen() {
               <Text style={styles.secondaryBtnText}>Détails</Text>
             </TouchableOpacity>
             {isLarge ? (
-              <TouchableOpacity style={styles.primaryBtn} onPress={() => setBiddingOn(item.id)}>
+              <TouchableOpacity
+                style={styles.primaryBtn}
+                onPress={() => {
+                  closeAcceptPanel();
+                  setLegalAccepted(false);
+                  setBiddingOn(item.id);
+                }}
+              >
                 <Ionicons name="hammer" size={16} color={COLORS.white} />
                 <Text style={styles.primaryBtnText}>Faire une offre</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 style={[styles.primaryBtn, { backgroundColor: COLORS.secondary }]}
-                onPress={() => acceptSmall(item)}
+                onPress={() => openAcceptPanel(item)}
               >
                 <Ionicons name="checkmark" size={16} color={COLORS.white} />
                 <Text style={styles.primaryBtnText}>Accepter</Text>
               </TouchableOpacity>
             )}
+          </View>
+        ) : isAccepting ? (
+          <View style={styles.bidForm}>
+            <Text style={styles.engageText}>
+              Vous vous engagez à transporter ce colis de {item.weight ?? 0} kg pour{' '}
+              {item.price ?? 0}€ ({PRICE_PER_KG}€/kg — effets personnels non commerciaux).
+            </Text>
+            <LegalConsent
+              checked={legalAccepted}
+              onToggle={() => setLegalAccepted(!legalAccepted)}
+              onOpenPage={openLegalPage}
+            />
+            <View style={styles.actionsRow}>
+              <TouchableOpacity style={styles.secondaryBtn} onPress={closeAcceptPanel}>
+                <Text style={styles.secondaryBtnText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.primaryBtn, { backgroundColor: COLORS.secondary }, !legalAccepted && { opacity: 0.5 }]}
+                onPress={() => confirmAcceptSmall(item)}
+              >
+                <Ionicons name="checkmark" size={16} color={COLORS.white} />
+                <Text style={styles.primaryBtnText}>Confirmer</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
           <View style={styles.bidForm}>
@@ -239,6 +298,15 @@ export default function AvailableShipmentsScreen() {
               placeholder="Présentez votre offre à l’expéditeur…"
               placeholderTextColor={COLORS.textLight}
               multiline
+            />
+            <Text style={styles.negotiableHint}>
+              Votre devis est négociable : l’expéditeur pourra en discuter avec vous via la
+              messagerie avant de l’accepter.
+            </Text>
+            <LegalConsent
+              checked={legalAccepted}
+              onToggle={() => setLegalAccepted(!legalAccepted)}
+              onOpenPage={openLegalPage}
             />
             <View style={styles.actionsRow}>
               <TouchableOpacity style={styles.secondaryBtn} onPress={closeBidForm} disabled={sending}>
@@ -356,6 +424,8 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   bidLabel: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.textSecondary },
+  engageText: { fontSize: FONTS.sizes.md, color: COLORS.text, lineHeight: 20 },
+  negotiableHint: { fontSize: FONTS.sizes.xs, color: COLORS.textLight, lineHeight: 16 },
   input: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,

@@ -39,6 +39,8 @@ import EditProfileScreen from '../screens/shared/EditProfileScreen';
 import MapScreen from '../screens/shared/MapScreen';
 import IdentityVerificationScreen from '../screens/shared/IdentityVerificationScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
+import LegalPageScreen from '../screens/shared/LegalPageScreen';
+import { LEGAL_PAGES, LegalPageKey } from '../content/legal';
 
 // ── Param lists ──────────────────────────────────────────────────────────
 
@@ -68,6 +70,7 @@ export type RootStackParamList = {
   EditProfile: undefined;
   IdentityVerification: undefined;
   Notifications: undefined;
+  Legal: { page: LegalPageKey };
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -218,6 +221,14 @@ export default function AppNavigator() {
             name="Notifications"
             component={NotificationsScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Notifications' }}
+          />
+          <Stack.Screen
+            name="Legal"
+            component={LegalPageScreen}
+            options={({ route }) => ({
+              ...SUBSCREEN_HEADER,
+              title: LEGAL_PAGES[route.params.page].title,
+            })}
           />
         </>
       )}
