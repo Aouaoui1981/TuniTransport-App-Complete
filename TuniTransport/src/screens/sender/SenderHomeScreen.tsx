@@ -39,7 +39,10 @@ export default function SenderHomeScreen() {
               {user?.firstName} {user?.lastName}
             </Text>
           </View>
-          <TouchableOpacity style={styles.bell}>
+          <TouchableOpacity
+            style={styles.bell}
+            onPress={() => navigation.navigate('Notifications')}
+          >
             <Ionicons name="notifications-outline" size={22} color={COLORS.text} />
             {hasUnread && <View style={styles.bellDot} />}
           </TouchableOpacity>

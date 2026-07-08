@@ -38,13 +38,14 @@ import RateUserScreen from '../screens/shared/RateUserScreen';
 import EditProfileScreen from '../screens/shared/EditProfileScreen';
 import MapScreen from '../screens/shared/MapScreen';
 import IdentityVerificationScreen from '../screens/shared/IdentityVerificationScreen';
+import NotificationsScreen from '../screens/shared/NotificationsScreen';
 
 // ── Param lists ──────────────────────────────────────────────────────────
 
 export type MainTabParamList = {
   Accueil: undefined;
   Envois: undefined;
-  Demandes: undefined;
+  Demandes: { bidShipmentId?: string } | undefined;
   Carte: undefined;
   Messages: undefined;
   Profil: undefined;
@@ -66,6 +67,7 @@ export type RootStackParamList = {
   RateUser: { shipmentId: string };
   EditProfile: undefined;
   IdentityVerification: undefined;
+  Notifications: undefined;
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -130,6 +132,17 @@ function MainTabs() {
 
 // ── Root navigator ───────────────────────────────────────────────────────
 
+// Native header (with back button) for sub-screens that don't render their
+// own header — their SafeAreaView uses edges={['bottom']} and relies on it.
+const SUBSCREEN_HEADER = {
+  headerShown: true,
+  headerBackButtonDisplayMode: 'minimal' as const,
+  headerTintColor: COLORS.text,
+  headerStyle: { backgroundColor: COLORS.surface },
+  headerTitleStyle: { fontWeight: '700' as const, color: COLORS.text },
+  headerShadowVisible: false,
+};
+
 export default function AppNavigator() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -158,17 +171,54 @@ export default function AppNavigator() {
       ) : (
         <>
           <Stack.Screen name="Main" component={MainTabs} />
-          <Stack.Screen name="ShipmentDetail" component={ShipmentDetailScreen} />
-          <Stack.Screen name="Tracking" component={TrackingScreen} />
+          <Stack.Screen
+            name="ShipmentDetail"
+            component={ShipmentDetailScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Détail de l’envoi' }}
+          />
+          <Stack.Screen
+            name="Tracking"
+            component={TrackingScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Suivi de l’envoi' }}
+          />
           <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
-          <Stack.Screen name="BidList" component={BidListScreen} />
+          <Stack.Screen
+            name="BidList"
+            component={BidListScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Offres reçues' }}
+          />
           <Stack.Screen name="Chat" component={ChatScreen} />
-          <Stack.Screen name="Payment" component={PaymentScreen} />
+          <Stack.Screen
+            name="Payment"
+            component={PaymentScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Paiement' }}
+          />
           <Stack.Screen name="CreateShipment" component={CreateShipmentScreen} />
-          <Stack.Screen name="CreateRoute" component={CreateRouteScreen} />
-          <Stack.Screen name="RateUser" component={RateUserScreen} />
-          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-          <Stack.Screen name="IdentityVerification" component={IdentityVerificationScreen} />
+          <Stack.Screen
+            name="CreateRoute"
+            component={CreateRouteScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Nouveau trajet' }}
+          />
+          <Stack.Screen
+            name="RateUser"
+            component={RateUserScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Évaluation' }}
+          />
+          <Stack.Screen
+            name="EditProfile"
+            component={EditProfileScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Modifier le profil' }}
+          />
+          <Stack.Screen
+            name="IdentityVerification"
+            component={IdentityVerificationScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Vérification d’identité' }}
+          />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Notifications' }}
+          />
         </>
       )}
     </Stack.Navigator>

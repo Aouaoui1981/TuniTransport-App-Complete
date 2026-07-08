@@ -232,7 +232,13 @@ export default function CreateShipmentScreen() {
                 value={dimensions}
                 onChangeText={setDimensions}
               />
-              <TouchableOpacity style={styles.photoHint} activeOpacity={0.7}>
+              <TouchableOpacity
+                style={styles.photoHint}
+                activeOpacity={0.7}
+                onPress={() =>
+                  Alert.alert('Photos', 'L’ajout de photos sera bientôt disponible.')
+                }
+              >
                 <Ionicons name="camera-outline" size={18} color={COLORS.textLight} />
                 <Text style={styles.photoHintText}>Ajouter des photos — bientôt disponible</Text>
               </TouchableOpacity>

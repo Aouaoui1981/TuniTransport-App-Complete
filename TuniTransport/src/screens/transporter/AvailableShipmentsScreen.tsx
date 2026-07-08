@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────
 // TuniTransport — Demandes disponibles (transporteur) — STEP 9
 // ──────────────────────────────────────────────────────────────────────────
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -15,17 +15,19 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRoute, RouteProp } from '@react-navigation/native';
 
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
 import { Card, EmptyState } from '../../components';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { useAppNavigation } from '../../navigation/AppNavigator';
+import { useAppNavigation, MainTabParamList } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
 import { Shipment } from '../../types';
 
 export default function AvailableShipmentsScreen() {
   const navigation = useAppNavigation();
+  const route = useRoute<RouteProp<MainTabParamList, 'Demandes'>>();
   const { user } = useAuth();
   const { shipments, addBid, updateShipment } = useData();
 
@@ -34,6 +36,14 @@ export default function AvailableShipmentsScreen() {
   const [bidPrice, setBidPrice] = useState('');
   const [bidMessage, setBidMessage] = useState('');
   const [sending, setSending] = useState(false);
+
+  // "Faire une offre" on the detail screen lands here with the shipment id:
+  // open its inline bid form directly.
+  useEffect(() => {
+    if (route.params?.bidShipmentId) {
+      setBiddingOn(route.params.bidShipmentId);
+    }
+  }, [route.params?.bidShipmentId]);
 
   const pending = useMemo(
     () => shipments.filter((s) => s.status === 'pending'),

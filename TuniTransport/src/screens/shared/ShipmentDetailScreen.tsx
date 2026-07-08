@@ -319,7 +319,12 @@ export default function ShipmentDetailScreen() {
           {isTransporter && shipment.status === 'pending' && isLarge ? (
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: COLORS.secondary }]}
-              onPress={() => navigation.goBack()}
+              onPress={() =>
+                navigation.navigate('Main', {
+                  screen: 'Demandes',
+                  params: { bidShipmentId: shipment.id },
+                })
+              }
             >
               <Ionicons name="hammer" size={18} color={COLORS.white} />
               <Text style={styles.actionText}>Faire une offre</Text>
