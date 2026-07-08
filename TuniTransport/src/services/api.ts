@@ -644,6 +644,26 @@ export async function savePushToken(userId: string, token: string): Promise<void
   if (error) throw error;
 }
 
+// ── Shipment photos ───────────────────────────────────────────────────────
+
+// Uploads one local photo to the public `shipment-photos` bucket and returns
+// its public URL (stored as-is in shipments.photos).
+export async function uploadShipmentPhoto(userId: string, localUri: string): Promise<string> {
+  // On web the picker returns a data URL; FileSystem can't read those.
+  const base64 = localUri.startsWith('data:')
+    ? localUri.slice(localUri.indexOf(',') + 1)
+    : await FileSystem.readAsStringAsync(localUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const { error } = await db()
+    .storage.from('shipment-photos')
+    .upload(path, decode(base64), { contentType: 'image/jpeg', upsert: false });
+  if (error) throw error;
+  const { data } = db().storage.from('shipment-photos').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 // ── Identity verification (KYC) ───────────────────────────────────────────
 
 export async function uploadIdentityDocument(
