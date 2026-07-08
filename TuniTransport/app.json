@@ -21,7 +21,9 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "TuniTransport utilise votre position pour le suivi en direct de vos livraisons."
+          "locationWhenInUsePermission": "TuniTransport utilise votre position pour le suivi en direct de vos livraisons.",
+          "locationAlwaysAndWhenInUsePermission": "TuniTransport utilise votre position en arrière-plan pour informer l'expéditeur de l'avancée de sa livraison.",
+          "isAndroidBackgroundLocationEnabled": true
         }
       ],
       [
@@ -37,7 +39,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.tunitransport.app",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": ["remote-notification", "location"]
       }
     },
     "android": {
