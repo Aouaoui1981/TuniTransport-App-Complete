@@ -207,13 +207,17 @@ assets/                       — icône, splash, favicon (placeholders — voir
 
 ## 6. À savoir avant la mise en production
 
-- **Icônes/splash** : `assets/icon.png`, `adaptive-icon.png`, `splash-icon.png`,
-  `favicon.png` sont des **placeholders générés automatiquement** (cercle blanc +
-  voilier, sur fond bleu `#2563EB`). Remplacez-les par vos visuels de marque avant
-  publication sur les stores.
+- **Icônes/splash** : `assets/icon.png`, `adaptive-icon.png`, `splash-icon.png` et
+  `favicon.png` portent l'identité TuniTransport (colis sur ferry, croissant-étoile,
+  dégradé bleu `#2563EB` aligné sur `src/utils/theme.ts`). L'icône adaptative Android
+  respecte la zone de sécurité de 66 % ; le splash affiche le logo + le wordmark sur
+  fond bleu.
 - **Photos de colis** : le champ « Ajouter des photos » de `CreateShipmentScreen`
-  est actuellement un espace réservé (« bientôt disponible ») — non branché à
-  `expo-image-picker`. Facile à ajouter si besoin.
+  est branché à `expo-image-picker` (caméra ou galerie, 5 photos max). En mode live,
+  les photos sont téléversées dans le bucket public `shipment-photos` (Supabase
+  Storage) via `uploadShipmentPhoto` et leurs URL publiques sont enregistrées dans
+  `shipments.photos` ; en mode démo, les URI locales restent en mémoire. Les photos
+  s'affichent dans la carte « Description » de `ShipmentDetailScreen`.
 - **Messagerie** : conformément à la spec, il n'existe pas de fonction de création
   de conversation — les boutons « Message » retrouvent une conversation existante
   liée à l'envoi ou aux deux participants. S'il n'y en a pas, un message

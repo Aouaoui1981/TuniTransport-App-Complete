@@ -13,8 +13,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
@@ -25,10 +27,12 @@ import { useData } from '../../context/DataContext';
 import { coordsFor } from '../../services/mockData';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
+import { uploadShipmentPhoto } from '../../services/api';
 import { ShipmentType } from '../../types';
 import { getErrorMessage } from '../../utils/errors';
 
 const PRICE_PER_KG = 4;
+const MAX_PHOTOS = 5;
 
 export default function CreateShipmentScreen() {
   const navigation = useAppNavigation();
@@ -52,12 +56,60 @@ export default function CreateShipmentScreen() {
   const [deliveryStreet, setDeliveryStreet] = useState('');
   const [deliveryContact, setDeliveryContact] = useState('');
   const [deliveryPhone, setDeliveryPhone] = useState('');
+  // Photos (large items)
+  const [photoUris, setPhotoUris] = useState<string[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
 
   const isSmall = type === 'small';
   const weightNum = parseFloat(weight.replace(',', '.')) || 0;
   const livePrice = useMemo(() => Math.round(weightNum * PRICE_PER_KG * 100) / 100, [weightNum]);
+
+  const captureFrom = async (source: 'camera' | 'library') => {
+    const perm =
+      source === 'camera'
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      showAlert('Permission requise', "Autorisez l'accès pour ajouter des photos.");
+      return;
+    }
+    const remaining = MAX_PHOTOS - photoUris.length;
+    const result =
+      source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7 })
+        : await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            quality: 0.7,
+            allowsMultipleSelection: true,
+            selectionLimit: remaining,
+          });
+    if (result.canceled) return;
+    const uris = result.assets.map((a) => a.uri).filter(Boolean);
+    if (uris.length === 0) return;
+    setPhotoUris((prev) => [...prev, ...uris].slice(0, MAX_PHOTOS));
+  };
+
+  const addPhoto = () => {
+    if (photoUris.length >= MAX_PHOTOS) {
+      showAlert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_PHOTOS} photos.`);
+      return;
+    }
+    // No camera capture in the browser: open the file picker directly.
+    if (Platform.OS === 'web') {
+      captureFrom('library');
+      return;
+    }
+    showAlert('Ajouter une photo', 'Choisissez une source', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Caméra', onPress: () => captureFrom('camera') },
+      { text: 'Galerie', onPress: () => captureFrom('library') },
+    ]);
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotoUris((prev) => prev.filter((_, i) => i !== index));
+  };
 
   async function handlePublish() {
     // Live mode requires a verified identity (enforced by RLS): guide the
@@ -96,6 +148,14 @@ export default function CreateShipmentScreen() {
 
     setSubmitting(true);
     try {
+      // In live mode the photos go to Supabase Storage first; in demo mode
+      // the local URIs are kept as-is (in-memory data only).
+      const shipmentPhotos = !isSmall ? photoUris : [];
+      const photoUrls =
+        IS_LIVE && user
+          ? await Promise.all(shipmentPhotos.map((uri) => uploadShipmentPhoto(user.id, uri)))
+          : shipmentPhotos;
+
       await addShipment({
         senderId: user?.id ?? '',
         senderName: user ? `${user.firstName} ${user.lastName}` : '',
@@ -104,6 +164,7 @@ export default function CreateShipmentScreen() {
         price: isSmall ? livePrice : undefined,
         description: !isSmall ? description.trim() : undefined,
         dimensions: !isSmall && dimensions.trim() ? dimensions.trim() : undefined,
+        photos: photoUrls.length > 0 ? photoUrls : undefined,
         pickupAddress: {
           street: pickupStreet.trim(),
           city: pickupCity.trim(),
@@ -233,16 +294,29 @@ export default function CreateShipmentScreen() {
                 value={dimensions}
                 onChangeText={setDimensions}
               />
-              <TouchableOpacity
-                style={styles.photoHint}
-                activeOpacity={0.7}
-                onPress={() =>
-                  showAlert('Photos', 'L’ajout de photos sera bientôt disponible.')
-                }
-              >
-                <Ionicons name="camera-outline" size={18} color={COLORS.textLight} />
-                <Text style={styles.photoHintText}>Ajouter des photos — bientôt disponible</Text>
-              </TouchableOpacity>
+              <View style={styles.photoRow}>
+                {photoUris.map((uri, index) => (
+                  <View key={`${uri}-${index}`} style={styles.photoThumbWrap}>
+                    <Image source={{ uri }} style={styles.photoThumb} />
+                    <TouchableOpacity
+                      style={styles.photoRemove}
+                      activeOpacity={0.8}
+                      onPress={() => removePhoto(index)}
+                      accessibilityLabel="Supprimer la photo"
+                    >
+                      <Ionicons name="close" size={14} color={COLORS.white} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                {photoUris.length < MAX_PHOTOS && (
+                  <TouchableOpacity style={styles.photoAdd} activeOpacity={0.7} onPress={addPhoto}>
+                    <Ionicons name="camera-outline" size={22} color={COLORS.textLight} />
+                    <Text style={styles.photoAddText}>
+                      {photoUris.length === 0 ? 'Photos' : `${photoUris.length}/${MAX_PHOTOS}`}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
               <View style={styles.auctionInfo}>
                 <Ionicons name="information-circle" size={18} color={COLORS.accent} />
                 <Text style={styles.auctionInfoText}>
@@ -396,19 +470,43 @@ const styles = StyleSheet.create({
   priceFormula: { fontSize: FONTS.sizes.xs, color: COLORS.primaryDark, marginTop: 2, opacity: 0.8 },
   priceValue: { fontSize: FONTS.sizes.xxxl, fontWeight: '800', color: COLORS.primary },
 
-  photoHint: {
+  photoRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  photoThumbWrap: { position: 'relative' },
+  photoThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.borderLight,
+  },
+  photoRemove: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: COLORS.danger,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.sm,
+    ...SHADOWS.sm,
+  },
+  photoAdd: {
+    width: 72,
+    height: 72,
+    borderRadius: RADIUS.md,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    paddingVertical: SPACING.lg,
-    marginBottom: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
   },
-  photoHintText: { fontSize: FONTS.sizes.sm, color: COLORS.textLight },
+  photoAddText: { fontSize: FONTS.sizes.xs, color: COLORS.textLight },
 
   auctionInfo: {
     flexDirection: 'row',

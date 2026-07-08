@@ -3,7 +3,7 @@
 // Status → Route → Items/Description → Bids → Tracking → Transporter → Actions
 // ──────────────────────────────────────────────────────────────────────────
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
@@ -161,6 +161,17 @@ export default function ShipmentDetailScreen() {
                 <Ionicons name="resize-outline" size={16} color={COLORS.textSecondary} />
                 <Text style={styles.dimensions}>{shipment.dimensions}</Text>
               </View>
+            ) : null}
+            {shipment.photos && shipment.photos.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.photosRow}
+              >
+                {shipment.photos.map((uri, idx) => (
+                  <Image key={`${uri}-${idx}`} source={{ uri }} style={styles.photo} />
+                ))}
+              </ScrollView>
             ) : null}
           </Card>
         ) : (
@@ -380,6 +391,13 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.xs,
   },
   description: { fontSize: FONTS.sizes.md, color: COLORS.text, lineHeight: 21 },
+  photosRow: { gap: SPACING.sm, marginTop: SPACING.md },
+  photo: {
+    width: 110,
+    height: 110,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.borderLight,
+  },
   dimensionsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dimensions: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
