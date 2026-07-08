@@ -557,4 +557,92 @@ create trigger trg_profiles_guard
   before update on public.profiles
   for each row execute function public.protect_profile_columns();
 
-  
+-- ═══════════════════════════════════════════
+-- TuniTransport -- Suivi en direct (live tracking)
+-- ═══════════════════════════════════════════
+-- Positions GPS publiées par le transporteur pendant le transport, diffusées
+-- via Supabase Realtime et lues en une seule requête groupée (RPC ci-dessous)
+-- pour éviter tout N+1 côté client.
+
+create table public.shipment_locations (
+  id             uuid primary key default gen_random_uuid(),
+  shipment_id    uuid not null references public.shipments(id) on delete cascade,
+  transporter_id uuid not null references public.profiles(id) on delete cascade,
+  latitude       double precision not null check (latitude between -90 and 90),
+  longitude      double precision not null check (longitude between -180 and 180),
+  heading        double precision,
+  speed          double precision,
+  accuracy       double precision,
+  recorded_at    timestamptz not null default now()
+);
+
+-- Index composite : sert à la fois la « dernière position » (distinct on +
+-- order by recorded_at desc) et l'historique d'un envoi, sans scan de table.
+create index idx_shipment_locations_latest
+  on public.shipment_locations (shipment_id, recorded_at desc);
+
+alter table public.shipment_locations enable row level security;
+
+-- Insertion : uniquement le transporteur assigné à l'envoi, en son propre nom.
+create policy "locations_insert_assigned_transporter" on public.shipment_locations
+  for insert to authenticated
+  with check (
+    transporter_id = auth.uid()
+    and exists (
+      select 1 from public.shipments s
+      where s.id = shipment_id and s.transporter_id = auth.uid()
+    )
+  );
+
+-- Lecture : expéditeur ou transporteur de l'envoi.
+create policy "locations_select_actors" on public.shipment_locations
+  for select to authenticated
+  using (exists (
+    select 1 from public.shipments s
+    where s.id = shipment_id
+      and (s.sender_id = auth.uid() or s.transporter_id = auth.uid())
+  ));
+
+-- RPC groupée : la dernière position de N envois en UNE requête (anti N+1).
+-- security invoker (défaut) : la RLS ci-dessus s'applique aux lignes rendues.
+create or replace function public.get_latest_shipment_locations(p_shipment_ids uuid[])
+returns setof public.shipment_locations
+language sql
+stable
+as $$
+  select distinct on (shipment_id) *
+  from public.shipment_locations
+  where shipment_id = any(p_shipment_ids)
+  order by shipment_id, recorded_at desc;
+$$;
+
+grant execute on function public.get_latest_shipment_locations(uuid[]) to authenticated;
+
+-- Rétention : on ne conserve que les 200 derniers points par envoi.
+create or replace function public.prune_shipment_locations()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  delete from public.shipment_locations
+  where shipment_id = new.shipment_id
+    and recorded_at < (
+      select min(recorded_at) from (
+        select recorded_at from public.shipment_locations
+        where shipment_id = new.shipment_id
+        order by recorded_at desc
+        limit 200
+      ) newest
+    );
+  return new;
+end;
+$$;
+
+create trigger trg_shipment_locations_prune
+  after insert on public.shipment_locations
+  for each row execute function public.prune_shipment_locations();
+
+-- Diffusion temps réel (la RLS s'applique aussi aux événements Realtime).
+alter publication supabase_realtime add table public.shipment_locations;
+
