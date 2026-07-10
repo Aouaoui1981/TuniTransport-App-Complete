@@ -38,6 +38,7 @@ import RateUserScreen from '../screens/shared/RateUserScreen';
 import EditProfileScreen from '../screens/shared/EditProfileScreen';
 import MapScreen from '../screens/shared/MapScreen';
 import IdentityVerificationScreen from '../screens/shared/IdentityVerificationScreen';
+import AdminVerificationsScreen from '../screens/shared/AdminVerificationsScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import LegalPageScreen from '../screens/shared/LegalPageScreen';
 import { LEGAL_PAGES, LegalPageKey } from '../content/legal';
@@ -69,6 +70,7 @@ export type RootStackParamList = {
   RateUser: { shipmentId: string };
   EditProfile: undefined;
   IdentityVerification: undefined;
+  AdminVerifications: undefined;
   Notifications: undefined;
   Legal: { page: LegalPageKey };
 };
@@ -216,6 +218,11 @@ export default function AppNavigator() {
             name="IdentityVerification"
             component={IdentityVerificationScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Vérification d’identité' }}
+          />
+          <Stack.Screen
+            name="AdminVerifications"
+            component={AdminVerificationsScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Vérifications (admin)' }}
           />
           <Stack.Screen
             name="Notifications"

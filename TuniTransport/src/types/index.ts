@@ -41,6 +41,8 @@ export interface User {
   identityStatus: IdentityStatus;
   identityDocumentType?: string;
   identityRejectionReason?: string;
+  /** Platform staff — unlocks the identity review screen. */
+  isAdmin?: boolean;
 }
 
 export interface Address {

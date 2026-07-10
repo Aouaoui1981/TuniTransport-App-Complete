@@ -788,3 +788,86 @@ alter table public.shipments
 
 alter table public.bids
   add column if not exists terms_accepted_at timestamptz;
+
+-- ═══════════════════════════════════════════
+-- TuniTransport -- Identity review (admin)
+-- ═══════════════════════════════════════════
+-- Existing project: run this whole section once in the SQL Editor.
+
+alter table public.profiles
+  add column if not exists is_admin boolean not null default false;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select coalesce(
+    (select is_admin from public.profiles where id = auth.uid()),
+    false
+  );
+$$;
+
+-- Reviewers can open the private identity photos (owners already can).
+drop policy if exists "Admins view identity documents" on storage.objects;
+create policy "Admins view identity documents"
+on storage.objects for select
+using (bucket_id = 'identity-documents' and public.is_admin());
+
+-- Pending KYC queue. SECURITY DEFINER so the reviewer can list profiles
+-- regardless of RLS; the admin check is inside the function itself.
+create or replace function public.list_pending_identities()
+returns table (
+  id uuid,
+  email text,
+  first_name text,
+  last_name text,
+  document_type text,
+  front_path text,
+  back_path text,
+  submitted_at timestamptz
+)
+language sql
+security definer
+stable
+as $$
+  select p.id, p.email, p.first_name, p.last_name,
+         p.identity_document_type, p.identity_document_front_url,
+         p.identity_document_back_url, p.identity_submitted_at
+  from public.profiles p
+  where public.is_admin()
+    and p.identity_status = 'pending'
+  order by p.identity_submitted_at asc nulls last;
+$$;
+
+-- Approve/reject a pending submission. Runs as the function owner, which
+-- also satisfies the profiles guard trigger (status is staff-managed).
+create or replace function public.review_identity(
+  target uuid,
+  approve boolean,
+  reason text default null
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Réservé aux administrateurs.';
+  end if;
+  update public.profiles
+  set identity_status      = case when approve then 'verified' else 'rejected' end::identity_status,
+      identity_reviewed_at = now(),
+      identity_rejection_reason =
+        case when approve then null
+             else coalesce(nullif(trim(reason), ''), 'Document non conforme.') end
+  where id = target
+    and identity_status = 'pending';
+end;
+$$;
+
+revoke all on function public.list_pending_identities() from public, anon;
+revoke all on function public.review_identity(uuid, boolean, text) from public, anon;
+grant execute on function public.list_pending_identities() to authenticated;
+grant execute on function public.review_identity(uuid, boolean, text) to authenticated;
