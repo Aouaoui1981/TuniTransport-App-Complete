@@ -7,6 +7,7 @@
 // Le QR code est produit en SVG pur (aucun canvas requis) pour fonctionner
 // sur toutes les plateformes.
 // ──────────────────────────────────────────────────────────────────────────
+import { Platform } from 'react-native';
 import * as Print from 'expo-print';
 import QRCode from 'qrcode';
 import { Shipment, Address } from '../types';
@@ -156,6 +157,37 @@ export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
 </html>`;
 }
 
+// On web, expo-print's `html` option is not supported — printAsync would
+// print the CURRENT page instead of the label. Render the label into a
+// hidden iframe and print that document instead.
+function printHtmlOnWeb(html: string): void {
+  const frame = document.createElement('iframe');
+  frame.style.position = 'fixed';
+  frame.style.right = '0';
+  frame.style.bottom = '0';
+  frame.style.width = '0';
+  frame.style.height = '0';
+  frame.style.border = '0';
+  document.body.appendChild(frame);
+
+  const frameWindow = frame.contentWindow;
+  if (!frameWindow) {
+    frame.remove();
+    throw new Error("Impossible d'ouvrir la fenêtre d'impression.");
+  }
+  frameWindow.document.open();
+  frameWindow.document.write(html);
+  frameWindow.document.close();
+
+  // Give the iframe a moment to lay out the SVG QR code before printing.
+  setTimeout(() => {
+    frameWindow.focus();
+    frameWindow.print();
+    // Keep the iframe alive while the dialog is open, then clean up.
+    setTimeout(() => frame.remove(), 60_000);
+  }, 300);
+}
+
 /** Builds the label and opens the system print dialog (print or save as PDF). */
 export async function printShippingLabel(shipment: Shipment): Promise<void> {
   const qrSvg = await QRCode.toString(buildQrPayload(shipment), {
@@ -163,5 +195,10 @@ export async function printShippingLabel(shipment: Shipment): Promise<void> {
     margin: 0,
     errorCorrectionLevel: 'L', // dense payload — L keeps the modules scannable
   });
-  await Print.printAsync({ html: buildLabelHtml(shipment, qrSvg) });
+  const html = buildLabelHtml(shipment, qrSvg);
+  if (Platform.OS === 'web') {
+    printHtmlOnWeb(html);
+    return;
+  }
+  await Print.printAsync({ html });
 }
