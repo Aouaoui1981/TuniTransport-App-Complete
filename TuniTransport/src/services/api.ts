@@ -1,4 +1,6 @@
-import * as FileSystem from 'expo-file-system';
+// SDK 54 moved readAsStringAsync behind the /legacy entry point — importing
+// it from the package root throws a deprecation error at runtime.
+import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -661,13 +663,14 @@ export async function savePushToken(userId: string, token: string): Promise<void
 
 // Uploads one local photo to the public `shipment-photos` bucket and returns
 // its public URL (stored as-is in shipments.photos).
+// On web the pickers return a data URL; FileSystem can't read those.
+async function readImageBase64(localUri: string): Promise<string> {
+  if (localUri.startsWith('data:')) return localUri.slice(localUri.indexOf(',') + 1);
+  return FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
+}
+
 export async function uploadShipmentPhoto(userId: string, localUri: string): Promise<string> {
-  // On web the picker returns a data URL; FileSystem can't read those.
-  const base64 = localUri.startsWith('data:')
-    ? localUri.slice(localUri.indexOf(',') + 1)
-    : await FileSystem.readAsStringAsync(localUri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+  const base64 = await readImageBase64(localUri);
   const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
   const { error } = await db()
     .storage.from('shipment-photos')
@@ -684,9 +687,7 @@ export async function uploadIdentityDocument(
   side: 'front' | 'back',
   localUri: string
 ): Promise<string> {
-  const base64 = await FileSystem.readAsStringAsync(localUri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
+  const base64 = await readImageBase64(localUri);
   const path = `${userId}/${side}-${Date.now()}.jpg`;
   const { error } = await db()
     .storage.from('identity-documents')
