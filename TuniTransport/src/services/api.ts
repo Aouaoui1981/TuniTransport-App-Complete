@@ -50,6 +50,7 @@ interface ProfileRow {
   identity_status?: string;
   identity_document_type?: string;
   identity_rejection_reason?: string;
+  is_admin?: boolean;
 }
 
 interface TrackingEventRow {
@@ -168,6 +169,7 @@ export function mapProfile(row: ProfileRow): User {
     identityStatus: (row.identity_status as IdentityStatus) ?? 'unsubmitted',
     identityDocumentType: row.identity_document_type ?? undefined,
     identityRejectionReason: row.identity_rejection_reason ?? undefined,
+    isAdmin: row.is_admin ?? false,
   };
 }
 
@@ -703,6 +705,69 @@ export async function uploadIdentityDocument(
     .upload(path, bytes, { contentType: 'image/jpeg', upsert: true });
   if (error) throw error;
   return path;
+}
+
+// ── Identity review (admin) ───────────────────────────────────────────────
+
+export interface PendingIdentity {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  documentType: string;
+  frontPath: string;
+  backPath?: string;
+  submittedAt?: string;
+}
+
+interface PendingIdentityRow {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  document_type: string;
+  front_path: string;
+  back_path: string | null;
+  submitted_at: string | null;
+}
+
+/** Pending KYC submissions — admin only (enforced server-side by the RPC). */
+export async function listPendingIdentities(): Promise<PendingIdentity[]> {
+  const { data, error } = await db().rpc('list_pending_identities');
+  if (error) throw error;
+  return ((data ?? []) as PendingIdentityRow[]).map((row) => ({
+    id: row.id,
+    email: row.email ?? '',
+    firstName: row.first_name ?? '',
+    lastName: row.last_name ?? '',
+    documentType: row.document_type ?? '',
+    frontPath: row.front_path ?? '',
+    backPath: row.back_path ?? undefined,
+    submittedAt: row.submitted_at ?? undefined,
+  }));
+}
+
+/** Short-lived signed URL so the reviewer can see a private identity photo. */
+export async function getIdentityDocumentUrl(path: string): Promise<string> {
+  const { data, error } = await db()
+    .storage.from('identity-documents')
+    .createSignedUrl(path, 60 * 60);
+  if (error || !data?.signedUrl) throw error ?? new Error('Document introuvable.');
+  return data.signedUrl;
+}
+
+/** Approve or reject a pending submission — admin only (enforced by the RPC). */
+export async function reviewIdentity(
+  targetUserId: string,
+  approve: boolean,
+  reason?: string
+): Promise<void> {
+  const { error } = await db().rpc('review_identity', {
+    target: targetUserId,
+    approve,
+    reason: reason ?? null,
+  });
+  if (error) throw error;
 }
 
 export async function submitIdentityVerification(
