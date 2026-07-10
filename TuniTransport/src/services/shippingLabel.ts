@@ -32,13 +32,37 @@ function addressBlock(title: string, name: string, address: Address): string {
     </div>`;
 }
 
+/** Short human-readable summary of what the parcel contains. */
+function contentSummary(shipment: Shipment): string {
+  if (shipment.items && shipment.items.length > 0) {
+    return shipment.items
+      .map((item) => `${item.quantity}× ${item.name}`)
+      .join(', ')
+      .slice(0, 60);
+  }
+  return (shipment.description ?? 'Effets personnels').slice(0, 60);
+}
+
+/**
+ * Plain-text payload encoded in the QR code: any phone camera or scanner
+ * app shows the shipment details directly, and the last line is the
+ * tracking link into the app.
+ */
+function buildQrPayload(shipment: Shipment): string {
+  const lines = [
+    `TuniTransport — Envoi ${shipment.id.slice(-8).toUpperCase()}`,
+    `Poids: ${shipment.weight ?? '—'} kg`,
+    `Contenu: ${contentSummary(shipment)}`,
+    `Expéditeur: ${shipment.senderName} — ${shipment.pickupAddress.street}, ${shipment.pickupAddress.postalCode} ${shipment.pickupAddress.city}, ${shipment.pickupAddress.country}`,
+    `Destinataire: ${shipment.deliveryAddress.contactName} — ${shipment.deliveryAddress.street}, ${shipment.deliveryAddress.postalCode} ${shipment.deliveryAddress.city}, ${shipment.deliveryAddress.country}`,
+    `Transporteur: ${shipment.transporterName ?? '—'}`,
+    `Suivi: ${APP_URL}/?shipment=${shipment.id}`,
+  ];
+  return lines.join('\n');
+}
+
 export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
   const reference = shipment.id.slice(-8).toUpperCase();
-  const printedAt = new Date().toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -111,8 +135,8 @@ export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
         <div class="meta-value">${escapeHtml(shipment.transporterName || '—')}</div>
       </div>
       <div class="meta-cell">
-        <div class="meta-label">Édité le</div>
-        <div class="meta-value">${printedAt}</div>
+        <div class="meta-label">Contenu</div>
+        <div class="meta-value">${escapeHtml(contentSummary(shipment))}</div>
       </div>
     </div>
     <div class="track">
@@ -120,11 +144,11 @@ export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
       <div class="track-info">
         <div class="ref">${escapeHtml(reference)}</div>
         <div class="ref-full">${escapeHtml(shipment.id)}</div>
-        <div class="track-hint">Scannez le QR code pour suivre cet envoi en ligne.</div>
+        <div class="track-hint">Scannez le QR code pour afficher les détails et le suivi de cet envoi.</div>
       </div>
     </div>
     <div class="foot">
-      <div>TuniTransport — colis léger 4€/kg, effets personnels non commerciaux</div>
+      <div>TuniTransport — transport de colis France ⇄ Tunisie</div>
       <div>Réf. ${escapeHtml(reference)}</div>
     </div>
   </div>
@@ -134,10 +158,10 @@ export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
 
 /** Builds the label and opens the system print dialog (print or save as PDF). */
 export async function printShippingLabel(shipment: Shipment): Promise<void> {
-  const qrSvg = await QRCode.toString(`${APP_URL}/?shipment=${shipment.id}`, {
+  const qrSvg = await QRCode.toString(buildQrPayload(shipment), {
     type: 'svg',
     margin: 0,
-    errorCorrectionLevel: 'M',
+    errorCorrectionLevel: 'L', // dense payload — L keeps the modules scannable
   });
   await Print.printAsync({ html: buildLabelHtml(shipment, qrSvg) });
 }
