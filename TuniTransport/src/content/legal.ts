@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────────────────
-// TuniTransport — contenu des pages légales et informatives
+// THL — contenu des pages légales et informatives
 //
 // Six pages statiques rendues par LegalPageScreen. Les trois pages "terms",
 // "prohibited" et "disclaimer" font l'objet d'un consentement obligatoire
@@ -39,12 +39,12 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
     icon: 'document-text-outline',
     updatedAt: 'Juillet 2026',
     intro:
-      "Les présentes conditions encadrent l'utilisation de TuniTransport, plateforme de mise en relation entre expéditeurs et transporteurs pour l'acheminement de bagages et d'objets entre la France et la Tunisie. En créant un compte, vous acceptez ces conditions dans leur intégralité.",
+      "Les présentes conditions encadrent l'utilisation de THL, plateforme de mise en relation entre expéditeurs et transporteurs pour l'acheminement de bagages et d'objets entre la France et la Tunisie. En créant un compte, vous acceptez ces conditions dans leur intégralité.",
     sections: [
       {
         heading: '1. Rôle de la plateforme',
         body:
-          "TuniTransport est un intermédiaire technique : la plateforme met en relation un expéditeur et un transporteur indépendant. Le contrat de transport est conclu directement entre ces deux parties. TuniTransport n'est ni transporteur, ni commissionnaire de transport.",
+          "THL est un intermédiaire technique : la plateforme met en relation un expéditeur et un transporteur indépendant. Le contrat de transport est conclu directement entre ces deux parties. THL n'est ni transporteur, ni commissionnaire de transport.",
       },
       {
         heading: '2. Tarification des envois',
@@ -92,7 +92,7 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
     icon: 'shield-checkmark-outline',
     updatedAt: 'Juillet 2026',
     intro:
-      "TuniTransport protège vos données personnelles et ne les utilise que pour fournir le service. Cette politique décrit ce que nous collectons, pourquoi, et vos droits.",
+      "THL protège vos données personnelles et ne les utilise que pour fournir le service. Cette politique décrit ce que nous collectons, pourquoi, et vos droits.",
     sections: [
       {
         heading: '1. Données collectées',
@@ -133,7 +133,7 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
     icon: 'ban-outline',
     updatedAt: 'Juillet 2026',
     intro:
-      "Les objets suivants ne peuvent en aucun cas être confiés ou transportés via TuniTransport, pour des raisons légales, douanières et de sécurité. Le transporteur est en droit de refuser tout envoi suspect.",
+      "Les objets suivants ne peuvent en aucun cas être confiés ou transportés via THL, pour des raisons légales, douanières et de sécurité. Le transporteur est en droit de refuser tout envoi suspect.",
     sections: [
       {
         heading: 'Strictement interdits',
@@ -169,12 +169,12 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
       {
         heading: '1. Nature du service',
         body:
-          "TuniTransport est une plateforme de mise en relation. Le contrat de transport lie exclusivement l'expéditeur et le transporteur. TuniTransport n'intervient pas dans l'exécution du transport.",
+          "THL est une plateforme de mise en relation. Le contrat de transport lie exclusivement l'expéditeur et le transporteur. THL n'intervient pas dans l'exécution du transport.",
       },
       {
         heading: '2. Limites de responsabilité',
         bullets: [
-          "TuniTransport ne peut être tenue responsable de la perte, du vol, de la casse ou du retard d'un envoi.",
+          "THL ne peut être tenue responsable de la perte, du vol, de la casse ou du retard d'un envoi.",
           "Les contrôles, taxes et saisies douanières relèvent de la responsabilité des parties.",
           "L'exactitude des déclarations (contenu, poids, valeur) relève de la seule responsabilité de l'expéditeur.",
           "L'assurance éventuelle des biens transportés relève de l'initiative des parties.",
@@ -194,7 +194,7 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
     icon: 'information-circle-outline',
     updatedAt: 'Juillet 2026',
     intro:
-      "TuniTransport connecte la diaspora tunisienne : les voyageurs et transporteurs qui font la route entre la France et la Tunisie transportent les colis de ceux qui en ont besoin.",
+      "THL connecte la diaspora tunisienne : les voyageurs et transporteurs qui font la route entre la France et la Tunisie transportent les colis de ceux qui en ont besoin.",
     sections: [
       {
         heading: 'Notre mission',
