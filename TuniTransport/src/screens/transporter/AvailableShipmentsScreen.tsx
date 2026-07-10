@@ -33,7 +33,7 @@ export default function AvailableShipmentsScreen() {
   const navigation = useAppNavigation();
   const route = useRoute<RouteProp<MainTabParamList, 'Demandes'>>();
   const { user } = useAuth();
-  const { shipments, addBid, updateShipment } = useData();
+  const { shipments, addBid, acceptSmallShipment } = useData();
 
   // Shipment id whose inline bid form is open
   const [biddingOn, setBiddingOn] = useState<string | null>(null);
@@ -149,22 +149,9 @@ export default function AvailableShipmentsScreen() {
       return;
     }
     try {
-      await updateShipment(shipment.id, {
-        status: 'accepted',
-        transporterId: user.id,
-        transporterName: `${user.firstName} ${user.lastName}`,
-        transporterTermsAcceptedAt: new Date().toISOString(),
-        trackingHistory: [
-          ...shipment.trackingHistory,
-          {
-            id: `te-${Date.now()}`,
-            status: 'accepted',
-            description: `Envoi accepté par ${user.firstName} ${user.lastName}`,
-            location: shipment.pickupAddress.city,
-            timestamp: new Date().toISOString(),
-          },
-        ],
-      });
+      // Assignment columns are server-managed: the context routes this
+      // through the accept_small_shipment RPC in live mode.
+      await acceptSmallShipment(shipment.id);
       closeAcceptPanel();
       showAlert('Envoi accepté', 'L’expéditeur a été notifié.');
     } catch (e) {

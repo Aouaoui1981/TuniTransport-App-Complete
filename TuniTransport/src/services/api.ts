@@ -401,6 +401,18 @@ export async function createBid(
   return mapBid(data);
 }
 
+/**
+ * Direct take-over of a small parcel by a transporter. Goes through a
+ * SECURITY DEFINER transaction because assignment columns are locked for
+ * client-side updates by the shipments guard trigger.
+ */
+export async function acceptSmallShipment(shipmentId: string): Promise<void> {
+  const { error } = await db().rpc('accept_small_shipment_transaction', {
+    p_shipment_id: shipmentId,
+  });
+  if (error) throw error;
+}
+
 export async function acceptBid(shipmentId: string, bidId: string): Promise<void> {
   const { error } = await db().rpc('accept_bid_transaction', {
     p_shipment_id: shipmentId,

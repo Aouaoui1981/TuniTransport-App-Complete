@@ -882,3 +882,98 @@ revoke all on function public.list_pending_identities() from public, anon;
 revoke all on function public.review_identity(uuid, boolean, text) from public, anon;
 grant execute on function public.list_pending_identities() to authenticated;
 grant execute on function public.review_identity(uuid, boolean, text) to authenticated;
+
+-- Garde-fou renforcé : le rôle administrateur n'est modifiable que par
+-- l'équipe (nouvelle version du trigger déclaré plus haut, avec la
+-- vérification supplémentaire sur is_admin).
+create or replace function public.protect_profile_columns()
+returns trigger
+language plpgsql
+as $$
+begin
+  if current_user in ('postgres', 'supabase_admin', 'service_role') then
+    return new;
+  end if;
+  if new.rating is distinct from old.rating
+     or new.total_ratings is distinct from old.total_ratings then
+    raise exception 'La réputation est en lecture seule.';
+  end if;
+  if new.identity_status is distinct from old.identity_status
+     and new.identity_status <> 'pending' then
+    raise exception 'Le statut d''identité est géré par l''équipe de vérification.';
+  end if;
+  if new.identity_reviewed_at is distinct from old.identity_reviewed_at then
+    raise exception 'Champ réservé à l''équipe de vérification.';
+  end if;
+  if new.stripe_account_id is distinct from old.stripe_account_id then
+    raise exception 'Le compte de paiement est géré par la plateforme.';
+  end if;
+  if new.is_admin is distinct from old.is_admin then
+    raise exception 'Le rôle administrateur est géré par la plateforme.';
+  end if;
+  return new;
+end;
+$$;
+
+-- ── RPC : acceptation directe d'un petit colis par un transporteur ────────
+-- Le trigger trg_shipments_guard verrouille transporter_id côté client ;
+-- l'acceptation directe (colis "small", sans enchère) passe donc par cette
+-- transaction SECURITY DEFINER, symétrique d'accept_bid_transaction.
+create or replace function public.accept_small_shipment_transaction(
+  p_shipment_id uuid
+)
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_shipment public.shipments%rowtype;
+  v_name     text;
+begin
+  if not public.is_identity_verified() then
+    raise exception 'Identité non vérifiée : vérification requise avant de prendre en charge un envoi.';
+  end if;
+
+  select * into v_shipment
+  from public.shipments
+  where id = p_shipment_id
+  for update;
+  if not found then
+    raise exception 'Envoi introuvable.';
+  end if;
+  if v_shipment.sender_id = auth.uid() then
+    raise exception 'Impossible de prendre en charge son propre envoi.';
+  end if;
+  if v_shipment.status <> 'pending' then
+    raise exception 'Cet envoi n''est plus disponible.';
+  end if;
+  if v_shipment.type <> 'small' then
+    raise exception 'Les objets volumineux passent par les offres.';
+  end if;
+
+  select trim(first_name || ' ' || last_name) into v_name
+  from public.profiles
+  where id = auth.uid() and role = 'transporter';
+  if v_name is null then
+    raise exception 'Seul un transporteur peut prendre en charge un envoi.';
+  end if;
+
+  update public.shipments
+  set status                        = 'accepted',
+      transporter_id                = auth.uid(),
+      transporter_name              = v_name,
+      transporter_terms_accepted_at = now()
+  where id = p_shipment_id;
+
+  insert into public.tracking_events (shipment_id, status, description, location)
+  values (
+    p_shipment_id,
+    'accepted',
+    'Envoi accepté par ' || v_name,
+    null
+  );
+end;
+$$;
+
+revoke execute on function public.accept_small_shipment_transaction(uuid) from public, anon;
+grant execute on function public.accept_small_shipment_transaction(uuid) to authenticated;

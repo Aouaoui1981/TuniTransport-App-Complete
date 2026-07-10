@@ -50,6 +50,7 @@ interface DataContextValue {
   updateShipment: (id: string, updates: Partial<Shipment>) => Promise<void>;
   addBid: (bid: Omit<Bid, 'id' | 'createdAt' | 'status'>) => Promise<void>;
   acceptBid: (shipmentId: string, bidId: string) => Promise<void>;
+  acceptSmallShipment: (shipmentId: string) => Promise<void>;
   addMessage: (msg: Pick<Message, 'conversationId' | 'senderId' | 'text'>) => Promise<Message>;
   ensureConversation: (params: {
     otherUserId: string;
@@ -346,6 +347,50 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // ── acceptSmallShipment (direct take-over, no auction) ──────────────────
+  // Assignment columns are locked client-side by the shipments guard
+  // trigger, so live mode goes through the accept_small_shipment RPC.
+
+  const acceptSmallShipment = useCallback(
+    async (shipmentId: string) => {
+      if (!user) throw new Error('Non connecté.');
+      const transporterName = `${user.firstName} ${user.lastName}`.trim();
+      let snapshot: Shipment[] = [];
+      setShipments((prev) => {
+        snapshot = prev;
+        return prev.map((s) => {
+          if (s.id !== shipmentId) return s;
+          const event: TrackingEvent = {
+            id: uid('te'),
+            status: 'accepted',
+            description: `Envoi accepté par ${transporterName}`,
+            location: s.pickupAddress.city,
+            timestamp: new Date().toISOString(),
+          };
+          return {
+            ...s,
+            status: 'accepted',
+            transporterId: user.id,
+            transporterName,
+            transporterTermsAcceptedAt: new Date().toISOString(),
+            trackingHistory: [...s.trackingHistory, event],
+          };
+        });
+      });
+      if (IS_LIVE) {
+        try {
+          await api.acceptSmallShipment(shipmentId);
+        } catch (e) {
+          if (isMounted.current) {
+            setShipments(snapshot);
+          }
+          throw e;
+        }
+      }
+    },
+    [user]
+  );
+
   // ── addMessage ──────────────────────────────────────────────────────────
 
   const addMessage = useCallback(
@@ -509,6 +554,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       updateShipment,
       addBid,
       acceptBid,
+      acceptSmallShipment,
       addMessage,
       ensureConversation,
       addRoute,
@@ -527,6 +573,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       updateShipment,
       addBid,
       acceptBid,
+      acceptSmallShipment,
       addMessage,
       ensureConversation,
       addRoute,
