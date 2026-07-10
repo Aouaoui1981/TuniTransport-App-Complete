@@ -871,3 +871,35 @@ revoke all on function public.list_pending_identities() from public, anon;
 revoke all on function public.review_identity(uuid, boolean, text) from public, anon;
 grant execute on function public.list_pending_identities() to authenticated;
 grant execute on function public.review_identity(uuid, boolean, text) to authenticated;
+
+-- Garde-fou renforcé : le rôle administrateur n'est modifiable que par
+-- l'équipe (nouvelle version du trigger déclaré plus haut, avec la
+-- vérification supplémentaire sur is_admin).
+create or replace function public.protect_profile_columns()
+returns trigger
+language plpgsql
+as $$
+begin
+  if current_user in ('postgres', 'supabase_admin', 'service_role') then
+    return new;
+  end if;
+  if new.rating is distinct from old.rating
+     or new.total_ratings is distinct from old.total_ratings then
+    raise exception 'La réputation est en lecture seule.';
+  end if;
+  if new.identity_status is distinct from old.identity_status
+     and new.identity_status <> 'pending' then
+    raise exception 'Le statut d''identité est géré par l''équipe de vérification.';
+  end if;
+  if new.identity_reviewed_at is distinct from old.identity_reviewed_at then
+    raise exception 'Champ réservé à l''équipe de vérification.';
+  end if;
+  if new.stripe_account_id is distinct from old.stripe_account_id then
+    raise exception 'Le compte de paiement est géré par la plateforme.';
+  end if;
+  if new.is_admin is distinct from old.is_admin then
+    raise exception 'Le rôle administrateur est géré par la plateforme.';
+  end if;
+  return new;
+end;
+$$;
