@@ -157,51 +157,63 @@ export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
 </html>`;
 }
 
-// On web, expo-print's `html` option is not supported — printAsync would
-// print the CURRENT page instead of the label. Render the label into a
-// hidden iframe and print that document instead.
-function printHtmlOnWeb(html: string): void {
-  const frame = document.createElement('iframe');
-  // Safari renders the frame's print snapshot at its LAYOUT size — a 0×0
-  // frame prints as a blank page. Give it a real A5-ish size and park it
-  // off-screen instead of collapsing it.
-  frame.style.position = 'fixed';
-  frame.style.left = '-10000px';
-  frame.style.top = '0';
-  frame.style.width = '560px';
-  frame.style.height = '800px';
-  frame.style.border = '0';
-  frame.setAttribute('aria-hidden', 'true');
-  document.body.appendChild(frame);
+// Floating toolbar injected on web only: the label opens as a visible page
+// in a new tab, with an explicit print button (hidden on paper via CSS).
+const WEB_TOOLBAR = `
+<div class="toolbar">
+  <button onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
+</div>
+<style>
+  .toolbar { position: sticky; top: 0; text-align: center; padding: 10px;
+             background: #F1F5F9; margin-bottom: 10px; }
+  .toolbar button { font-size: 16px; font-weight: 700; padding: 10px 18px;
+                    border: 0; border-radius: 8px; background: #2563EB;
+                    color: #fff; }
+  @media print { .toolbar { display: none; } }
+</style>`;
 
-  const frameWindow = frame.contentWindow;
-  if (!frameWindow) {
-    frame.remove();
-    throw new Error("Impossible d'ouvrir la fenêtre d'impression.");
+/**
+ * Build the QR as an SVG string SYNCHRONOUSLY (QRCode.create is sync).
+ * Keeping the whole web flow synchronous matters: window.open is only
+ * allowed inside the click's own call stack — an await would get the
+ * new tab blocked as a popup.
+ */
+function qrSvgSync(text: string): string {
+  const qr = QRCode.create(text, { errorCorrectionLevel: 'L' });
+  const size = qr.modules.size;
+  const data = qr.modules.data as Uint8Array | number[];
+  let path = '';
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      if (data[row * size + col]) path += `M${col} ${row}h1v1h-1z`;
+    }
   }
-  frameWindow.document.open();
-  frameWindow.document.write(html);
-  frameWindow.document.close();
-
-  // Give the iframe a moment to lay out the SVG QR code before printing.
-  setTimeout(() => {
-    frameWindow.focus();
-    frameWindow.print();
-    // Keep the iframe alive while the dialog is open, then clean up.
-    setTimeout(() => frame.remove(), 60_000);
-  }, 500);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges"><path d="${path}" fill="#000"/></svg>`;
 }
 
-/** Builds the label and opens the system print dialog (print or save as PDF). */
+// On web, expo-print's `html` option is not supported (printAsync would
+// print the CURRENT page), and printing hidden iframes renders blank on
+// iOS Safari. Open the label as a normal visible page in a new tab
+// instead — the user sees it immediately and prints/saves from there.
+function openLabelOnWeb(html: string): void {
+  const labelWindow = window.open('', '_blank');
+  if (!labelWindow) {
+    throw new Error(
+      "Impossible d'ouvrir l'étiquette : autorisez les fenêtres pop-up pour ce site."
+    );
+  }
+  labelWindow.document.open();
+  labelWindow.document.write(html.replace('<body>', `<body>${WEB_TOOLBAR}`));
+  labelWindow.document.close();
+}
+
+/** Builds the label and shows it (new tab on web, print dialog on native). */
 export async function printShippingLabel(shipment: Shipment): Promise<void> {
-  const qrSvg = await QRCode.toString(buildQrPayload(shipment), {
-    type: 'svg',
-    margin: 0,
-    errorCorrectionLevel: 'L', // dense payload — L keeps the modules scannable
-  });
+  const qrSvg = qrSvgSync(buildQrPayload(shipment));
   const html = buildLabelHtml(shipment, qrSvg);
   if (Platform.OS === 'web') {
-    printHtmlOnWeb(html);
+    // Synchronous on purpose — see qrSvgSync.
+    openLabelOnWeb(html);
     return;
   }
   await Print.printAsync({ html });
