@@ -51,7 +51,7 @@ function contentSummary(shipment: Shipment): string {
  */
 function buildQrPayload(shipment: Shipment): string {
   const lines = [
-    `TuniTransport — Envoi ${shipment.id.slice(-8).toUpperCase()}`,
+    `THL — Envoi ${shipment.id.slice(-8).toUpperCase()}`,
     `Poids: ${shipment.weight ?? '—'} kg`,
     `Contenu: ${contentSummary(shipment)}`,
     `Expéditeur: ${shipment.senderName} — ${shipment.pickupAddress.street}, ${shipment.pickupAddress.postalCode} ${shipment.pickupAddress.city}, ${shipment.pickupAddress.country}`,
@@ -107,7 +107,7 @@ export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
 <body>
   <div class="label">
     <div class="head">
-      <div class="brand">Tuni<span>Transport</span></div>
+      <div class="brand">THL<span>.</span></div>
       <div class="service">
         Transport de colis France ⇄ Tunisie<br/>
         ${APP_URL.replace('https://', '')}
@@ -149,7 +149,7 @@ export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
       </div>
     </div>
     <div class="foot">
-      <div>TuniTransport — transport de colis France ⇄ Tunisie</div>
+      <div>THL — transport de colis France ⇄ Tunisie</div>
       <div>Réf. ${escapeHtml(reference)}</div>
     </div>
   </div>

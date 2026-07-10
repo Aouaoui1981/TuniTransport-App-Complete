@@ -110,7 +110,7 @@ export default function PaymentScreen() {
       // Loaded lazily: the native Stripe module only exists in dev/EAS builds.
       const stripeSdk = require('@stripe/stripe-react-native');
       const { error: initError } = await stripeSdk.initPaymentSheet({
-        merchantDisplayName: 'TuniTransport',
+        merchantDisplayName: 'THL',
         paymentIntentClientSecret: intent.clientSecret,
         defaultBillingDetails: { address: { country: 'FR' } },
       });

@@ -193,7 +193,7 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>TuniTransport v1.0.0</Text>
+        <Text style={styles.version}>THL v1.1.0</Text>
       </ScrollView>
     </SafeAreaView>
   );

@@ -256,7 +256,7 @@ export function useTransporterLocationPublisher(
         distanceInterval: 50,
         deferredUpdatesInterval: 30000,
         foregroundService: {
-          notificationTitle: 'Suivi TuniTransport actif',
+          notificationTitle: 'Suivi THL actif',
           notificationBody: 'Votre position est partagée avec l’expéditeur.',
           notificationColor: '#2563EB',
         },
