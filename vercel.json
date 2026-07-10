@@ -3,6 +3,12 @@
   "framework": null,
   "installCommand": "cd TuniTransport && npm install",
   "buildCommand": "cd TuniTransport && npx expo export --platform web",
+  "build": {
+    "env": {
+      "EXPO_PUBLIC_SUPABASE_URL": "https://leuntmiyxqvetksfrjfm.supabase.co",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_jLRE6NoomvAG_0WtN3Tcgg_FlI1qcwr"
+    }
+  },
   "outputDirectory": "TuniTransport/dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
