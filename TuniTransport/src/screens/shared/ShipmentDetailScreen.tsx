@@ -291,6 +291,18 @@ export default function ShipmentDetailScreen() {
 
         {/* 7 — Actions */}
         <View style={styles.actions}>
+          {isSender && shipment.senderId === user?.id && shipment.status === 'pending' ? (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: COLORS.primary }]}
+              onPress={() =>
+                navigation.navigate('CreateShipment', { editShipmentId: shipment.id })
+              }
+            >
+              <Ionicons name="create" size={18} color={COLORS.white} />
+              <Text style={styles.actionText}>Modifier l'annonce</Text>
+            </TouchableOpacity>
+          ) : null}
+
           {isSender && shipment.status === 'accepted' && shipment.price != null && !shipment.paidAt ? (
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: COLORS.primary }]}
