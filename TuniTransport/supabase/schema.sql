@@ -302,10 +302,21 @@ begin
   -- 2. Read-only columns for all authenticated users.
   -- These MUST be changed via Edge Functions or Security Definer RPCs.
   if new.paid_at is distinct from old.paid_at
-     or new.price is distinct from old.price
      or new.transporter_id is distinct from old.transporter_id
      or new.selected_bid_id is distinct from old.selected_bid_id
      or new.sender_id is distinct from old.sender_id then
+    raise exception 'Les données financières et d''assignation sont en lecture seule.';
+  end if;
+
+  -- 2bis. Le prix est verrouillé, sauf pour l'expéditeur qui modifie son
+  -- annonce encore « pending » : le tarif au poids (weight × 4€/kg) est
+  -- recalculé côté client quand le poids change. Après acceptation d'une
+  -- offre, le prix redevient intouchable (RPC accept_bid_transaction /
+  -- fonctions Edge uniquement).
+  if new.price is distinct from old.price
+     and not (auth.uid() = old.sender_id
+              and old.status = 'pending'
+              and new.status = 'pending') then
     raise exception 'Les données financières et d''assignation sont en lecture seule.';
   end if;
 
