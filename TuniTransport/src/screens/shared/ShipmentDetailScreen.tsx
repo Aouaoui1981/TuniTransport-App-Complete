@@ -16,6 +16,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { Bid } from '../../types';
+import { printShippingLabel } from '../../services/shippingLabel';
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-FR', {
@@ -329,6 +330,22 @@ export default function ShipmentDetailScreen() {
                 })}
               </Text>
             </View>
+          ) : null}
+
+          {shipment.transporterId && shipment.status !== 'cancelled' ? (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: COLORS.text }]}
+              onPress={async () => {
+                try {
+                  await printShippingLabel(shipment);
+                } catch (e) {
+                  showAlert('Erreur', getErrorMessage(e, "Impossible de générer l'étiquette."));
+                }
+              }}
+            >
+              <Ionicons name="print" size={18} color={COLORS.white} />
+              <Text style={styles.actionText}>Imprimer l'étiquette d'expédition</Text>
+            </TouchableOpacity>
           ) : null}
 
           {isSender && shipment.status === 'delivered' ? (
