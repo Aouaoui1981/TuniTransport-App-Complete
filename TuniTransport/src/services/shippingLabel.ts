@@ -162,12 +162,16 @@ export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
 // hidden iframe and print that document instead.
 function printHtmlOnWeb(html: string): void {
   const frame = document.createElement('iframe');
+  // Safari renders the frame's print snapshot at its LAYOUT size — a 0×0
+  // frame prints as a blank page. Give it a real A5-ish size and park it
+  // off-screen instead of collapsing it.
   frame.style.position = 'fixed';
-  frame.style.right = '0';
-  frame.style.bottom = '0';
-  frame.style.width = '0';
-  frame.style.height = '0';
+  frame.style.left = '-10000px';
+  frame.style.top = '0';
+  frame.style.width = '560px';
+  frame.style.height = '800px';
   frame.style.border = '0';
+  frame.setAttribute('aria-hidden', 'true');
   document.body.appendChild(frame);
 
   const frameWindow = frame.contentWindow;
@@ -185,7 +189,7 @@ function printHtmlOnWeb(html: string): void {
     frameWindow.print();
     // Keep the iframe alive while the dialog is open, then clean up.
     setTimeout(() => frame.remove(), 60_000);
-  }, 300);
+  }, 500);
 }
 
 /** Builds the label and opens the system print dialog (print or save as PDF). */
