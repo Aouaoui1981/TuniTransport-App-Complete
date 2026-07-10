@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 // SDK 54 moved readAsStringAsync behind the /legacy entry point — importing
 // it from the package root throws a deprecation error at runtime.
 import * as FileSystem from 'expo-file-system/legacy';
@@ -663,18 +664,26 @@ export async function savePushToken(userId: string, token: string): Promise<void
 
 // Uploads one local photo to the public `shipment-photos` bucket and returns
 // its public URL (stored as-is in shipments.photos).
-// On web the pickers return a data URL; FileSystem can't read those.
-async function readImageBase64(localUri: string): Promise<string> {
-  if (localUri.startsWith('data:')) return localUri.slice(localUri.indexOf(',') + 1);
-  return FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
+// Web pickers return blob:/data: URLs and expo-file-system does not exist in
+// the browser — read those with fetch(); native file:// URIs go through
+// FileSystem.
+async function readImageBytes(localUri: string): Promise<ArrayBuffer> {
+  if (Platform.OS === 'web') {
+    const response = await fetch(localUri);
+    return await response.arrayBuffer();
+  }
+  const base64 = await FileSystem.readAsStringAsync(localUri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  return decode(base64);
 }
 
 export async function uploadShipmentPhoto(userId: string, localUri: string): Promise<string> {
-  const base64 = await readImageBase64(localUri);
+  const bytes = await readImageBytes(localUri);
   const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
   const { error } = await db()
     .storage.from('shipment-photos')
-    .upload(path, decode(base64), { contentType: 'image/jpeg', upsert: false });
+    .upload(path, bytes, { contentType: 'image/jpeg', upsert: false });
   if (error) throw error;
   const { data } = db().storage.from('shipment-photos').getPublicUrl(path);
   return data.publicUrl;
@@ -687,11 +696,11 @@ export async function uploadIdentityDocument(
   side: 'front' | 'back',
   localUri: string
 ): Promise<string> {
-  const base64 = await readImageBase64(localUri);
+  const bytes = await readImageBytes(localUri);
   const path = `${userId}/${side}-${Date.now()}.jpg`;
   const { error } = await db()
     .storage.from('identity-documents')
-    .upload(path, decode(base64), { contentType: 'image/jpeg', upsert: true });
+    .upload(path, bytes, { contentType: 'image/jpeg', upsert: true });
   if (error) throw error;
   return path;
 }
