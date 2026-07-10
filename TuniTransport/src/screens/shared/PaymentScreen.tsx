@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +26,7 @@ import { showAlert } from '../../utils/alert';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import {
   createPaymentIntent,
+  createCheckoutSession,
   waitForPaymentConfirmation,
   IS_STRIPE_LIVE,
 } from '../../services/payments';
@@ -96,6 +98,14 @@ export default function PaymentScreen() {
   const payLive = async () => {
     setStep('processing');
     try {
+      // The native Payment Sheet does not exist in the web build — use the
+      // hosted Stripe Checkout page instead. Booking confirmation still comes
+      // from the stripe-webhook function once the payment settles.
+      if (Platform.OS === 'web') {
+        const session = await createCheckoutSession(shipmentId);
+        window.location.assign(session.url);
+        return;
+      }
       const intent = await createPaymentIntent(amount, 'eur', shipmentId);
       // Loaded lazily: the native Stripe module only exists in dev/EAS builds.
       const stripeSdk = require('@stripe/stripe-react-native');
