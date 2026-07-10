@@ -65,7 +65,7 @@ export type RootStackParamList = {
   BidList: { shipmentId: string };
   Chat: { conversationId: string };
   Payment: { shipmentId: string; amount: number };
-  CreateShipment: { type?: ShipmentType } | undefined;
+  CreateShipment: { type?: ShipmentType; editShipmentId?: string } | undefined;
   CreateRoute: undefined;
   RateUser: { shipmentId: string };
   EditProfile: undefined;

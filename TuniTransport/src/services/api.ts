@@ -341,7 +341,19 @@ export async function updateShipment(id: string, updates: Partial<Shipment>): Pr
   if (updates.status !== undefined) payload.status = updates.status;
   if (updates.transporterId !== undefined) payload.transporter_id = updates.transporterId;
   if (updates.transporterName !== undefined) payload.transporter_name = updates.transporterName;
-  if (updates.price !== undefined) payload.price = updates.price;
+  // Editable listing fields: `'key' in updates` (not `!== undefined`) so an
+  // explicit undefined clears the column (e.g. weight when small → large).
+  if ('type' in updates) payload.type = updates.type;
+  if ('weight' in updates) payload.weight = updates.weight ?? null;
+  if ('price' in updates) payload.price = updates.price ?? null;
+  if ('items' in updates) payload.items = updates.items ?? null;
+  if ('description' in updates) payload.description = updates.description ?? null;
+  if ('dimensions' in updates) payload.dimensions = updates.dimensions ?? null;
+  if ('photos' in updates) payload.photos = updates.photos ?? null;
+  if ('nonCommercialDeclaredAt' in updates)
+    payload.non_commercial_declared_at = updates.nonCommercialDeclaredAt ?? null;
+  if (updates.pickupAddress !== undefined) payload.pickup_address = updates.pickupAddress;
+  if (updates.deliveryAddress !== undefined) payload.delivery_address = updates.deliveryAddress;
   if (updates.selectedBidId !== undefined) payload.selected_bid_id = updates.selectedBidId;
   if (updates.collectedAt !== undefined) payload.collected_at = updates.collectedAt;
   if (updates.deliveredAt !== undefined) payload.delivered_at = updates.deliveredAt;

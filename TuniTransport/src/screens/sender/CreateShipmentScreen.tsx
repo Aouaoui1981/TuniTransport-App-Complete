@@ -5,6 +5,9 @@
 // des transporteurs et/ou entente directe via la messagerie).
 // La publication exige l'acceptation des Conditions, Objets interdits et
 // Décharge de responsabilité (checkbox bloquante).
+// Sert aussi d'écran d'édition : `editShipmentId` pré-remplit le formulaire
+// et la sauvegarde met à jour l'annonce (uniquement tant qu'elle est
+// « pending », avant l'acceptation d'une offre).
 // ──────────────────────────────────────────────────────────────────────────
 import React, { useMemo, useState } from 'react';
 import {
@@ -43,30 +46,35 @@ export default function CreateShipmentScreen() {
   const navigation = useAppNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'CreateShipment'>>();
   const { user } = useAuth();
-  const { addShipment } = useData();
+  const { addShipment, updateShipment, getShipmentById } = useData();
 
-  const [type, setType] = useState<ShipmentType>(route.params?.type ?? 'small');
+  // Mode édition : l'annonce existante pré-remplit le formulaire.
+  const editShipmentId = route.params?.editShipmentId;
+  const editing = editShipmentId ? getShipmentById(editShipmentId) : undefined;
+  const isEditing = !!editing;
+
+  const [type, setType] = useState<ShipmentType>(editing?.type ?? route.params?.type ?? 'small');
   // Route
-  const [pickupCity, setPickupCity] = useState('');
-  const [deliveryCity, setDeliveryCity] = useState('');
+  const [pickupCity, setPickupCity] = useState(editing?.pickupAddress.city ?? '');
+  const [deliveryCity, setDeliveryCity] = useState(editing?.deliveryAddress.city ?? '');
   // Small parcel
-  const [weight, setWeight] = useState('');
+  const [weight, setWeight] = useState(editing?.weight != null ? String(editing.weight) : '');
   // Large item
-  const [description, setDescription] = useState('');
-  const [dimensions, setDimensions] = useState('');
+  const [description, setDescription] = useState(editing?.description ?? '');
+  const [dimensions, setDimensions] = useState(editing?.dimensions ?? '');
   // Addresses
-  const [pickupStreet, setPickupStreet] = useState('');
-  const [pickupContact, setPickupContact] = useState('');
-  const [pickupPhone, setPickupPhone] = useState('');
-  const [deliveryStreet, setDeliveryStreet] = useState('');
-  const [deliveryContact, setDeliveryContact] = useState('');
-  const [deliveryPhone, setDeliveryPhone] = useState('');
+  const [pickupStreet, setPickupStreet] = useState(editing?.pickupAddress.street ?? '');
+  const [pickupContact, setPickupContact] = useState(editing?.pickupAddress.contactName ?? '');
+  const [pickupPhone, setPickupPhone] = useState(editing?.pickupAddress.contactPhone ?? '');
+  const [deliveryStreet, setDeliveryStreet] = useState(editing?.deliveryAddress.street ?? '');
+  const [deliveryContact, setDeliveryContact] = useState(editing?.deliveryAddress.contactName ?? '');
+  const [deliveryPhone, setDeliveryPhone] = useState(editing?.deliveryAddress.contactPhone ?? '');
   // Photos (large items)
-  const [photoUris, setPhotoUris] = useState<string[]>([]);
+  const [photoUris, setPhotoUris] = useState<string[]>(editing?.photos ?? []);
 
-  // Consentements obligatoires
-  const [nonCommercial, setNonCommercial] = useState(false);
-  const [legalAccepted, setLegalAccepted] = useState(false);
+  // Consentements obligatoires (déjà donnés lors de la publication en édition)
+  const [nonCommercial, setNonCommercial] = useState(!!editing?.nonCommercialDeclaredAt);
+  const [legalAccepted, setLegalAccepted] = useState(!!editing?.termsAcceptedAt);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -121,9 +129,18 @@ export default function CreateShipmentScreen() {
   };
 
   async function handlePublish() {
+    // Une annonce n'est modifiable que tant qu'aucune offre n'a été acceptée.
+    if (isEditing && editing.status !== 'pending') {
+      showAlert(
+        'Modification impossible',
+        "Cet envoi a déjà été pris en charge : l'annonce ne peut plus être modifiée."
+      );
+      return;
+    }
     // Live mode requires a verified identity (enforced by RLS): guide the
     // user to the KYC screen instead of letting the insert fail server-side.
-    if (IS_LIVE && user?.identityStatus !== 'verified') {
+    // (L'édition ne crée pas de ligne : la vérification a déjà eu lieu.)
+    if (!isEditing && IS_LIVE && user?.identityStatus !== 'verified') {
       showAlert(
         'Vérification requise',
         "Vous devez faire vérifier votre identité avant de publier un envoi.",
@@ -172,14 +189,70 @@ export default function CreateShipmentScreen() {
     setSubmitting(true);
     try {
       // In live mode the photos go to Supabase Storage first; in demo mode
-      // the local URIs are kept as-is (in-memory data only).
+      // the local URIs are kept as-is (in-memory data only). En édition, les
+      // photos déjà en ligne (URL http…) sont conservées telles quelles.
       const shipmentPhotos = !isSmall ? photoUris : [];
       const photoUrls =
         IS_LIVE && user
-          ? await Promise.all(shipmentPhotos.map((uri) => uploadShipmentPhoto(user.id, uri)))
+          ? await Promise.all(
+              shipmentPhotos.map((uri) =>
+                uri.startsWith('http') ? Promise.resolve(uri) : uploadShipmentPhoto(user.id, uri)
+              )
+            )
           : shipmentPhotos;
 
       const consentAt = new Date().toISOString();
+      const pickupAddress = {
+        street: pickupStreet.trim(),
+        city: pickupCity.trim(),
+        postalCode: '',
+        country: 'France',
+        contactName: pickupContact.trim(),
+        contactPhone: pickupPhone.trim(),
+        ...coordsFor(pickupCity),
+      };
+      const deliveryAddress = {
+        street: deliveryStreet.trim(),
+        city: deliveryCity.trim(),
+        postalCode: '',
+        country: 'Tunisie',
+        contactName: deliveryContact.trim(),
+        contactPhone: deliveryPhone.trim(),
+        ...coordsFor(deliveryCity),
+      };
+
+      if (isEditing) {
+        await updateShipment(editing.id, {
+          type,
+          weight: isSmall ? weightNum : undefined,
+          price: isSmall ? livePrice : undefined,
+          description: !isSmall ? description.trim() : undefined,
+          dimensions: !isSmall && dimensions.trim() ? dimensions.trim() : undefined,
+          photos: photoUrls.length > 0 ? photoUrls : undefined,
+          nonCommercialDeclaredAt: isSmall
+            ? editing.nonCommercialDeclaredAt ?? consentAt
+            : undefined,
+          pickupAddress,
+          deliveryAddress,
+          trackingHistory: [
+            ...editing.trackingHistory,
+            {
+              id: `te-edit-${Date.now()}`,
+              status: 'pending',
+              description: "Annonce modifiée par l'expéditeur",
+              location: `${pickupAddress.city}, ${pickupAddress.country}`,
+              timestamp: consentAt,
+            },
+          ],
+        });
+        showAlert(
+          'Annonce modifiée',
+          'Vos changements sont enregistrés — les transporteurs voient désormais la version à jour.',
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+        return;
+      }
+
       await addShipment({
         termsAcceptedAt: consentAt,
         nonCommercialDeclaredAt: isSmall ? consentAt : undefined,
@@ -191,24 +264,8 @@ export default function CreateShipmentScreen() {
         description: !isSmall ? description.trim() : undefined,
         dimensions: !isSmall && dimensions.trim() ? dimensions.trim() : undefined,
         photos: photoUrls.length > 0 ? photoUrls : undefined,
-        pickupAddress: {
-          street: pickupStreet.trim(),
-          city: pickupCity.trim(),
-          postalCode: '',
-          country: 'France',
-          contactName: pickupContact.trim(),
-          contactPhone: pickupPhone.trim(),
-          ...coordsFor(pickupCity),
-        },
-        deliveryAddress: {
-          street: deliveryStreet.trim(),
-          city: deliveryCity.trim(),
-          postalCode: '',
-          country: 'Tunisie',
-          contactName: deliveryContact.trim(),
-          contactPhone: deliveryPhone.trim(),
-          ...coordsFor(deliveryCity),
-        },
+        pickupAddress,
+        deliveryAddress,
       });
       showAlert(
         'Envoi publié !',
@@ -218,10 +275,31 @@ export default function CreateShipmentScreen() {
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (e) {
-      showAlert('Erreur', getErrorMessage(e, "L'envoi n'a pas pu être créé."));
+      showAlert(
+        'Erreur',
+        getErrorMessage(e, isEditing ? "L'envoi n'a pas pu être modifié." : "L'envoi n'a pas pu être créé.")
+      );
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Lien d'édition vers une annonce qui n'existe plus (ou pas encore chargée).
+  if (editShipmentId && !editing) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color={COLORS.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Modifier l'envoi</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.notFoundWrap}>
+          <Text style={styles.notFoundText}>Envoi introuvable.</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -230,7 +308,7 @@ export default function CreateShipmentScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={22} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nouvel envoi</Text>
+        <Text style={styles.headerTitle}>{isEditing ? "Modifier l'envoi" : 'Nouvel envoi'}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -415,8 +493,10 @@ export default function CreateShipmentScreen() {
               <ActivityIndicator color={COLORS.white} />
             ) : (
               <>
-                <Ionicons name="paper-plane" size={18} color={COLORS.white} />
-                <Text style={styles.publishText}>Publier l'envoi</Text>
+                <Ionicons name={isEditing ? 'checkmark' : 'paper-plane'} size={18} color={COLORS.white} />
+                <Text style={styles.publishText}>
+                  {isEditing ? 'Enregistrer les modifications' : "Publier l'envoi"}
+                </Text>
               </>
             )}
           </TouchableOpacity>
@@ -462,6 +542,8 @@ const styles = StyleSheet.create({
     ...SHADOWS.sm,
   },
   headerTitle: { fontSize: FONTS.sizes.xl, fontWeight: '800', color: COLORS.text },
+  notFoundWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  notFoundText: { fontSize: FONTS.sizes.lg, color: COLORS.textSecondary },
 
   scroll: { padding: SPACING.xl, paddingTop: SPACING.sm, paddingBottom: SPACING.xxxl },
 
