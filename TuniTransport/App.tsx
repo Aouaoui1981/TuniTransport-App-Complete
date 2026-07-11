@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/context/AuthContext';
 import { DataProvider } from './src/context/DataContext';
 import AppNavigator from './src/navigation/AppNavigator';
+import AppAlertHost from './src/components/AppAlert';
 import { IS_STRIPE_LIVE, STRIPE_PUBLISHABLE_KEY } from './src/services/stripe';
 
 let StripeProvider: React.ComponentType<any> | null = null;
@@ -32,6 +33,7 @@ function Root() {
         <NavigationContainer>
           <StatusBar style="auto" />
           <AppNavigator />
+          <AppAlertHost />
         </NavigationContainer>
       </DataProvider>
     </AuthProvider>
