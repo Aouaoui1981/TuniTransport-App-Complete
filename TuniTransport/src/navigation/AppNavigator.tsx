@@ -107,9 +107,17 @@ function MainTabs() {
         tabBarInactiveTintColor: COLORS.textLight,
         tabBarStyle: {
           backgroundColor: COLORS.surface,
-          borderTopColor: COLORS.border,
+          borderTopWidth: 0,
+          height: 62,
+          paddingTop: 6,
+          paddingBottom: 8,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.06,
+          shadowRadius: 12,
+          elevation: 10,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
         tabBarIcon: ({ color, size, focused }) => {
           const base = TAB_ICONS[route.name] ?? 'ellipse';
           const name = focused ? base : (`${base}-outline` as keyof typeof Ionicons.glyphMap);
