@@ -50,9 +50,10 @@ export default function PaymentScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Payment'>>();
   const { shipmentId, amount } = route.params;
-  const { getShipmentById, updateShipment, refresh } = useData();
+  const { getShipmentById, updateShipment, refresh, payByCash } = useData();
 
   const [step, setStep] = useState<Step>('form');
+  const [method, setMethod] = useState<'card' | 'cash'>('card');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
@@ -160,7 +161,29 @@ export default function PaymentScreen() {
     }
   };
 
-  const pay = () => (IS_STRIPE_LIVE ? payLive() : payDemo());
+  const payCash = async () => {
+    setStep('processing');
+    try {
+      await payByCash(shipmentId);
+      if (isMounted.current) {
+        setStep('success');
+        scheduleLocalNotification(
+          'Réservation confirmée',
+          `Vous réglerez ${amount}€ en espèces à la remise du colis.`
+        );
+      }
+    } catch (e) {
+      if (isMounted.current) {
+        setStep('form');
+        showAlert('Erreur', getErrorMessage(e, 'L’opération n’a pas abouti. Réessayez.'));
+      }
+    }
+  };
+
+  const pay = () => {
+    if (method === 'cash') return payCash();
+    return IS_STRIPE_LIVE ? payLive() : payDemo();
+  };
 
   if (step === 'success') {
     return (
@@ -169,9 +192,15 @@ export default function PaymentScreen() {
           <View style={styles.successCircle}>
             <Ionicons name="checkmark" size={54} color={COLORS.white} />
           </View>
-          <Text style={styles.successTitle}>Paiement réussi !</Text>
+          <Text style={styles.successTitle}>
+            {method === 'cash' ? 'Réservation confirmée !' : 'Paiement réussi !'}
+          </Text>
           <Text style={styles.successAmount}>{amount}€</Text>
-          <Text style={styles.successNote}>Le transporteur sera notifié.</Text>
+          <Text style={styles.successNote}>
+            {method === 'cash'
+              ? 'À régler en espèces au transporteur à la remise du colis.'
+              : 'Le transporteur sera notifié.'}
+          </Text>
           <TouchableOpacity style={styles.homeBtn} onPress={goHome}>
             <Text style={styles.homeBtnText}>Retour à l’accueil</Text>
           </TouchableOpacity>
@@ -195,13 +224,58 @@ export default function PaymentScreen() {
           <Text style={styles.amountShipment}>Envoi #{shortId}</Text>
         </LinearGradient>
 
-        {/* Stripe badge */}
-        <View style={styles.stripeBadge}>
-          <Ionicons name="lock-closed" size={14} color={COLORS.secondary} />
-          <Text style={styles.stripeBadgeText}>Paiement sécurisé par Stripe</Text>
+        {/* Payment method selector */}
+        <Text style={styles.methodTitle}>Mode de paiement</Text>
+        <View style={styles.methodRow}>
+          <TouchableOpacity
+            style={[styles.methodCard, method === 'card' && styles.methodCardActive]}
+            activeOpacity={0.85}
+            onPress={() => setMethod('card')}
+          >
+            <Ionicons
+              name="card"
+              size={24}
+              color={method === 'card' ? COLORS.primary : COLORS.textSecondary}
+            />
+            <Text style={[styles.methodLabel, method === 'card' && styles.methodLabelActive]}>
+              Carte bancaire
+            </Text>
+            <Text style={styles.methodSub}>En ligne, sécurisé</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.methodCard, method === 'cash' && styles.methodCardActive]}
+            activeOpacity={0.85}
+            onPress={() => setMethod('cash')}
+          >
+            <Ionicons
+              name="cash"
+              size={24}
+              color={method === 'cash' ? COLORS.primary : COLORS.textSecondary}
+            />
+            <Text style={[styles.methodLabel, method === 'cash' && styles.methodLabelActive]}>
+              Espèces
+            </Text>
+            <Text style={styles.methodSub}>À la remise</Text>
+          </TouchableOpacity>
         </View>
 
-        {IS_STRIPE_LIVE ? (
+        {method === 'cash' ? (
+          <View style={styles.cashInfo}>
+            <Ionicons name="information-circle" size={20} color={COLORS.primary} />
+            <Text style={styles.cashInfoText}>
+              Vous remettrez {amount}€ en espèces au transporteur lors de la remise du
+              colis. La réservation est confirmée immédiatement et l'accord est tracé
+              dans le suivi de l'envoi.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.stripeBadge}>
+            <Ionicons name="lock-closed" size={14} color={COLORS.secondary} />
+            <Text style={styles.stripeBadgeText}>Paiement sécurisé par Stripe</Text>
+          </View>
+        )}
+
+        {method === 'cash' ? null : IS_STRIPE_LIVE ? (
           <Text style={styles.liveHint}>
             Vous allez être redirigé vers le formulaire de paiement sécurisé.
           </Text>
@@ -267,8 +341,10 @@ export default function PaymentScreen() {
             <ActivityIndicator color={COLORS.white} />
           ) : (
             <>
-              <Ionicons name="lock-closed" size={18} color={COLORS.white} />
-              <Text style={styles.payBtnText}>Payer {amount}€</Text>
+              <Ionicons name={method === 'cash' ? 'cash' : 'lock-closed'} size={18} color={COLORS.white} />
+              <Text style={styles.payBtnText}>
+                {method === 'cash' ? `Confirmer — ${amount}€ en espèces` : `Payer ${amount}€`}
+              </Text>
             </>
           )}
         </TouchableOpacity>
@@ -290,6 +366,41 @@ const styles = StyleSheet.create({
   amountLabel: { color: '#DBEAFECC', fontSize: FONTS.sizes.md, fontWeight: '600' },
   amountValue: { color: COLORS.white, fontSize: 44, fontWeight: '800' },
   amountShipment: { color: '#DBEAFECC', fontSize: FONTS.sizes.sm },
+  methodTitle: {
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.sm,
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  methodRow: { flexDirection: 'row', gap: SPACING.md },
+  methodCard: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    borderWidth: 2,
+    borderColor: COLORS.borderLight,
+    paddingVertical: SPACING.lg,
+  },
+  methodCardActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
+  },
+  methodLabel: { fontSize: FONTS.sizes.md, fontWeight: '700', color: COLORS.textSecondary },
+  methodLabelActive: { color: COLORS.primary },
+  methodSub: { fontSize: FONTS.sizes.xs, color: COLORS.textLight },
+  cashInfo: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    alignItems: 'flex-start',
+    backgroundColor: COLORS.primaryLight,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginTop: SPACING.lg,
+  },
+  cashInfoText: { flex: 1, fontSize: FONTS.sizes.md, lineHeight: 20, color: COLORS.primaryDark },
   stripeBadge: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -123,6 +123,8 @@ export interface Shipment {
   collectedAt?: string;
   deliveredAt?: string;
   paidAt?: string;
+  /** 'card' (Stripe) or 'cash' (paid in person at handover). Null = card. */
+  paymentMethod?: 'card' | 'cash';
   selectedBidId?: string;
   trackingHistory: TrackingEvent[];
   bids?: Bid[];
