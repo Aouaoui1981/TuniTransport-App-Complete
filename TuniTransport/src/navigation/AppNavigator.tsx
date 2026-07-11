@@ -41,6 +41,7 @@ import IdentityVerificationScreen from '../screens/shared/IdentityVerificationSc
 import AdminVerificationsScreen from '../screens/shared/AdminVerificationsScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import LegalPageScreen from '../screens/shared/LegalPageScreen';
+import WhitePaperScreen from '../screens/shared/WhitePaperScreen';
 import { LEGAL_PAGES, LegalPageKey } from '../content/legal';
 
 // ── Param lists ──────────────────────────────────────────────────────────
@@ -73,6 +74,7 @@ export type RootStackParamList = {
   AdminVerifications: undefined;
   Notifications: undefined;
   Legal: { page: LegalPageKey };
+  WhitePaper: undefined;
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -180,6 +182,11 @@ export default function AppNavigator() {
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen
+            name="WhitePaper"
+            component={WhitePaperScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Livre blanc' }}
+          />
         </>
       ) : (
         <>
@@ -244,6 +251,11 @@ export default function AppNavigator() {
               ...SUBSCREEN_HEADER,
               title: LEGAL_PAGES[route.params.page].title,
             })}
+          />
+          <Stack.Screen
+            name="WhitePaper"
+            component={WhitePaperScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Livre blanc' }}
           />
         </>
       )}
