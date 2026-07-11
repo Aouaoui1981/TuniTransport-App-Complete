@@ -163,8 +163,10 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xl,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
     ...SHADOWS.md,
   },
 

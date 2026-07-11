@@ -188,8 +188,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.xl,
   },
-  hello: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary },
-  name: { fontSize: FONTS.sizes.xxl, fontWeight: '800', color: COLORS.text },
+  hello: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary, fontWeight: '500' },
+  name: { fontSize: FONTS.sizes.xxxl, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
   bell: {
     width: 44,
     height: 44,
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   quickRow: { flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.xl },
   quickCard: {
     flex: 1,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     alignItems: 'center',
     gap: SPACING.xs,

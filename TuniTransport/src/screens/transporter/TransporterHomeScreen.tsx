@@ -199,9 +199,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.xl,
   },
-  hello: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary },
+  hello: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary, fontWeight: '500' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  name: { fontSize: FONTS.sizes.xxl, fontWeight: '800', color: COLORS.text },
+  name: { fontSize: FONTS.sizes.xxxl, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
