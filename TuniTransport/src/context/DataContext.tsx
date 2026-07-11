@@ -51,6 +51,7 @@ interface DataContextValue {
   addBid: (bid: Omit<Bid, 'id' | 'createdAt' | 'status'>) => Promise<void>;
   acceptBid: (shipmentId: string, bidId: string) => Promise<void>;
   acceptSmallShipment: (shipmentId: string) => Promise<void>;
+  payByCash: (shipmentId: string) => Promise<void>;
   addMessage: (msg: Pick<Message, 'conversationId' | 'senderId' | 'text'>) => Promise<Message>;
   ensureConversation: (params: {
     otherUserId: string;
@@ -391,6 +392,44 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [user]
   );
 
+  // ── payByCash (règlement en espèces à la remise) ────────────────────────
+  // paid_at est verrouillé côté client : le mode live passe par le RPC
+  // choose_cash_payment ; le mode démo simule localement.
+
+  const payByCash = useCallback(async (shipmentId: string) => {
+    const now = new Date().toISOString();
+    let snapshot: Shipment[] = [];
+    setShipments((prev) => {
+      snapshot = prev;
+      return prev.map((s) => {
+        if (s.id !== shipmentId) return s;
+        const event: TrackingEvent = {
+          id: uid('te'),
+          status: s.status,
+          description:
+            'Paiement en espèces convenu — à régler au transporteur à la remise du colis. Réservation validée.',
+          timestamp: now,
+        };
+        return {
+          ...s,
+          paidAt: now,
+          paymentMethod: 'cash' as const,
+          trackingHistory: [...s.trackingHistory, event],
+        };
+      });
+    });
+    if (IS_LIVE) {
+      try {
+        await api.chooseCashPayment(shipmentId);
+      } catch (e) {
+        if (isMounted.current) {
+          setShipments(snapshot);
+        }
+        throw e;
+      }
+    }
+  }, []);
+
   // ── addMessage ──────────────────────────────────────────────────────────
 
   const addMessage = useCallback(
@@ -555,6 +594,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       addBid,
       acceptBid,
       acceptSmallShipment,
+      payByCash,
       addMessage,
       ensureConversation,
       addRoute,
@@ -574,6 +614,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       addBid,
       acceptBid,
       acceptSmallShipment,
+      payByCash,
       addMessage,
       ensureConversation,
       addRoute,

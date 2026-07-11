@@ -321,13 +321,18 @@ export default function ShipmentDetailScreen() {
 
           {isSender && shipment.paidAt ? (
             <View style={styles.paidBanner}>
-              <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+              <Ionicons
+                name={shipment.paymentMethod === 'cash' ? 'cash' : 'checkmark-circle'}
+                size={18}
+                color={COLORS.success}
+              />
               <Text style={styles.paidText}>
-                Payé le{' '}
-                {new Date(shipment.paidAt).toLocaleDateString('fr-FR', {
-                  day: 'numeric',
-                  month: 'long',
-                })}
+                {shipment.paymentMethod === 'cash'
+                  ? 'Espèces à la remise — réservation confirmée'
+                  : `Payé le ${new Date(shipment.paidAt).toLocaleDateString('fr-FR', {
+                      day: 'numeric',
+                      month: 'long',
+                    })}`}
               </Text>
             </View>
           ) : null}

@@ -977,3 +977,60 @@ $$;
 
 revoke execute on function public.accept_small_shipment_transaction(uuid) from public, anon;
 grant execute on function public.accept_small_shipment_transaction(uuid) to authenticated;
+
+-- ═══════════════════════════════════════════
+-- THL -- Paiement en espèces (à la remise)
+-- ═══════════════════════════════════════════
+-- Existing project: run this whole section once in the SQL Editor.
+
+alter table public.shipments
+  add column if not exists payment_method text
+  check (payment_method in ('card', 'cash'));
+
+-- L'expéditeur choisit le règlement en espèces : la réservation est
+-- confirmée immédiatement (paid_at) et l'accord est tracé. paid_at est
+-- verrouillé côté client par le trigger shipments_guard, d'où ce RPC
+-- SECURITY DEFINER (même modèle qu'accept_bid_transaction).
+create or replace function public.choose_cash_payment(
+  p_shipment_id uuid
+)
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_shipment public.shipments%rowtype;
+begin
+  select * into v_shipment
+  from public.shipments
+  where id = p_shipment_id
+  for update;
+  if not found then
+    raise exception 'Envoi introuvable.';
+  end if;
+  if v_shipment.sender_id <> auth.uid() then
+    raise exception 'Seul l''expéditeur peut choisir le mode de paiement.';
+  end if;
+  if v_shipment.status <> 'accepted' then
+    raise exception 'Cet envoi n''est pas prêt pour le paiement.';
+  end if;
+  if v_shipment.paid_at is not null then
+    raise exception 'Cet envoi a déjà été payé.';
+  end if;
+
+  update public.shipments
+  set paid_at        = now(),
+      payment_method = 'cash'
+  where id = p_shipment_id;
+
+  insert into public.tracking_events (shipment_id, status, description)
+  values (
+    p_shipment_id,
+    v_shipment.status,
+    'Paiement en espèces convenu — à régler au transporteur à la remise du colis. Réservation validée.'
+  );
+end;
+$$;
+
+revoke execute on function public.choose_cash_payment(uuid) from public, anon;
+grant execute on function public.choose_cash_payment(uuid) to authenticated;

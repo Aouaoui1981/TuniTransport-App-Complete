@@ -95,6 +95,7 @@ interface ShipmentRow {
   collected_at?: string;
   delivered_at?: string;
   paid_at?: string;
+  payment_method?: 'card' | 'cash';
   selected_bid_id?: string;
   tracking_events?: TrackingEventRow[];
   bids?: BidRow[];
@@ -220,6 +221,7 @@ function mapShipment(row: ShipmentRow): Shipment {
     collectedAt: row.collected_at ?? undefined,
     deliveredAt: row.delivered_at ?? undefined,
     paidAt: row.paid_at ?? undefined,
+    paymentMethod: row.payment_method ?? undefined,
     selectedBidId: row.selected_bid_id ?? undefined,
     trackingHistory: (row.tracking_events ?? []).map(mapTrackingEvent),
     bids: (row.bids ?? []).map(mapBid),
@@ -408,6 +410,17 @@ export async function createBid(
  */
 export async function acceptSmallShipment(shipmentId: string): Promise<void> {
   const { error } = await db().rpc('accept_small_shipment_transaction', {
+    p_shipment_id: shipmentId,
+  });
+  if (error) throw error;
+}
+
+/**
+ * Sender opts to pay in cash at handover. paid_at is server-managed
+ * (locked by the shipments guard trigger), hence the SECURITY DEFINER RPC.
+ */
+export async function chooseCashPayment(shipmentId: string): Promise<void> {
+  const { error } = await db().rpc('choose_cash_payment', {
     p_shipment_id: shipmentId,
   });
   if (error) throw error;
