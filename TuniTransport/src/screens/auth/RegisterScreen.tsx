@@ -401,20 +401,6 @@ export default function RegisterScreen() {
               <Text style={styles.footerLink}>Se connecter</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={styles.whitePaperLink}
-            onPress={() => navigation.navigate('WhitePaper')}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Découvrir le livre blanc THL"
-          >
-            <Ionicons name="book-outline" size={16} color={COLORS.primary} />
-            <Text style={styles.whitePaperLinkText}>
-              Notre vision & feuille de route — Livre blanc THL
-            </Text>
-            <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
-          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -541,20 +527,4 @@ const styles = StyleSheet.create({
   },
   footerText: { color: COLORS.textSecondary, fontSize: FONTS.sizes.md },
   footerLink: { color: COLORS.primary, fontWeight: '700', fontSize: FONTS.sizes.md },
-
-  whitePaperLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    marginTop: SPACING.lg,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.primaryLight,
-    backgroundColor: `${COLORS.primary}08`,
-    alignSelf: 'center',
-  },
-  whitePaperLinkText: { color: COLORS.primary, fontWeight: '600', fontSize: FONTS.sizes.sm },
 });

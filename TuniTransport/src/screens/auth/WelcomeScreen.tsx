@@ -126,6 +126,21 @@ export default function WelcomeScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Livre blanc */}
+        <TouchableOpacity
+          style={styles.whitePaperLink}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('WhitePaper')}
+          accessibilityRole="button"
+          accessibilityLabel="Découvrir le livre blanc THL"
+        >
+          <Ionicons name="book-outline" size={18} color={COLORS.primary} />
+          <Text style={styles.whitePaperLinkText}>
+            Notre vision & feuille de route — Livre blanc THL
+          </Text>
+          <Ionicons name="chevron-forward" size={15} color={COLORS.primary} />
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -258,4 +273,19 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
   },
   loginLinkAccent: { color: COLORS.primary, fontWeight: '700' },
+
+  whitePaperLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.xxxl,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
+    backgroundColor: COLORS.surface,
+  },
+  whitePaperLinkText: { color: COLORS.primary, fontWeight: '600', fontSize: FONTS.sizes.sm },
 });
