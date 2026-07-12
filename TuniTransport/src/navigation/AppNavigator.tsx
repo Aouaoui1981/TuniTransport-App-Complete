@@ -36,6 +36,7 @@ import ChatScreen from '../screens/shared/ChatScreen';
 import PaymentScreen from '../screens/shared/PaymentScreen';
 import ProfileScreen from '../screens/shared/ProfileScreen';
 import RateUserScreen from '../screens/shared/RateUserScreen';
+import UserReviewsScreen from '../screens/shared/UserReviewsScreen';
 import EditProfileScreen from '../screens/shared/EditProfileScreen';
 import MapScreen from '../screens/shared/MapScreen';
 import IdentityVerificationScreen from '../screens/shared/IdentityVerificationScreen';
@@ -71,6 +72,7 @@ export type RootStackParamList = {
   CreateShipment: { type?: ShipmentType; editShipmentId?: string } | undefined;
   CreateRoute: undefined;
   RateUser: { shipmentId: string };
+  UserReviews: { userId: string; userName: string; rating?: number; totalRatings?: number };
   EditProfile: undefined;
   IdentityVerification: undefined;
   AdminVerifications: undefined;
@@ -227,6 +229,11 @@ export default function AppNavigator() {
             name="RateUser"
             component={RateUserScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Évaluation' }}
+          />
+          <Stack.Screen
+            name="UserReviews"
+            component={UserReviewsScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Avis' }}
           />
           <Stack.Screen
             name="EditProfile"

@@ -45,6 +45,18 @@ export interface User {
   isAdmin?: boolean;
 }
 
+/** Avis public laissé par un expéditeur sur un transporteur (ou l'inverse). */
+export interface Review {
+  id: string;
+  ratedUserId: string;
+  raterName: string;
+  stars: number;
+  tags?: string[];
+  comment?: string;
+  photos?: string[];
+  createdAt: string;
+}
+
 export interface Address {
   street: string;
   city: string;

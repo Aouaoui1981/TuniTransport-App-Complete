@@ -20,6 +20,7 @@ import {
   MOCK_CONVERSATIONS,
   MOCK_MESSAGES,
   MOCK_ROUTES,
+  MOCK_REVIEWS,
 } from '../services/mockData';
 import { useAuth } from './AuthContext';
 import {
@@ -29,6 +30,7 @@ import {
   Route,
   Bid,
   TrackingEvent,
+  Review,
 } from '../types';
 
 let seq = 0;
@@ -66,7 +68,9 @@ interface DataContextValue {
     stars: number;
     tags?: string[];
     comment?: string;
+    photos?: string[];
   }) => Promise<void>;
+  getUserReviews: (userId: string) => Promise<Review[]>;
   getShipmentById: (id: string) => Shipment | undefined;
   getConversationById: (id: string) => Conversation | undefined;
   getMessagesByConversation: (conversationId: string) => Message[];
@@ -81,6 +85,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
+  // Demo-only local store of reviews (live mode fetches from Supabase).
+  const [reviews, setReviews] = useState<Review[]>([]);
   const isMounted = useRef(true);
   const [isReady, setIsReady] = useState(false);
 
@@ -125,6 +131,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       setConversations(MOCK_CONVERSATIONS.map((c) => ({ ...c })));
       setMessages(MOCK_MESSAGES.map((m) => ({ ...m })));
       setRoutes(MOCK_ROUTES.map((r) => ({ ...r })));
+      setReviews(MOCK_REVIEWS.map((r) => ({ ...r })));
     }
   }, [user]);
 
@@ -583,12 +590,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       stars: number;
       tags?: string[];
       comment?: string;
+      photos?: string[];
     }) => {
       if (IS_LIVE && user) {
         await api.submitRating({ ...params, raterId: user.id });
         return;
       }
-      // Demo mode: recompute the transporter's average wherever it appears.
+      // Demo mode: recompute the transporter's average wherever it appears
+      // and store the review locally so it shows on the public reviews page.
       setShipments((prev) =>
         prev.map((s) => ({
           ...s,
@@ -599,8 +608,31 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ),
         }))
       );
+      const review: Review = {
+        id: uid('rev'),
+        ratedUserId: params.ratedUserId,
+        raterName: user?.firstName || 'Vous',
+        stars: params.stars,
+        tags: params.tags,
+        comment: params.comment,
+        photos: params.photos,
+        createdAt: new Date().toISOString(),
+      };
+      setReviews((prev) => [review, ...prev]);
     },
     [user]
+  );
+
+  // ── getUserReviews (avis publics d'un utilisateur) ───────────────────────
+
+  const getUserReviews = useCallback(
+    async (userId: string): Promise<Review[]> => {
+      if (IS_LIVE) {
+        return api.listUserReviews(userId);
+      }
+      return reviews.filter((r) => r.ratedUserId === userId);
+    },
+    [reviews]
   );
 
   // ── Getters ─────────────────────────────────────────────────────────────
@@ -640,6 +672,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       ensureConversation,
       addRoute,
       submitRating,
+      getUserReviews,
       getShipmentById,
       getConversationById,
       getMessagesByConversation,
@@ -661,6 +694,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       ensureConversation,
       addRoute,
       submitRating,
+      getUserReviews,
       getShipmentById,
       getConversationById,
       getMessagesByConversation,
