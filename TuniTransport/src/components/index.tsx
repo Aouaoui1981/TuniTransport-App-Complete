@@ -2,7 +2,7 @@
 // TuniTransport — shared components (STEP 3)
 // ──────────────────────────────────────────────────────────────────────────
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../utils/theme';
 import { ShipmentStatus } from '../types';
@@ -117,11 +117,21 @@ export function Avatar({
   name,
   size = 44,
   color = COLORS.primary,
+  uri,
 }: {
   name?: string;
   size?: number;
   color?: string;
+  uri?: string;
 }) {
+  if (uri) {
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: `${color}22` }}
+      />
+    );
+  }
   const initials = (name || '?')
     .split(' ')
     .filter(Boolean)

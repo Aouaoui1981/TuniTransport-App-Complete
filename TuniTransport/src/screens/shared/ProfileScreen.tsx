@@ -101,15 +101,17 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Identity */}
         <View style={styles.identity}>
-          <View>
-            <Avatar name={`${user.firstName} ${user.lastName}`} size={84} color={roleColor} />
-            <TouchableOpacity
-              style={[styles.cameraBtn, { backgroundColor: roleColor }]}
-              onPress={() => showAlert('Photo de profil', 'Cette option sera bientôt disponible.')}
-            >
+          <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('EditProfile')}>
+            <Avatar
+              name={`${user.firstName} ${user.lastName}`}
+              size={84}
+              color={roleColor}
+              uri={user.avatar}
+            />
+            <View style={[styles.cameraBtn, { backgroundColor: roleColor }]}>
               <Ionicons name="camera" size={14} color={COLORS.white} />
-            </TouchableOpacity>
-          </View>
+            </View>
+          </TouchableOpacity>
           <Text style={styles.name}>
             {user.firstName} {user.lastName}
           </Text>
