@@ -707,6 +707,19 @@ interface CheckoutSessionResponse {
   transporterAmount: number;
 }
 
+// Stripe rejects malformed redirect URLs ("Not a valid URL"). Secrets pasted
+// from a phone often carry a trailing newline/space or drop the scheme, so
+// sanitize: trim whitespace, fall back when empty, and assume https:// when a
+// bare domain (no scheme) slipped in.
+function sanitizeCheckoutUrl(raw: string, fallback: string): string {
+  const v = (raw ?? '').trim();
+  if (!v) return fallback;
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(v)) return v;
+  return `https://${v}`;
+}
+
+const DEFAULT_CHECKOUT_URL = 'https://thl-colis-app-complete.vercel.app';
+
 servePost(async (req) => {
   const admin = createAdminClient();
   const user = await getAuthenticatedUser(admin, req);
@@ -721,13 +734,13 @@ servePost(async (req) => {
   const split = computeSplit(toCents(shipment.price), getPlatformFeePercent());
 
   const shortId = shipment.id.slice(-4).toUpperCase();
-  const successUrl = optionalEnv(
-    'CHECKOUT_SUCCESS_URL',
-    'tunitransport://payment/success?shipment={SHIPMENT_ID}'
+  const successUrl = sanitizeCheckoutUrl(
+    optionalEnv('CHECKOUT_SUCCESS_URL', DEFAULT_CHECKOUT_URL),
+    DEFAULT_CHECKOUT_URL
   ).replace('{SHIPMENT_ID}', shipment.id);
-  const cancelUrl = optionalEnv(
-    'CHECKOUT_CANCEL_URL',
-    'tunitransport://payment/cancel?shipment={SHIPMENT_ID}'
+  const cancelUrl = sanitizeCheckoutUrl(
+    optionalEnv('CHECKOUT_CANCEL_URL', DEFAULT_CHECKOUT_URL),
+    DEFAULT_CHECKOUT_URL
   ).replace('{SHIPMENT_ID}', shipment.id);
 
   const metadata = {
