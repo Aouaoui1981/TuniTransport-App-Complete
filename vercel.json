@@ -7,7 +7,7 @@
     "env": {
       "EXPO_PUBLIC_SUPABASE_URL": "https://leuntmiyxqvetksfrjfm.supabase.co",
       "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_jLRE6NoomvAG_0WtN3Tcgg_FlI1qcwr",
-      "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51TrbUtIwX5XJcgLWbiB00FrsO7cUGON2yCN8GGf6bXIVMZDFPoEDt4hyxW5Z3pL1T9Zfw6oh6Ae8nVbq7NaCBxeG000euN8K25"
+      "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51TrbUtIwX5XJcgLWRbKxEelIk1Ll4BE05qwnvbGRBD1ubloFOeeyyZm5dRZxqeVVMSFQpwzYnzV4eZbF0eMGs29W0044SPEPRk"
     }
   },
   "outputDirectory": "TuniTransport/dist",
