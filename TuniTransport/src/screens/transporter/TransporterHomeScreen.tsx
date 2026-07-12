@@ -21,7 +21,9 @@ export default function TransporterHomeScreen() {
   const inProgress = assigned.filter((s) =>
     ['accepted', 'collected', 'in_transit', 'arrived'].includes(s.status)
   ).length;
-  const delivered = assigned.filter((s) => s.status === 'delivered').length;
+  const deliveredShipments = assigned.filter((s) => s.status === 'delivered');
+  const delivered = deliveredShipments.length;
+  const earnings = deliveredShipments.reduce((sum, s) => sum + (s.price ?? 0), 0);
   const available = shipments.filter((s) => s.status === 'pending').length;
   const hasUnread = conversations.some((c) => c.unreadCount > 0);
 
@@ -96,6 +98,27 @@ export default function TransporterHomeScreen() {
             <Text style={styles.statLabel}>Disponibles</Text>
           </TouchableOpacity>
         </Card>
+
+        {/* Earnings */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() =>
+            navigation.navigate('Main', { screen: 'Livraisons', params: { filter: 'delivered' } })
+          }
+        >
+          <Card style={styles.earningsCard}>
+            <View style={styles.earningsIcon}>
+              <Ionicons name="wallet" size={22} color={COLORS.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.earningsLabel}>Total encaissé</Text>
+              <Text style={styles.earningsSub}>
+                {delivered} livraison{delivered > 1 ? 's' : ''} terminée{delivered > 1 ? 's' : ''}
+              </Text>
+            </View>
+            <Text style={styles.earningsValue}>{earnings}€</Text>
+          </Card>
+        </TouchableOpacity>
 
         {/* My upcoming routes */}
         <SectionHeader
@@ -262,7 +285,26 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.danger,
   },
 
-  statsCard: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.xxl },
+  statsCard: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.lg },
+
+  earningsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.xxl,
+    backgroundColor: COLORS.secondary,
+  },
+  earningsIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  earningsLabel: { fontSize: FONTS.sizes.md, fontWeight: '700', color: COLORS.white },
+  earningsSub: { fontSize: FONTS.sizes.sm, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
+  earningsValue: { fontSize: FONTS.sizes.xxxl, fontWeight: '800', color: COLORS.white, letterSpacing: -0.5 },
   statCol: { flex: 1, alignItems: 'center' },
   statValue: { fontSize: FONTS.sizes.xxl, fontWeight: '800' },
   statLabel: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary, marginTop: 2 },

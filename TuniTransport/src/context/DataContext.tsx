@@ -52,6 +52,7 @@ interface DataContextValue {
   acceptBid: (shipmentId: string, bidId: string) => Promise<void>;
   acceptSmallShipment: (shipmentId: string) => Promise<void>;
   payByCash: (shipmentId: string) => Promise<void>;
+  confirmDelivery: (shipmentId: string) => Promise<void>;
   addMessage: (msg: Pick<Message, 'conversationId' | 'senderId' | 'text'>) => Promise<Message>;
   ensureConversation: (params: {
     otherUserId: string;
@@ -430,6 +431,45 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // ── confirmDelivery (l'expéditeur confirme la réception) ─────────────────
+  // status/delivered_at sont verrouillés côté client : le mode live passe
+  // par le RPC confirm_delivery ; le montant est alors compté dans les gains
+  // du transporteur (total dérivé). Le mode démo simule localement.
+
+  const confirmDelivery = useCallback(async (shipmentId: string) => {
+    const now = new Date().toISOString();
+    let snapshot: Shipment[] = [];
+    setShipments((prev) => {
+      snapshot = prev;
+      return prev.map((s) => {
+        if (s.id !== shipmentId) return s;
+        const event: TrackingEvent = {
+          id: uid('te'),
+          status: 'delivered',
+          description:
+            'Réception confirmée par l’expéditeur — livraison validée. Montant crédité au transporteur.',
+          timestamp: now,
+        };
+        return {
+          ...s,
+          status: 'delivered' as const,
+          deliveredAt: now,
+          trackingHistory: [...s.trackingHistory, event],
+        };
+      });
+    });
+    if (IS_LIVE) {
+      try {
+        await api.confirmDelivery(shipmentId);
+      } catch (e) {
+        if (isMounted.current) {
+          setShipments(snapshot);
+        }
+        throw e;
+      }
+    }
+  }, []);
+
   // ── addMessage ──────────────────────────────────────────────────────────
 
   const addMessage = useCallback(
@@ -595,6 +635,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       acceptBid,
       acceptSmallShipment,
       payByCash,
+      confirmDelivery,
       addMessage,
       ensureConversation,
       addRoute,
@@ -615,6 +656,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       acceptBid,
       acceptSmallShipment,
       payByCash,
+      confirmDelivery,
       addMessage,
       ensureConversation,
       addRoute,

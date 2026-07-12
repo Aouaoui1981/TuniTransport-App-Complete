@@ -31,7 +31,7 @@ export default function ShipmentDetailScreen() {
   const navigation = useAppNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'ShipmentDetail'>>();
   const { user } = useAuth();
-  const { getShipmentById, ensureConversation } = useData();
+  const { getShipmentById, ensureConversation, confirmDelivery } = useData();
 
   const shipment = getShipmentById(route.params.shipmentId);
 
@@ -62,6 +62,27 @@ export default function ShipmentDetailScreen() {
 
   const isLarge = shipment.type === 'large';
   const shortId = shipment.id.slice(-4).toUpperCase();
+
+  const handleConfirmDelivery = () => {
+    if (!shipment) return;
+    showAlert(
+      'Confirmer la réception',
+      'Confirmez-vous avoir bien reçu ce colis ? Le montant sera crédité au transporteur.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Confirmer',
+          onPress: async () => {
+            try {
+              await confirmDelivery(shipment.id);
+            } catch (e) {
+              showAlert('Erreur', getErrorMessage(e, 'Impossible de confirmer la réception.'));
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const openChatWithTransporter = async () => {
     if (!shipment.transporterId || !shipment.transporterName) return;
@@ -350,6 +371,21 @@ export default function ShipmentDetailScreen() {
             >
               <Ionicons name="print" size={18} color={COLORS.white} />
               <Text style={styles.actionText}>Imprimer l'étiquette d'expédition</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {isSender &&
+          shipment.senderId === user?.id &&
+          shipment.paidAt &&
+          shipment.transporterId &&
+          shipment.status !== 'delivered' &&
+          shipment.status !== 'cancelled' ? (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: COLORS.secondary }]}
+              onPress={handleConfirmDelivery}
+            >
+              <Ionicons name="checkmark-done" size={18} color={COLORS.white} />
+              <Text style={styles.actionText}>Confirmer la réception du colis</Text>
             </TouchableOpacity>
           ) : null}
 
