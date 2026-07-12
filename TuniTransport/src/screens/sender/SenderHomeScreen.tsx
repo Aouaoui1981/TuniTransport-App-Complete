@@ -122,6 +122,21 @@ export default function SenderHomeScreen() {
         ) : (
           recent.map((s) => <ShipmentMiniCard key={s.id} shipment={s} />)
         )}
+
+        {/* White paper */}
+        <TouchableOpacity
+          style={styles.whitePaperLink}
+          onPress={() => navigation.navigate('WhitePaper')}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Découvrir le livre blanc THL"
+        >
+          <Ionicons name="book-outline" size={16} color={COLORS.primary} />
+          <Text style={styles.whitePaperLinkText}>
+            Notre vision & feuille de route — Livre blanc THL
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -251,4 +266,20 @@ const styles = StyleSheet.create({
   miniBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   price: { fontSize: FONTS.sizes.lg, fontWeight: '800', color: COLORS.primary },
   weight: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary },
+
+  whitePaperLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.xl,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
+    backgroundColor: `${COLORS.primary}08`,
+    alignSelf: 'center',
+  },
+  whitePaperLinkText: { color: COLORS.primary, fontWeight: '600', fontSize: FONTS.sizes.sm },
 });
