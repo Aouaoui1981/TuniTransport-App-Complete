@@ -37,14 +37,20 @@ interface CheckoutSessionResponse {
 }
 
 // Stripe rejects malformed redirect URLs ("Not a valid URL"). Secrets pasted
-// from a phone often carry a trailing newline/space or drop the scheme, so
-// sanitize: trim whitespace, fall back when empty, and assume https:// when a
-// bare domain (no scheme) slipped in.
+// from a phone often carry a stray newline/space (even mid-value, e.g. a
+// duplicated URL) or drop the scheme. Take the first whitespace-delimited
+// token, assume https:// when the scheme is missing, then validate — and fall
+// back to a known-good URL if anything is still off, so checkout never breaks.
 function sanitizeCheckoutUrl(raw: string, fallback: string): string {
-  const v = (raw ?? '').trim();
-  if (!v) return fallback;
-  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(v)) return v;
-  return `https://${v}`;
+  const first = (raw ?? '').trim().split(/\s+/)[0] ?? '';
+  if (!first) return fallback;
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(first) ? first : `https://${first}`;
+  try {
+    new URL(withScheme);
+    return withScheme;
+  } catch {
+    return fallback;
+  }
 }
 
 const DEFAULT_CHECKOUT_URL = 'https://thl-colis-app-complete.vercel.app';
