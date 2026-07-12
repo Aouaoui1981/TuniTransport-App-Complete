@@ -150,6 +150,21 @@ export default function TransporterHomeScreen() {
             </Card>
           ))
         )}
+
+        {/* White paper */}
+        <TouchableOpacity
+          style={styles.whitePaperLink}
+          onPress={() => navigation.navigate('WhitePaper')}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Découvrir le livre blanc THL"
+        >
+          <Ionicons name="book-outline" size={16} color={COLORS.secondaryDark} />
+          <Text style={styles.whitePaperLinkText}>
+            Notre vision & feuille de route — Livre blanc THL
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color={COLORS.secondaryDark} />
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -273,4 +288,20 @@ const styles = StyleSheet.create({
   },
   requestTitle: { fontSize: FONTS.sizes.md, fontWeight: '700', color: COLORS.text },
   requestSub: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary, marginTop: 2 },
+
+  whitePaperLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.xl,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.secondaryLight,
+    backgroundColor: `${COLORS.secondary}08`,
+    alignSelf: 'center',
+  },
+  whitePaperLinkText: { color: COLORS.secondaryDark, fontWeight: '600', fontSize: FONTS.sizes.sm },
 });
