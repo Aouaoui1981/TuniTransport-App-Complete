@@ -772,6 +772,20 @@ export async function uploadShipmentPhoto(userId: string, localUri: string): Pro
   return data.publicUrl;
 }
 
+// Uploads a profile picture to the public `shipment-photos` bucket (already
+// public-read + authenticated-write) and returns its public URL. Reusing that
+// bucket avoids a new storage migration; the URL is stored in profiles.avatar_url.
+export async function uploadAvatar(userId: string, localUri: string): Promise<string> {
+  const bytes = await readImageBytes(localUri);
+  const path = `${userId}/avatar-${Date.now()}.jpg`;
+  const { error } = await db()
+    .storage.from('shipment-photos')
+    .upload(path, bytes, { contentType: 'image/jpeg', upsert: true });
+  if (error) throw error;
+  const { data } = db().storage.from('shipment-photos').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 // ── Identity verification (KYC) ───────────────────────────────────────────
 
 export async function uploadIdentityDocument(
