@@ -12,9 +12,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "imageWidth": 220,
+          "imageWidth": 240,
           "resizeMode": "contain",
-          "backgroundColor": "#2563EB"
+          "backgroundColor": "#FFFFFF"
         }
       ],
       "expo-notifications",
@@ -45,7 +45,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#2563EB"
+        "backgroundColor": "#FFFFFF"
       },
       "package": "com.tunitransport.app",
       "config": {
