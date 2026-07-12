@@ -77,7 +77,7 @@ servePost(async (req) => {
         price_data: {
           currency,
           unit_amount: split.totalCents,
-          product_data: { name: `TuniTransport — Envoi #${shortId}` },
+          product_data: { name: `THL — Envoi #${shortId}` },
         },
       },
     ],
