@@ -240,6 +240,8 @@ export const MOCK_SHIPMENTS: Shipment[] = [
     },
     createdAt: '2026-06-24T09:15:00.000Z',
     collectedAt: '2026-06-27T10:05:00.000Z',
+    paidAt: '2026-06-26T14:30:00.000Z',
+    paymentMethod: 'card',
     trackingHistory: s1Tracking,
   },
   {

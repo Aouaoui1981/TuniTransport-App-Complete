@@ -35,6 +35,10 @@ export default function MyDeliveriesScreen() {
     .filter((s) => s.transporterId === user?.id)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
+  const earnings = mine
+    .filter((s) => s.status === 'delivered')
+    .reduce((sum, s) => sum + (s.price ?? 0), 0);
+
   const filtered = mine.filter((s) => {
     if (filter === 'all') return true;
     if (filter === 'in_progress') return IN_PROGRESS_GROUP.includes(s.status);
@@ -44,7 +48,10 @@ export default function MyDeliveriesScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mes livraisons</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>Mes livraisons</Text>
+          <Text style={styles.subtitle}>Total encaissé : {earnings}€</Text>
+        </View>
       </View>
 
       <View style={styles.chipsWrap}>
@@ -142,6 +149,7 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
   },
   title: { fontSize: FONTS.sizes.xxl, fontWeight: '800', color: COLORS.text },
+  subtitle: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.secondaryDark, marginTop: 2 },
 
   chipsWrap: { marginTop: SPACING.lg, marginBottom: SPACING.sm },
   chips: { paddingHorizontal: SPACING.xl, gap: SPACING.sm },

@@ -426,6 +426,19 @@ export async function chooseCashPayment(shipmentId: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Sender confirms they received the parcel: the shipment becomes
+ * 'delivered' and its amount is counted toward the transporter's earnings.
+ * status/delivered_at are locked for the sender by the shipments guard
+ * trigger, hence the SECURITY DEFINER RPC.
+ */
+export async function confirmDelivery(shipmentId: string): Promise<void> {
+  const { error } = await db().rpc('confirm_delivery', {
+    p_shipment_id: shipmentId,
+  });
+  if (error) throw error;
+}
+
 export async function acceptBid(shipmentId: string, bidId: string): Promise<void> {
   const { error } = await db().rpc('accept_bid_transaction', {
     p_shipment_id: shipmentId,

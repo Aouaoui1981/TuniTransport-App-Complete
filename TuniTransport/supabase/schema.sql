@@ -1034,3 +1034,64 @@ $$;
 
 revoke execute on function public.choose_cash_payment(uuid) from public, anon;
 grant execute on function public.choose_cash_payment(uuid) to authenticated;
+
+-- ═══════════════════════════════════════════
+-- THL -- Confirmation de réception (par l'expéditeur)
+-- ═══════════════════════════════════════════
+-- Existing project: run this whole section once in the SQL Editor.
+--
+-- L'expéditeur confirme avoir bien reçu le colis : l'envoi passe à
+-- 'delivered'. Le montant est alors comptabilisé dans les gains du
+-- transporteur (total dérivé côté application : somme des envois livrés).
+-- status/delivered_at sont verrouillés pour l'expéditeur par le trigger
+-- shipments_guard (seul le transporteur peut changer le statut), d'où ce
+-- RPC SECURITY DEFINER (même modèle que choose_cash_payment).
+create or replace function public.confirm_delivery(
+  p_shipment_id uuid
+)
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_shipment public.shipments%rowtype;
+begin
+  select * into v_shipment
+  from public.shipments
+  where id = p_shipment_id
+  for update;
+  if not found then
+    raise exception 'Envoi introuvable.';
+  end if;
+  if v_shipment.sender_id <> auth.uid() then
+    raise exception 'Seul l''expéditeur peut confirmer la réception.';
+  end if;
+  if v_shipment.transporter_id is null then
+    raise exception 'Cet envoi n''a pas encore de transporteur.';
+  end if;
+  if v_shipment.paid_at is null then
+    raise exception 'Cet envoi doit être réglé avant la confirmation.';
+  end if;
+  if v_shipment.status = 'cancelled' then
+    raise exception 'Cet envoi est annulé.';
+  end if;
+  if v_shipment.status = 'delivered' then
+    raise exception 'La réception de cet envoi est déjà confirmée.';
+  end if;
+
+  update public.shipments
+  set status       = 'delivered',
+      delivered_at = now()
+  where id = p_shipment_id;
+
+  insert into public.tracking_events (shipment_id, status, description)
+  values (
+    p_shipment_id,
+    'delivered',
+    'Réception confirmée par l''expéditeur — livraison validée. Montant crédité au transporteur.'
+  );
+end;
+$$;
+
+revoke execute on function public.confirm_delivery(uuid) from public, anon;
+grant execute on function public.confirm_delivery(uuid) to authenticated;
