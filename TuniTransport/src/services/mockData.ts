@@ -2,7 +2,7 @@
 // TuniTransport — demo seed data (STEP 15)
 // Realistic French/Tunisian data walking through the ferry lifecycle.
 // ──────────────────────────────────────────────────────────────────────────
-import { User, Shipment, Route, Conversation, Message, Bid, TrackingEvent } from '../types';
+import { User, Shipment, Route, Conversation, Message, Bid, TrackingEvent, Review } from '../types';
 
 // Shared city coordinates (used by CreateShipment / CreateRoute / Map)
 export const CITY_COORDS: Record<string, { latitude: number; longitude: number }> = {
@@ -445,5 +445,48 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     lastMessage: MOCK_MESSAGES[4],
     unreadCount: 0,
     updatedAt: '2026-06-28T17:25:00.000Z',
+  },
+];
+
+// Photos de démo (data URI → s'affichent hors-ligne dans l'aperçu).
+function demoPhoto(bg: string, label: string): string {
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'>` +
+    `<rect width='240' height='240' fill='${bg}'/>` +
+    `<text x='50%' y='52%' font-family='Arial' font-size='26' fill='white' ` +
+    `text-anchor='middle' font-weight='bold'>${label}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+export const MOCK_REVIEWS: Review[] = [
+  {
+    id: 'rev-1',
+    ratedUserId: 'u-transporter-1',
+    raterName: 'Amine',
+    stars: 5,
+    tags: ['Ponctuel', 'Soigneux', 'Recommandé'],
+    comment:
+      'Colis livré à Tunis en parfait état, avec photo à la remise. Karim est très professionnel et communicatif tout au long du trajet. Je recommande vivement !',
+    photos: [demoPhoto('#2563EB', 'Colis reçu'), demoPhoto('#10B981', 'À la remise')],
+    createdAt: '2026-06-30T16:40:00.000Z',
+  },
+  {
+    id: 'rev-2',
+    ratedUserId: 'u-transporter-1',
+    raterName: 'Sonia',
+    stars: 5,
+    tags: ['Professionnel', 'Communicatif'],
+    comment: 'Très bon contact, ponctuel au rendez-vous. Rien à redire.',
+    createdAt: '2026-06-18T10:05:00.000Z',
+  },
+  {
+    id: 'rev-3',
+    ratedUserId: 'u-transporter-1',
+    raterName: 'Karim',
+    stars: 4,
+    tags: ['Ponctuel'],
+    comment: 'Bonne expérience dans l’ensemble, livraison un peu en avance sur l’horaire prévu.',
+    photos: [demoPhoto('#F59E0B', 'Emballage')],
+    createdAt: '2026-05-28T14:20:00.000Z',
   },
 ];

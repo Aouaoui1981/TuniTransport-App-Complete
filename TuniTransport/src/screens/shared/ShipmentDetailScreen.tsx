@@ -294,16 +294,29 @@ export default function ShipmentDetailScreen() {
           <Card style={styles.card}>
             <Text style={styles.cardHeading}>Transporteur</Text>
             <View style={styles.transporterRow}>
-              <Avatar name={shipment.transporterName} size={46} color={COLORS.secondary} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.transporterName}>{shipment.transporterName}</Text>
-                <RatingStars
-                  rating={
-                    sortedBids.find((b) => b.id === shipment.selectedBidId)?.transporterRating ?? 5
-                  }
-                  size={13}
-                />
-              </View>
+              <TouchableOpacity
+                style={styles.transporterInfo}
+                activeOpacity={0.7}
+                onPress={() =>
+                  navigation.navigate('UserReviews', {
+                    userId: shipment.transporterId!,
+                    userName: shipment.transporterName!,
+                    rating: sortedBids.find((b) => b.id === shipment.selectedBidId)?.transporterRating,
+                  })
+                }
+              >
+                <Avatar name={shipment.transporterName} size={46} color={COLORS.secondary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.transporterName}>{shipment.transporterName}</Text>
+                  <RatingStars
+                    rating={
+                      sortedBids.find((b) => b.id === shipment.selectedBidId)?.transporterRating ?? 5
+                    }
+                    size={13}
+                  />
+                  <Text style={styles.reviewsLink}>Voir les avis ›</Text>
+                </View>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.chatBtn} onPress={openChatWithTransporter}>
                 <Ionicons name="chatbubble-ellipses" size={18} color={COLORS.white} />
               </TouchableOpacity>
@@ -511,7 +524,9 @@ const styles = StyleSheet.create({
   trackDesc: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary },
   trackMeta: { fontSize: FONTS.sizes.sm, color: COLORS.textLight, marginTop: 2 },
   transporterRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  transporterInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   transporterName: { fontSize: FONTS.sizes.lg, fontWeight: '700', color: COLORS.text },
+  reviewsLink: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.primary, marginTop: 3 },
   chatBtn: {
     width: 40,
     height: 40,

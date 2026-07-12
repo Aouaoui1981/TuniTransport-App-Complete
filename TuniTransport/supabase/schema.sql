@@ -1095,3 +1095,54 @@ $$;
 
 revoke execute on function public.confirm_delivery(uuid) from public, anon;
 grant execute on function public.confirm_delivery(uuid) to authenticated;
+
+-- ═══════════════════════════════════════════
+-- THL -- Avis avec photos, visibles publiquement
+-- ═══════════════════════════════════════════
+-- Existing project: run this whole section once in the SQL Editor.
+
+-- 1. Les avis peuvent porter des photos (URLs publiques).
+alter table public.ratings
+  add column if not exists photos text[];
+
+-- 2. Bucket public pour les photos d'avis.
+insert into storage.buckets (id, name, public)
+values ('review-photos', 'review-photos', true)
+on conflict (id) do nothing;
+
+-- Lecture publique, écriture par tout utilisateur authentifié dans son dossier.
+drop policy if exists "review_photos_read" on storage.objects;
+create policy "review_photos_read" on storage.objects
+  for select using (bucket_id = 'review-photos');
+
+drop policy if exists "review_photos_insert" on storage.objects;
+create policy "review_photos_insert" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'review-photos');
+
+-- 3. Liste publique des avis d'un utilisateur (avec le prénom de l'auteur).
+-- Les avis sont déjà lisibles par tous (ratings_select), mais ce RPC joint le
+-- prénom de l'auteur sans exposer toute la table profiles.
+create or replace function public.list_user_reviews(p_user_id uuid)
+returns table (
+  id uuid,
+  stars integer,
+  tags text[],
+  comment text,
+  photos text[],
+  created_at timestamptz,
+  rater_name text
+)
+language sql
+security definer set search_path = public
+as $$
+  select r.id, r.stars, r.tags, r.comment, r.photos, r.created_at,
+         coalesce(p.first_name, 'Utilisateur') as rater_name
+  from public.ratings r
+  left join public.profiles p on p.id = r.rater_id
+  where r.rated_user_id = p_user_id
+  order by r.created_at desc;
+$$;
+
+revoke execute on function public.list_user_reviews(uuid) from public, anon;
+grant execute on function public.list_user_reviews(uuid) to authenticated;

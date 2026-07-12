@@ -159,10 +159,21 @@ export default function ProfileScreen() {
             <Text style={styles.statValue}>{user.rating.toFixed(1)}/5</Text>
           </View>
           <View style={styles.statDivider} />
-          <View style={styles.statCol}>
+          <TouchableOpacity
+            style={styles.statCol}
+            activeOpacity={0.7}
+            onPress={() =>
+              navigation.navigate('UserReviews', {
+                userId: user.id,
+                userName: `${user.firstName} ${user.lastName}`,
+                rating: user.rating,
+                totalRatings: user.totalRatings,
+              })
+            }
+          >
             <Text style={styles.statBig}>{user.totalRatings}</Text>
-            <Text style={styles.statLabel}>Avis</Text>
-          </View>
+            <Text style={styles.statLabel}>Avis ›</Text>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
           <View style={styles.statCol}>
             <Ionicons name="calendar-outline" size={18} color={COLORS.textSecondary} />

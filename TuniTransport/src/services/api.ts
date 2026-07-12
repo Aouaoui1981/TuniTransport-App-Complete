@@ -26,6 +26,7 @@ import {
   Address,
   Item,
   IdentityStatus,
+  Review,
 } from '../types';
 
 function db() {
@@ -693,6 +694,7 @@ export async function submitRating(params: {
   stars: number;
   tags?: string[];
   comment?: string;
+  photos?: string[];
 }): Promise<void> {
   const { error } = await db().from('ratings').insert({
     shipment_id: params.shipmentId,
@@ -701,8 +703,37 @@ export async function submitRating(params: {
     stars: params.stars,
     tags: params.tags ?? null,
     comment: params.comment ?? null,
+    photos: params.photos ?? null,
   });
   if (error) throw error;
+}
+
+/** Uploads one review photo to the public `review-photos` bucket. */
+export async function uploadReviewPhoto(userId: string, localUri: string): Promise<string> {
+  const bytes = await readImageBytes(localUri);
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const { error } = await db()
+    .storage.from('review-photos')
+    .upload(path, bytes, { contentType: 'image/jpeg', upsert: false });
+  if (error) throw error;
+  const { data } = db().storage.from('review-photos').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+/** Public list of reviews a user has received (with the rater's first name). */
+export async function listUserReviews(userId: string): Promise<Review[]> {
+  const { data, error } = await db().rpc('list_user_reviews', { p_user_id: userId });
+  if (error) throw error;
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    ratedUserId: userId,
+    raterName: row.rater_name ?? 'Utilisateur',
+    stars: row.stars,
+    tags: row.tags ?? undefined,
+    comment: row.comment ?? undefined,
+    photos: row.photos ?? undefined,
+    createdAt: row.created_at,
+  }));
 }
 
 export async function savePushToken(userId: string, token: string): Promise<void> {
