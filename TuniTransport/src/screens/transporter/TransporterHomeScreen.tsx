@@ -65,20 +65,36 @@ export default function TransporterHomeScreen() {
 
         {/* Stats */}
         <Card style={styles.statsCard}>
-          <View style={styles.statCol}>
+          <TouchableOpacity
+            style={styles.statCol}
+            activeOpacity={0.7}
+            onPress={() =>
+              navigation.navigate('Main', { screen: 'Livraisons', params: { filter: 'in_progress' } })
+            }
+          >
             <Text style={[styles.statValue, { color: COLORS.secondary }]}>{inProgress}</Text>
             <Text style={styles.statLabel}>En cours</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
-          <View style={styles.statCol}>
+          <TouchableOpacity
+            style={styles.statCol}
+            activeOpacity={0.7}
+            onPress={() =>
+              navigation.navigate('Main', { screen: 'Livraisons', params: { filter: 'delivered' } })
+            }
+          >
             <Text style={[styles.statValue, { color: COLORS.success }]}>{delivered}</Text>
             <Text style={styles.statLabel}>Livrés</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
-          <View style={styles.statCol}>
+          <TouchableOpacity
+            style={styles.statCol}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('Main', { screen: 'Demandes' })}
+          >
             <Text style={[styles.statValue, { color: COLORS.accent }]}>{available}</Text>
             <Text style={styles.statLabel}>Disponibles</Text>
-          </View>
+          </TouchableOpacity>
         </Card>
 
         {/* My upcoming routes */}
