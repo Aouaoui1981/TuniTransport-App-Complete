@@ -24,6 +24,7 @@ import CreateShipmentScreen from '../screens/sender/CreateShipmentScreen';
 // Transporter screens
 import TransporterHomeScreen from '../screens/transporter/TransporterHomeScreen';
 import AvailableShipmentsScreen from '../screens/transporter/AvailableShipmentsScreen';
+import MyDeliveriesScreen from '../screens/transporter/MyDeliveriesScreen';
 import CreateRouteScreen from '../screens/transporter/CreateRouteScreen';
 // Shared screens
 import ShipmentDetailScreen from '../screens/shared/ShipmentDetailScreen';
@@ -50,6 +51,7 @@ export type MainTabParamList = {
   Accueil: undefined;
   Envois: undefined;
   Demandes: { bidShipmentId?: string } | undefined;
+  Livraisons: { filter?: 'all' | 'in_progress' | 'delivered' } | undefined;
   Carte: undefined;
   Messages: undefined;
   Profil: undefined;
@@ -91,6 +93,7 @@ const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   Accueil: 'home',
   Envois: 'cube',
   Demandes: 'search',
+  Livraisons: 'checkmark-done',
   Carte: 'map',
   Messages: 'chatbubbles',
   Profil: 'person',
@@ -136,6 +139,7 @@ function MainTabs() {
         <>
           <Tab.Screen name="Accueil" component={TransporterHomeScreen} />
           <Tab.Screen name="Demandes" component={AvailableShipmentsScreen} />
+          <Tab.Screen name="Livraisons" component={MyDeliveriesScreen} />
         </>
       )}
       <Tab.Screen name="Carte" component={MapScreen} />
