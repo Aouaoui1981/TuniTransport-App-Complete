@@ -12,7 +12,7 @@ import * as Print from 'expo-print';
 import QRCode from 'qrcode';
 import { Shipment, Address } from '../types';
 
-const APP_URL = 'https://tuni-transport-app-complete.vercel.app';
+const APP_URL = 'https://thl-colis-app-complete.vercel.app';
 
 function escapeHtml(value: string | undefined | null): string {
   return String(value ?? '')
