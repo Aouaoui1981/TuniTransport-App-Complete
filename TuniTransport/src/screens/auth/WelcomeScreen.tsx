@@ -3,7 +3,7 @@
 // XXL avec mot accentué, points de confiance en pastilles pastel, CTA pleins)
 // ──────────────────────────────────────────────────────────────────────────
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
@@ -40,9 +40,11 @@ export default function WelcomeScreen() {
         {/* Top bar */}
         <View style={styles.topBar}>
           <View style={styles.logoRow}>
-            <View style={styles.logoBadge}>
-              <Ionicons name="cube" size={20} color={COLORS.white} />
-            </View>
+            <Image
+              source={require('../../../assets/logo-mark.png')}
+              style={styles.logoMark}
+              resizeMode="contain"
+            />
             <Text style={styles.wordmark}>
               THL<Text style={styles.wordmarkDot}>.</Text>
             </Text>
@@ -156,16 +158,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: SPACING.lg,
   },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  logoBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.md,
-  },
+  logoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
+  logoMark: { width: 46, height: 46 },
   wordmark: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: '800',

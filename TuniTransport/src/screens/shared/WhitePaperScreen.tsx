@@ -5,7 +5,7 @@
 // Contenu : content/whitepaper.
 // ──────────────────────────────────────────────────────────────────────────
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
@@ -56,6 +56,11 @@ export default function WhitePaperScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* ── Couverture ── */}
         <View style={styles.cover}>
+          <Image
+            source={require('../../../assets/logo-full.png')}
+            style={styles.coverLogo}
+            resizeMode="contain"
+          />
           <Text style={styles.wordmark}>
             THL<Text style={{ color: COLORS.primary }}>.</Text>
           </Text>
@@ -220,6 +225,7 @@ const styles = StyleSheet.create({
   scroll: { padding: SPACING.xl, paddingBottom: SPACING.xxxl, gap: SPACING.lg },
 
   cover: { paddingVertical: SPACING.lg, gap: SPACING.sm },
+  coverLogo: { width: 132, height: 132, marginBottom: SPACING.xs },
   wordmark: { fontSize: FONTS.sizes.xxl, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
   docKind: {
     fontSize: FONTS.sizes.xs,
