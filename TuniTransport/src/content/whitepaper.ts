@@ -95,8 +95,8 @@ export const WHITEPAPER = {
     },
     {
       label: 'Paiement par carte (Stripe)',
-      status: 'now',
-      detail: "Intégralement fonctionnel et vérifié en mode test. Bascule vers les paiements réels en cours.",
+      status: 'done',
+      detail: "Paiements réels activés (Stripe en mode production). Le règlement est encaissé de façon sécurisée et débloqué au transporteur après confirmation de la livraison.",
     },
     {
       label: "Étiquette d'expédition + QR code",
@@ -109,9 +109,9 @@ export const WHITEPAPER = {
       detail: "Le code est déjà multiplateforme ; la publication sur les stores est planifiée.",
     },
     {
-      label: 'Reversement automatique aux transporteurs',
-      status: 'plan',
-      detail: "Via Stripe Connect. Aujourd'hui, la rémunération est réglée hors plateforme ou en espèces.",
+      label: 'Versement des gains aux transporteurs',
+      status: 'now',
+      detail: "Le transporteur enregistre ses coordonnées bancaires et demande le retrait de ses gains disponibles depuis l'application. Le reversement 100 % automatique via Stripe Connect est la prochaine étape.",
     },
   ] as CapabilityRow[],
 
@@ -156,7 +156,7 @@ export const WHITEPAPER = {
       status: 'done',
       items: [
         "Application web complète en production (expéditeur, transporteur, administrateur).",
-        "Infrastructure sécurisée : authentification, isolation des données, paiements Stripe vérifiés en mode test.",
+        "Infrastructure sécurisée : authentification, isolation des données, paiements Stripe en production.",
         "Vérification d'identité, étiquette QR, paiement en espèces, messagerie, suivi.",
         "Identité de marque THL et refonte professionnelle de l'interface.",
       ],
@@ -166,7 +166,7 @@ export const WHITEPAPER = {
       when: 'T3 2026',
       status: 'now',
       items: [
-        "Activation des paiements réels (bascule Stripe en mode production).",
+        "Paiements réels activés (Stripe en mode production) — première transaction réussie.",
         "Nom de domaine propre et adresse e-mail professionnelle.",
         "Premiers utilisateurs réels sur les communautés de la diaspora, avec accompagnement rapproché.",
         "Mesure systématique : taux de complétion, litiges, satisfaction.",
