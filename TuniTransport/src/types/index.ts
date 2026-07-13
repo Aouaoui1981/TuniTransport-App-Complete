@@ -229,4 +229,29 @@ export interface RegisterPayload {
   lastName: string;
   phone: string;
   role: UserRole;
+  // Transporteur : coordonnées bancaires facultatives fournies à l'inscription
+  // pour recevoir ses gains (stockées à part, jamais dans le profil public).
+  payoutHolder?: string;
+  payoutIban?: string;
+}
+
+// Coordonnées bancaires du transporteur (privées).
+export interface PayoutAccount {
+  holder: string;
+  iban: string;
+  bankName?: string;
+}
+
+export type PayoutStatus = 'pending' | 'paid' | 'rejected';
+
+// Demande de retrait des gains du transporteur.
+export interface PayoutRequest {
+  id: string;
+  amount: number;
+  status: PayoutStatus;
+  iban: string;
+  holder: string;
+  note?: string;
+  createdAt: string;
+  processedAt?: string;
 }

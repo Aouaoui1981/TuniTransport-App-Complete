@@ -27,6 +27,8 @@ import {
   Item,
   IdentityStatus,
   Review,
+  PayoutAccount,
+  PayoutRequest,
 } from '../types';
 
 function db() {
@@ -734,6 +736,76 @@ export async function listUserReviews(userId: string): Promise<Review[]> {
     photos: row.photos ?? undefined,
     createdAt: row.created_at,
   }));
+}
+
+// ── Paiements transporteur : coordonnées bancaires & retraits ─────────────
+
+/** Reads the transporter's own bank details (owner-only via RLS). */
+export async function fetchPayoutAccount(userId: string): Promise<PayoutAccount | null> {
+  const { data, error } = await db()
+    .from('payout_accounts')
+    .select('holder, iban, bank_name')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    holder: data.holder ?? '',
+    iban: data.iban ?? '',
+    bankName: data.bank_name ?? undefined,
+  };
+}
+
+/** Creates or updates the transporter's bank details. */
+export async function savePayoutAccount(userId: string, account: PayoutAccount): Promise<void> {
+  const { error } = await db()
+    .from('payout_accounts')
+    .upsert(
+      {
+        user_id: userId,
+        holder: account.holder,
+        iban: account.iban,
+        bank_name: account.bankName ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    );
+  if (error) throw error;
+}
+
+function mapPayoutRequest(row: any): PayoutRequest {
+  return {
+    id: row.id,
+    amount: Number(row.amount),
+    status: row.status,
+    iban: row.iban ?? '',
+    holder: row.holder ?? '',
+    note: row.note ?? undefined,
+    createdAt: row.created_at,
+    processedAt: row.processed_at ?? undefined,
+  };
+}
+
+/** Lists the transporter's own payout requests, newest first. */
+export async function fetchPayoutRequests(userId: string): Promise<PayoutRequest[]> {
+  const { data, error } = await db()
+    .from('payout_requests')
+    .select('*')
+    .eq('transporter_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapPayoutRequest);
+}
+
+/**
+ * Requests a payout of the full available balance. The server recomputes the
+ * available amount (delivered & paid shipments minus already-requested payouts)
+ * and enforces the 10 € minimum and the presence of an IBAN.
+ */
+export async function requestPayout(): Promise<PayoutRequest> {
+  const { data, error } = await db().rpc('request_payout');
+  if (error) throw error;
+  return mapPayoutRequest(data);
 }
 
 export async function savePushToken(userId: string, token: string): Promise<void> {
