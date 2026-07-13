@@ -208,11 +208,11 @@ export default function ProfileScreen() {
         {user.isAdmin ? (
           <TouchableOpacity
             style={[styles.identityCard, { backgroundColor: COLORS.primaryLight }]}
-            onPress={() => navigation.navigate('AdminVerifications')}
+            onPress={() => navigation.navigate('AdminDashboard')}
           >
             <Ionicons name="shield-half-outline" size={22} color={COLORS.primary} />
             <Text style={[styles.identityText, { color: COLORS.primary }]}>
-              Vérifications d'identité (admin)
+              Panneau d'administration
             </Text>
             <Ionicons name="chevron-forward" size={18} color={COLORS.primary} />
           </TouchableOpacity>

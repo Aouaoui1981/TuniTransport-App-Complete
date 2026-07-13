@@ -255,3 +255,22 @@ export interface PayoutRequest {
   createdAt: string;
   processedAt?: string;
 }
+
+// Demande de retrait vue par l'administrateur (avec le nom du transporteur).
+export interface PayoutRequestAdmin extends PayoutRequest {
+  transporterId: string;
+  transporterName: string;
+  transporterEmail: string;
+}
+
+// Statistiques globales du tableau de bord administrateur.
+export interface AdminStats {
+  users: number;
+  transporters: number;
+  senders: number;
+  shipments: number;
+  delivered: number;
+  pendingKyc: number;
+  pendingPayoutsCount: number;
+  pendingPayoutsAmount: number;
+}

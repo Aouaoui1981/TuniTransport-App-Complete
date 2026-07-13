@@ -43,6 +43,8 @@ import EditProfileScreen from '../screens/shared/EditProfileScreen';
 import MapScreen from '../screens/shared/MapScreen';
 import IdentityVerificationScreen from '../screens/shared/IdentityVerificationScreen';
 import AdminVerificationsScreen from '../screens/shared/AdminVerificationsScreen';
+import AdminDashboardScreen from '../screens/shared/AdminDashboardScreen';
+import AdminPayoutsScreen from '../screens/shared/AdminPayoutsScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import LegalPageScreen from '../screens/shared/LegalPageScreen';
 import WhitePaperScreen from '../screens/shared/WhitePaperScreen';
@@ -78,7 +80,9 @@ export type RootStackParamList = {
   UserReviews: { userId: string; userName: string; rating?: number; totalRatings?: number };
   EditProfile: undefined;
   IdentityVerification: undefined;
+  AdminDashboard: undefined;
   AdminVerifications: undefined;
+  AdminPayouts: undefined;
   Notifications: undefined;
   Legal: { page: LegalPageKey };
   WhitePaper: undefined;
@@ -256,9 +260,19 @@ export default function AppNavigator() {
             options={{ ...SUBSCREEN_HEADER, title: 'Vérification d’identité' }}
           />
           <Stack.Screen
+            name="AdminDashboard"
+            component={AdminDashboardScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Administration' }}
+          />
+          <Stack.Screen
             name="AdminVerifications"
             component={AdminVerificationsScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Vérifications (admin)' }}
+          />
+          <Stack.Screen
+            name="AdminPayouts"
+            component={AdminPayoutsScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Demandes de retrait' }}
           />
           <Stack.Screen
             name="Notifications"
