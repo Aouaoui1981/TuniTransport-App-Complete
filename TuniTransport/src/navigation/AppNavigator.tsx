@@ -17,6 +17,7 @@ import { ShipmentType, UserRole } from '../types';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 // Sender screens
 import SenderHomeScreen from '../screens/sender/SenderHomeScreen';
@@ -62,6 +63,7 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
+  ForgotPassword: { email?: string } | undefined;
   Register: { role?: UserRole } | undefined;
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   ShipmentDetail: { shipmentId: string };
@@ -194,6 +196,7 @@ export default function AppNavigator() {
         <>
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen
             name="WhitePaper"
