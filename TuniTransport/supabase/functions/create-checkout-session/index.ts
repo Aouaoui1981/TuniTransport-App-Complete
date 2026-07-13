@@ -44,10 +44,16 @@ interface CheckoutSessionResponse {
 function sanitizeCheckoutUrl(raw: string, fallback: string): string {
   const first = (raw ?? '').trim().split(/\s+/)[0] ?? '';
   if (!first) return fallback;
-  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(first) ? first : `https://${first}`;
+  const withScheme = /^https?:\/\//i.test(first) ? first : `https://${first}`;
   try {
-    new URL(withScheme);
-    return withScheme;
+    const u = new URL(withScheme);
+    // Require http(s) with a real, dotted hostname. This rejects junk that
+    // slipped into the secret (e.g. an "import ..." statement → host "import")
+    // and falls back to the known-good app URL instead of a dead redirect.
+    if ((u.protocol === 'https:' || u.protocol === 'http:') && u.hostname.includes('.')) {
+      return withScheme;
+    }
+    return fallback;
   } catch {
     return fallback;
   }
