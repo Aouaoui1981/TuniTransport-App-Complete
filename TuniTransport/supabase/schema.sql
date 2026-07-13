@@ -1146,3 +1146,149 @@ $$;
 
 revoke execute on function public.list_user_reviews(uuid) from public, anon;
 grant execute on function public.list_user_reviews(uuid) to authenticated;
+
+-- ═══════════════════════════════════════════
+-- THL -- Paiement des transporteurs : coordonnées bancaires + retraits
+-- ═══════════════════════════════════════════
+-- Existing project: run this whole section once in the SQL Editor.
+--
+-- IMPORTANT (sécurité) : le RIB/IBAN est une donnée sensible. La table
+-- `profiles` est lisible par TOUT utilisateur authentifié (profiles_select) ;
+-- on ne stocke donc JAMAIS l'IBAN dans profiles. Il vit dans une table à part
+-- `payout_accounts` accessible uniquement à son propriétaire.
+
+-- 1. Coordonnées bancaires du transporteur (privées, propriétaire uniquement).
+create table if not exists public.payout_accounts (
+  user_id    uuid primary key references public.profiles(id) on delete cascade,
+  holder     text not null default '',
+  iban       text not null default '',
+  bank_name  text,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.payout_accounts enable row level security;
+
+drop policy if exists "payout_accounts_select_own" on public.payout_accounts;
+create policy "payout_accounts_select_own" on public.payout_accounts
+  for select using (user_id = auth.uid());
+
+drop policy if exists "payout_accounts_insert_own" on public.payout_accounts;
+create policy "payout_accounts_insert_own" on public.payout_accounts
+  for insert with check (user_id = auth.uid());
+
+drop policy if exists "payout_accounts_update_own" on public.payout_accounts;
+create policy "payout_accounts_update_own" on public.payout_accounts
+  for update using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- 2. Demandes de retrait des gains.
+create table if not exists public.payout_requests (
+  id             uuid primary key default gen_random_uuid(),
+  transporter_id uuid not null references public.profiles(id) on delete cascade,
+  amount         numeric(10,2) not null check (amount > 0),
+  status         text not null default 'pending'
+                   check (status in ('pending', 'paid', 'rejected')),
+  iban           text not null default '',
+  holder         text not null default '',
+  note           text,
+  created_at     timestamptz not null default now(),
+  processed_at   timestamptz
+);
+
+create index if not exists idx_payout_requests_transporter
+  on public.payout_requests (transporter_id, created_at desc);
+
+alter table public.payout_requests enable row level security;
+
+-- Le transporteur voit ses propres demandes ; l'administrateur les voit toutes.
+drop policy if exists "payout_requests_select_own" on public.payout_requests;
+create policy "payout_requests_select_own" on public.payout_requests
+  for select using (transporter_id = auth.uid() or public.is_admin());
+
+-- L'insertion se fait exclusivement via le RPC request_payout (security definer),
+-- qui recalcule le solde disponible côté serveur — pas d'insertion directe.
+
+-- 3. Mise à jour du trigger de création de compte : si un transporteur fournit
+--    un IBAN à l'inscription (métadonnées signUp), on l'enregistre aussitôt.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, first_name, last_name, phone, role)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'first_name', ''),
+    coalesce(new.raw_user_meta_data ->> 'last_name', ''),
+    coalesce(new.raw_user_meta_data ->> 'phone', ''),
+    coalesce((new.raw_user_meta_data ->> 'role')::user_role, 'sender')
+  );
+
+  if coalesce(new.raw_user_meta_data ->> 'role', '') = 'transporter'
+     and coalesce(new.raw_user_meta_data ->> 'payout_iban', '') <> '' then
+    insert into public.payout_accounts (user_id, holder, iban)
+    values (
+      new.id,
+      coalesce(new.raw_user_meta_data ->> 'payout_holder', ''),
+      new.raw_user_meta_data ->> 'payout_iban'
+    )
+    on conflict (user_id) do nothing;
+  end if;
+
+  return new;
+end;
+$$;
+
+-- 4. Demander un retrait : recalcule le solde disponible côté serveur
+--    (envois livrés et payés) diminué des retraits déjà demandés/payés, et
+--    crée une demande pour la totalité du disponible. Minimum : 10 €.
+create or replace function public.request_payout()
+returns public.payout_requests
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_uid       uuid := auth.uid();
+  v_delivered numeric;
+  v_requested numeric;
+  v_available numeric;
+  v_acct      public.payout_accounts%rowtype;
+  v_req       public.payout_requests;
+begin
+  if v_uid is null then
+    raise exception 'Non authentifié.';
+  end if;
+
+  select coalesce(sum(price), 0) into v_delivered
+  from public.shipments
+  where transporter_id = v_uid
+    and status = 'delivered'
+    and paid_at is not null;
+
+  select coalesce(sum(amount), 0) into v_requested
+  from public.payout_requests
+  where transporter_id = v_uid
+    and status in ('pending', 'paid');
+
+  v_available := v_delivered - v_requested;
+
+  if v_available < 10 then
+    raise exception 'Montant disponible insuffisant (minimum 10 €).';
+  end if;
+
+  select * into v_acct from public.payout_accounts where user_id = v_uid;
+  if not found or coalesce(v_acct.iban, '') = '' then
+    raise exception 'Ajoutez d''abord vos coordonnées bancaires (IBAN).';
+  end if;
+
+  insert into public.payout_requests (transporter_id, amount, iban, holder)
+  values (v_uid, v_available, v_acct.iban, v_acct.holder)
+  returning * into v_req;
+
+  return v_req;
+end;
+$$;
+
+revoke execute on function public.request_payout() from public, anon;
+grant execute on function public.request_payout() to authenticated;

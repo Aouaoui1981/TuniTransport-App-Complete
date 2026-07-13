@@ -145,6 +145,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               last_name: payload.lastName,
               phone: payload.phone,
               role: payload.role,
+              // Transporteur : persistées dans payout_accounts par le trigger.
+              ...(payload.role === 'transporter' && payload.payoutIban
+                ? {
+                    payout_iban: payload.payoutIban,
+                    payout_holder: payload.payoutHolder ?? '',
+                  }
+                : {}),
             },
           },
         });
