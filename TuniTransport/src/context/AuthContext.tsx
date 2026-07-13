@@ -28,10 +28,16 @@ interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  /** true while the app is opened from a password-reset e-mail link */
+  passwordRecovery: boolean;
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<RegisterResult>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
+  /** Sets a new password during the recovery flow, then clears it. */
+  completePasswordReset: (newPassword: string) => Promise<void>;
+  /** Abandons the recovery flow (signs out, returns to login). */
+  cancelPasswordReset: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -51,6 +57,7 @@ function buildDemoUser(email: string): User {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const isMounted = React.useRef(true);
 
   // Restore session on mount
@@ -63,7 +70,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (IS_LIVE && supabase) {
           // Register the listener first: even if the initial profile fetch
           // fails (network hiccup), later auth events still reach the app.
-          const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+          const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+            // Opened from a reset-password e-mail: force the "new password"
+            // screen before the user can use the app.
+            if (event === 'PASSWORD_RECOVERY' && isMounted.current) {
+              setPasswordRecovery(true);
+            }
             if (session?.user) {
               const profile = await fetchProfile(session.user.id);
               if (profile && isMounted.current) {
@@ -215,17 +227,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  // ── password recovery ────────────────────────────────────────────────────
+
+  const completePasswordReset = useCallback(async (newPassword: string) => {
+    if (!IS_LIVE || !supabase) return;
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
+    if (isMounted.current) setPasswordRecovery(false);
+  }, []);
+
+  const cancelPasswordReset = useCallback(async () => {
+    if (isMounted.current) setPasswordRecovery(false);
+    if (IS_LIVE && supabase) {
+      await supabase.auth.signOut();
+    }
+    if (isMounted.current) setUser(null);
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       isLoading,
       isAuthenticated: !!user,
+      passwordRecovery,
       login,
       register,
       logout,
       updateUser,
+      completePasswordReset,
+      cancelPasswordReset,
     }),
-    [user, isLoading, login, register, logout, updateUser]
+    [
+      user,
+      isLoading,
+      passwordRecovery,
+      login,
+      register,
+      logout,
+      updateUser,
+      completePasswordReset,
+      cancelPasswordReset,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

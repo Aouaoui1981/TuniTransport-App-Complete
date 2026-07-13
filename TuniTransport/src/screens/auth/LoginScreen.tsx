@@ -71,7 +71,14 @@ export default function LoginScreen() {
       return;
     }
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(trimmed);
+      // Send the recovery link back to the app itself so Supabase fires the
+      // PASSWORD_RECOVERY event and the "new password" screen can take over.
+      const redirectTo =
+        Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : undefined;
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        trimmed,
+        redirectTo ? { redirectTo } : undefined
+      );
       if (error) throw error;
       showAlert(
         'E-mail envoyé',
