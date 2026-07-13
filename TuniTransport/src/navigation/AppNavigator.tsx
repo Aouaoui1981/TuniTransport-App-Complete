@@ -17,6 +17,7 @@ import { ShipmentType, UserRole } from '../types';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 // Sender screens
 import SenderHomeScreen from '../screens/sender/SenderHomeScreen';
 import ShipmentsScreen from '../screens/sender/ShipmentsScreen';
@@ -165,7 +166,7 @@ const SUBSCREEN_HEADER = {
 };
 
 export default function AppNavigator() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, passwordRecovery } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -179,6 +180,12 @@ export default function AppNavigator() {
         <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
+  }
+
+  // Opened from a password-reset e-mail: the "new password" screen takes over
+  // until the user sets a new password (or cancels), regardless of auth state.
+  if (passwordRecovery) {
+    return <ResetPasswordScreen />;
   }
 
   return (
