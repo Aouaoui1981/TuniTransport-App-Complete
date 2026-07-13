@@ -2,11 +2,11 @@
 // TuniTransport — Détails de l'envoi — STEP 10, card order per spec:
 // Status → Route → Items/Description → Bids → Tracking → Transporter → Actions
 // ──────────────────────────────────────────────────────────────────────────
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 
 import { getErrorMessage } from '../../utils/errors';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
@@ -14,6 +14,7 @@ import { showAlert } from '../../utils/alert';
 import { Card, StatusBadge, RatingStars, SectionHeader, Avatar } from '../../components';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { IS_LIVE } from '../../services/supabase';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { Bid } from '../../types';
 import { printShippingLabel } from '../../services/shippingLabel';
@@ -31,7 +32,17 @@ export default function ShipmentDetailScreen() {
   const navigation = useAppNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'ShipmentDetail'>>();
   const { user } = useAuth();
-  const { getShipmentById, ensureConversation, confirmDelivery } = useData();
+  const { getShipmentById, ensureConversation, confirmDelivery, refresh } = useData();
+
+  // Re-fetch whenever the screen regains focus (e.g. returning from the Stripe
+  // payment page) so the paid state and tracking reflect the webhook update.
+  // Live only: in demo mode refresh() resets to seed data and would wipe the
+  // optimistic local updates.
+  useFocusEffect(
+    useCallback(() => {
+      if (IS_LIVE) refresh();
+    }, [refresh])
+  );
 
   const shipment = getShipmentById(route.params.shipmentId);
 
