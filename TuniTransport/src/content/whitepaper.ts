@@ -110,8 +110,13 @@ export const WHITEPAPER = {
     },
     {
       label: 'Versement des gains aux transporteurs',
-      status: 'now',
-      detail: "Le transporteur enregistre ses coordonnées bancaires et demande le retrait de ses gains disponibles depuis l'application. Le reversement 100 % automatique via Stripe Connect est la prochaine étape.",
+      status: 'done',
+      detail: "Le transporteur enregistre ses coordonnées bancaires et demande le retrait de ses gains disponibles directement depuis l'application.",
+    },
+    {
+      label: 'Reversement 100 % automatique (Stripe Connect)',
+      status: 'plan',
+      detail: "Versement automatique de la part du transporteur, sans intervention manuelle. Prochaine étape après le versement sur demande.",
     },
   ] as CapabilityRow[],
 
