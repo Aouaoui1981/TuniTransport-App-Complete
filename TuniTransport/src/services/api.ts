@@ -29,6 +29,9 @@ import {
   Review,
   PayoutAccount,
   PayoutRequest,
+  PayoutRequestAdmin,
+  PayoutStatus,
+  AdminStats,
 } from '../types';
 
 function db() {
@@ -806,6 +809,52 @@ export async function requestPayout(): Promise<PayoutRequest> {
   const { data, error } = await db().rpc('request_payout');
   if (error) throw error;
   return mapPayoutRequest(data);
+}
+
+// ── Administration ────────────────────────────────────────────────────────
+
+/** Global dashboard stats — admin only (enforced server-side by the RPC). */
+export async function fetchAdminStats(): Promise<AdminStats> {
+  const { data, error } = await db().rpc('admin_stats');
+  if (error) throw error;
+  const d = (data ?? {}) as Record<string, number>;
+  return {
+    users: Number(d.users ?? 0),
+    transporters: Number(d.transporters ?? 0),
+    senders: Number(d.senders ?? 0),
+    shipments: Number(d.shipments ?? 0),
+    delivered: Number(d.delivered ?? 0),
+    pendingKyc: Number(d.pending_kyc ?? 0),
+    pendingPayoutsCount: Number(d.pending_payouts_count ?? 0),
+    pendingPayoutsAmount: Number(d.pending_payouts_amount ?? 0),
+  };
+}
+
+/** All payout requests with the transporter's name — admin only. */
+export async function listPayoutRequestsAdmin(): Promise<PayoutRequestAdmin[]> {
+  const { data, error } = await db().rpc('list_payout_requests_admin');
+  if (error) throw error;
+  return ((data ?? []) as any[]).map((row) => ({
+    id: row.id,
+    transporterId: row.transporter_id,
+    transporterName: row.transporter_name ?? 'Transporteur',
+    transporterEmail: row.transporter_email ?? '',
+    amount: Number(row.amount),
+    status: row.status,
+    iban: row.iban ?? '',
+    holder: row.holder ?? '',
+    createdAt: row.created_at,
+    processedAt: row.processed_at ?? undefined,
+  }));
+}
+
+/** Mark a payout request as paid/rejected/pending — admin only. */
+export async function setPayoutStatus(requestId: string, status: PayoutStatus): Promise<void> {
+  const { error } = await db().rpc('set_payout_status', {
+    p_request_id: requestId,
+    p_status: status,
+  });
+  if (error) throw error;
 }
 
 export async function savePushToken(userId: string, token: string): Promise<void> {

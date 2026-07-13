@@ -1292,3 +1292,97 @@ $$;
 
 revoke execute on function public.request_payout() from public, anon;
 grant execute on function public.request_payout() to authenticated;
+
+-- ═══════════════════════════════════════════
+-- THL -- Panneau d'administration
+-- ═══════════════════════════════════════════
+-- Existing project: run this whole section once in the SQL Editor.
+-- Toutes ces fonctions sont réservées aux administrateurs (is_admin()).
+
+-- 1. Statistiques globales pour le tableau de bord admin.
+create or replace function public.admin_stats()
+returns json
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Réservé aux administrateurs.';
+  end if;
+  return json_build_object(
+    'users',                  (select count(*) from public.profiles),
+    'transporters',           (select count(*) from public.profiles where role = 'transporter'),
+    'senders',                (select count(*) from public.profiles where role = 'sender'),
+    'shipments',              (select count(*) from public.shipments),
+    'delivered',              (select count(*) from public.shipments where status = 'delivered'),
+    'pending_kyc',            (select count(*) from public.profiles where identity_status = 'pending'),
+    'pending_payouts_count',  (select count(*) from public.payout_requests where status = 'pending'),
+    'pending_payouts_amount', (select coalesce(sum(amount), 0) from public.payout_requests where status = 'pending')
+  );
+end;
+$$;
+
+revoke execute on function public.admin_stats() from public, anon;
+grant execute on function public.admin_stats() to authenticated;
+
+-- 2. Toutes les demandes de retrait, avec le nom du transporteur (admin only).
+create or replace function public.list_payout_requests_admin()
+returns table (
+  id                uuid,
+  transporter_id    uuid,
+  transporter_name  text,
+  transporter_email text,
+  amount            numeric,
+  status            text,
+  iban              text,
+  holder            text,
+  created_at        timestamptz,
+  processed_at      timestamptz
+)
+language sql
+security definer set search_path = public
+as $$
+  select
+    r.id,
+    r.transporter_id,
+    coalesce(nullif(trim(p.first_name || ' ' || p.last_name), ''), 'Transporteur') as transporter_name,
+    p.email as transporter_email,
+    r.amount, r.status, r.iban, r.holder, r.created_at, r.processed_at
+  from public.payout_requests r
+  left join public.profiles p on p.id = r.transporter_id
+  where public.is_admin()
+  order by (r.status = 'pending') desc, r.created_at desc;
+$$;
+
+revoke execute on function public.list_payout_requests_admin() from public, anon;
+grant execute on function public.list_payout_requests_admin() to authenticated;
+
+-- 3. Changer le statut d'une demande de retrait (admin only).
+create or replace function public.set_payout_status(p_request_id uuid, p_status text)
+returns public.payout_requests
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_req public.payout_requests;
+begin
+  if not public.is_admin() then
+    raise exception 'Réservé aux administrateurs.';
+  end if;
+  if p_status not in ('pending', 'paid', 'rejected') then
+    raise exception 'Statut invalide.';
+  end if;
+  update public.payout_requests
+  set status       = p_status,
+      processed_at = case when p_status = 'pending' then null else now() end
+  where id = p_request_id
+  returning * into v_req;
+  if not found then
+    raise exception 'Demande introuvable.';
+  end if;
+  return v_req;
+end;
+$$;
+
+revoke execute on function public.set_payout_status(uuid, text) from public, anon;
+grant execute on function public.set_payout_status(uuid, text) to authenticated;
