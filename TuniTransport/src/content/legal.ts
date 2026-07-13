@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 export type LegalPageKey =
   | 'terms'
+  | 'refund'
   | 'privacy'
   | 'prohibited'
   | 'disclaimer'
@@ -82,6 +83,58 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
         heading: '6. Manquements et sanctions',
         body:
           "Toute fausse déclaration, tentative de fraude ou envoi d'objets interdits peut entraîner l'annulation de l'envoi, la suspension ou la suppression du compte, et le signalement aux autorités compétentes.",
+      },
+    ],
+  },
+
+  // ── Politique de remboursement ──────────────────────────────────────────
+  refund: {
+    title: 'Politique de remboursement',
+    icon: 'cash-outline',
+    updatedAt: 'Juillet 2026',
+    intro:
+      "Cette politique décrit les conditions de remboursement d'un envoi payé sur THL. Le paiement est encaissé de façon sécurisée par notre prestataire de paiement (Stripe) et n'est reversé au transporteur qu'après confirmation de la livraison par l'expéditeur.",
+    sections: [
+      {
+        heading: '1. Principe général',
+        body:
+          "Lorsqu'un expéditeur règle un envoi, le montant est conservé de manière sécurisée. Il n'est libéré au profit du transporteur qu'une fois la livraison confirmée par l'expéditeur dans l'application. Tant que cette confirmation n'a pas eu lieu, un remboursement reste possible selon les conditions ci-dessous.",
+      },
+      {
+        heading: '2. Annulation avant prise en charge',
+        bullets: [
+          "Si l'envoi est annulé avant que le transporteur ne l'ait physiquement pris en charge, l'expéditeur est remboursé intégralement (100 %).",
+          "L'annulation se fait depuis l'application, sur la fiche de l'envoi concerné.",
+          'Aucun frais n’est retenu pour une annulation à ce stade.',
+        ],
+      },
+      {
+        heading: '3. Après la prise en charge',
+        body:
+          "Une fois l'envoi pris en charge par le transporteur, le service de transport a commencé : l'envoi n'est plus remboursable automatiquement. Si un problème survient (retard important, litige à la livraison), l'expéditeur doit d'abord contacter le transporteur via la messagerie interne, puis le support si le désaccord persiste.",
+      },
+      {
+        heading: '4. Envoi non livré',
+        bullets: [
+          "Si le transporteur ne livre pas l'envoi et que l'absence de livraison est établie, l'expéditeur est remboursé intégralement.",
+          "Le paiement n'étant libéré qu'après confirmation de livraison, aucun montant n'est reversé au transporteur pour un envoi non livré.",
+          "Les cas de litige sont tranchés à partir de l'historique de l'envoi (suivi, messagerie interne, preuves de livraison).",
+        ],
+      },
+      {
+        heading: '5. Modalités du remboursement',
+        bullets: [
+          'Tout remboursement est effectué sur le moyen de paiement utilisé lors du règlement (carte bancaire).',
+          'Le délai de crédit dépend de la banque de l’expéditeur, généralement de 5 à 10 jours ouvrés après validation.',
+          "Une commission de service, lorsqu'elle s'applique, peut être non remboursable car elle couvre des frais de traitement déjà engagés.",
+        ],
+      },
+      {
+        heading: '6. Demander un remboursement',
+        body:
+          "Pour toute demande de remboursement ou tout litige, contactez le support à " +
+          SUPPORT_EMAIL +
+          " en précisant le numéro de l'envoi concerné. Notre équipe étudie chaque demande et répond sous 24 h ouvrées.",
       },
     ],
   },

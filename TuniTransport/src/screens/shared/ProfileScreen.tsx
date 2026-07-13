@@ -26,6 +26,7 @@ const MENU: {
   { icon: 'lock-closed-outline', label: 'Sécurité' },
   { icon: 'help-circle-outline', label: 'Aide & Support', legalPage: 'contact' },
   { icon: LEGAL_PAGES.terms.icon, label: LEGAL_PAGES.terms.title, legalPage: 'terms' },
+  { icon: LEGAL_PAGES.refund.icon, label: LEGAL_PAGES.refund.title, legalPage: 'refund' },
   { icon: LEGAL_PAGES.privacy.icon, label: LEGAL_PAGES.privacy.title, legalPage: 'privacy' },
   { icon: LEGAL_PAGES.prohibited.icon, label: LEGAL_PAGES.prohibited.title, legalPage: 'prohibited' },
   { icon: LEGAL_PAGES.disclaimer.icon, label: LEGAL_PAGES.disclaimer.title, legalPage: 'disclaimer' },
