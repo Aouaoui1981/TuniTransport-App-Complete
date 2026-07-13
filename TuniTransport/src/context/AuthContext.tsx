@@ -233,7 +233,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!IS_LIVE || !supabase) return;
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw new Error(error.message);
-    if (isMounted.current) setPasswordRecovery(false);
+    // Sign the user out so they re-authenticate with the new password instead
+    // of landing silently inside the account.
+    await supabase.auth.signOut();
+    if (isMounted.current) {
+      setPasswordRecovery(false);
+      setUser(null);
+    }
   }, []);
 
   const cancelPasswordReset = useCallback(async () => {
