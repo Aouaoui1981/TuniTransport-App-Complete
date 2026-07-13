@@ -47,7 +47,7 @@ export default function ResetPasswordScreen() {
       await completePasswordReset(password);
       showAlert(
         'Mot de passe modifié',
-        'Votre nouveau mot de passe a été enregistré. Vous êtes connecté.'
+        'Votre nouveau mot de passe a été enregistré. Connectez-vous avec votre nouveau mot de passe.'
       );
     } catch (e) {
       showAlert('Modification impossible', getErrorMessage(e));
