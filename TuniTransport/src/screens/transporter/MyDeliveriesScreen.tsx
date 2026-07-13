@@ -35,8 +35,16 @@ export default function MyDeliveriesScreen() {
     .filter((s) => s.transporterId === user?.id)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  const earnings = mine
+  // Portefeuille en deux parts :
+  //  • Disponible  : envois livrés (le destinataire a confirmé) — acquis au transporteur.
+  //  • En attente  : envois payés et pris en charge mais pas encore confirmés livrés
+  //                  — bloqués jusqu'à la confirmation de livraison par l'expéditeur.
+  const availableBalance = mine
     .filter((s) => s.status === 'delivered')
+    .reduce((sum, s) => sum + (s.price ?? 0), 0);
+
+  const pendingBalance = mine
+    .filter((s) => s.paidAt != null && IN_PROGRESS_GROUP.includes(s.status))
     .reduce((sum, s) => sum + (s.price ?? 0), 0);
 
   const filtered = mine.filter((s) => {
@@ -50,7 +58,27 @@ export default function MyDeliveriesScreen() {
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Mes livraisons</Text>
-          <Text style={styles.subtitle}>Total encaissé : {earnings}€</Text>
+          <Text style={styles.subtitle}>Portefeuille du transporteur</Text>
+        </View>
+      </View>
+
+      <View style={styles.walletWrap}>
+        <View style={[styles.walletCard, styles.walletAvailable]}>
+          <View style={styles.walletIconRow}>
+            <Ionicons name="checkmark-circle" size={15} color={COLORS.secondaryDark} />
+            <Text style={[styles.walletLabel, { color: COLORS.secondaryDark }]}>Disponible</Text>
+          </View>
+          <Text style={[styles.walletAmount, { color: COLORS.secondaryDark }]}>{availableBalance}€</Text>
+          <Text style={styles.walletHint}>Acquis après livraison confirmée</Text>
+        </View>
+
+        <View style={[styles.walletCard, styles.walletPending]}>
+          <View style={styles.walletIconRow}>
+            <Ionicons name="time" size={15} color={COLORS.accent} />
+            <Text style={[styles.walletLabel, { color: COLORS.accent }]}>En attente</Text>
+          </View>
+          <Text style={[styles.walletAmount, { color: COLORS.accent }]}>{pendingBalance}€</Text>
+          <Text style={styles.walletHint}>Bloqué jusqu'à confirmation de l'expéditeur</Text>
         </View>
       </View>
 
@@ -149,7 +177,26 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
   },
   title: { fontSize: FONTS.sizes.xxl, fontWeight: '800', color: COLORS.text },
-  subtitle: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.secondaryDark, marginTop: 2 },
+  subtitle: { fontSize: FONTS.sizes.sm, fontWeight: '600', color: COLORS.textSecondary, marginTop: 2 },
+
+  walletWrap: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    marginTop: SPACING.lg,
+  },
+  walletCard: {
+    flex: 1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    borderWidth: 1,
+  },
+  walletAvailable: { backgroundColor: COLORS.secondaryLight, borderColor: COLORS.secondary },
+  walletPending: { backgroundColor: COLORS.accentLight, borderColor: COLORS.accent },
+  walletIconRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
+  walletLabel: { fontSize: FONTS.sizes.xs, fontWeight: '700' },
+  walletAmount: { fontSize: FONTS.sizes.xxl, fontWeight: '800', marginTop: SPACING.xs },
+  walletHint: { fontSize: 11, color: COLORS.textSecondary, marginTop: 2, lineHeight: 15 },
 
   chipsWrap: { marginTop: SPACING.lg, marginBottom: SPACING.sm },
   chips: { paddingHorizontal: SPACING.xl, gap: SPACING.sm },
