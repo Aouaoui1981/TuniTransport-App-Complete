@@ -19,7 +19,6 @@ import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { showAlert } from '../../utils/alert';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
-import { supabase, IS_LIVE } from '../../services/supabase';
 import { getErrorMessage } from '../../utils/errors';
 
 const DEMO_ACCOUNTS = [
@@ -56,37 +55,9 @@ export default function LoginScreen() {
     return undefined;
   }
 
-  async function handleForgotPassword() {
-    const trimmed = email.trim();
-    if (!trimmed) {
-      setErrors((e) => ({ ...e, email: 'Saisissez votre e-mail pour réinitialiser le mot de passe.' }));
-      emailRef.current?.focus();
-      return;
-    }
-    if (!IS_LIVE || !supabase) {
-      showAlert(
-        'Mode démo',
-        'La réinitialisation du mot de passe n’est pas disponible en mode démo. Connectez-vous avec n’importe quel mot de passe.'
-      );
-      return;
-    }
-    try {
-      // Send the recovery link back to the app itself so Supabase fires the
-      // PASSWORD_RECOVERY event and the "new password" screen can take over.
-      const redirectTo =
-        Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : undefined;
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        trimmed,
-        redirectTo ? { redirectTo } : undefined
-      );
-      if (error) throw error;
-      showAlert(
-        'E-mail envoyé',
-        `Si un compte existe pour ${trimmed}, un lien de réinitialisation vient d’être envoyé.`
-      );
-    } catch {
-      showAlert('Erreur', 'Impossible d’envoyer l’e-mail de réinitialisation. Réessayez.');
-    }
+  function handleForgotPassword() {
+    // Open the dedicated screen, pre-filling the e-mail already typed (if any).
+    navigation.navigate('ForgotPassword', { email: email.trim() || undefined });
   }
 
   async function handleLogin() {
