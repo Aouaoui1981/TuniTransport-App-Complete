@@ -57,8 +57,8 @@ export default function WelcomeScreen() {
       />
       {/* Voile sombre fixe pour garder le contenu lisible par-dessus */}
       <LinearGradient
-        colors={['rgba(5,11,18,0.18)', 'rgba(5,11,18,0.40)', 'rgba(5,11,18,0.82)']}
-        locations={[0, 0.5, 1]}
+        colors={['rgba(5,11,18,0.45)', 'rgba(5,11,18,0.0)']}
+        locations={[0, 0.3]}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
 
   // Zone laissant apparaître l'image de fond fixe
   heroSpacer: {
-    height: 210,
+    height: 300,
     justifyContent: 'flex-end',
     paddingHorizontal: SPACING.xxl,
     paddingBottom: SPACING.lg,
