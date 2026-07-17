@@ -49,17 +49,20 @@ export default function WelcomeScreen() {
     <View style={styles.root}>
       <StatusBar style="light" />
 
-      {/* Image de fond FIXE (ne défile pas quand on scrolle) */}
-      <Image
-        source={require('../../../assets/hero-van.jpg')}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-      />
-      {/* Voile sombre fixe pour garder le contenu lisible par-dessus */}
+      {/* Fond dégradé aux couleurs de la marque (fixe) — pas d'image */}
       <LinearGradient
-        colors={['rgba(5,11,18,0.45)', 'rgba(5,11,18,0.0)']}
-        locations={[0, 0.3]}
+        colors={['#0F3B3A', '#0E2233', '#0A1420', '#050B12']}
+        locations={[0, 0.32, 0.7, 1]}
+        start={{ x: 0.15, y: 0 }}
+        end={{ x: 0.85, y: 1 }}
         style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+      {/* Lueur teal douce en haut pour une touche premium */}
+      <LinearGradient
+        colors={['rgba(45,212,191,0.16)', 'rgba(45,212,191,0)']}
+        locations={[0, 1]}
+        style={styles.glow}
         pointerEvents="none"
       />
 
@@ -248,12 +251,14 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: DARK.colors.white, fontWeight: '700', fontSize: FONTS.sizes.xs },
 
-  // Zone laissant apparaître l'image de fond fixe
+  // Lueur teal en haut de l'écran
+  glow: { position: 'absolute', top: 0, left: 0, right: 0, height: 280 },
+
+  // Badge sous la barre supérieure
   heroSpacer: {
-    height: 300,
-    justifyContent: 'flex-end',
+    paddingTop: SPACING.xxl,
     paddingHorizontal: SPACING.xxl,
-    paddingBottom: SPACING.lg,
+    paddingBottom: SPACING.sm,
   },
 
   // Corps
