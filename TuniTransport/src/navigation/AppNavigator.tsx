@@ -232,7 +232,13 @@ export default function AppNavigator() {
         </>
       ) : (
         <>
-          <Stack.Screen name="Main" component={MainTabs} />
+          {/* Admin : interface dédiée « Panneau d'administration » uniquement
+              (pas les onglets expéditeur/transporteur). Sinon, l'app normale. */}
+          {user?.isAdmin ? (
+            <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
+          ) : (
+            <Stack.Screen name="Main" component={MainTabs} />
+          )}
           <Stack.Screen
             name="RouteMap"
             component={RouteMapScreen}
@@ -285,11 +291,6 @@ export default function AppNavigator() {
             name="IdentityVerification"
             component={IdentityVerificationScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Vérification d’identité' }}
-          />
-          <Stack.Screen
-            name="AdminDashboard"
-            component={AdminDashboardScreen}
-            options={{ ...SUBSCREEN_HEADER, title: 'Administration' }}
           />
           <Stack.Screen
             name="AdminVerifications"

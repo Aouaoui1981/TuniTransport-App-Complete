@@ -204,20 +204,6 @@ export default function ProfileScreen() {
           <Ionicons name="chevron-forward" size={18} color={identityMeta.color} />
         </TouchableOpacity>
 
-        {/* Admin: pending identity reviews */}
-        {user.isAdmin ? (
-          <TouchableOpacity
-            style={[styles.identityCard, { backgroundColor: COLORS.primaryLight }]}
-            onPress={() => navigation.navigate('AdminDashboard')}
-          >
-            <Ionicons name="shield-half-outline" size={22} color={COLORS.primary} />
-            <Text style={[styles.identityText, { color: COLORS.primary }]}>
-              Panneau d'administration
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={COLORS.primary} />
-          </TouchableOpacity>
-        ) : null}
-
         {/* Stats */}
         <Card style={styles.statsCard}>
           <View style={styles.statCol}>
