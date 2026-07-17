@@ -23,7 +23,11 @@ import { DataProvider } from './src/context/DataContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AppAlertHost from './src/components/AppAlert';
 import { COLORS } from './src/utils/theme';
+import { injectWebStyles } from './src/utils/webStyles';
 import { IS_STRIPE_LIVE, STRIPE_PUBLISHABLE_KEY } from './src/services/stripe';
+
+// Neutralise le contour bleu natif des champs sur le web (Safari/Chrome).
+injectWebStyles();
 
 // Thème de navigation sombre « Méditerranée nuit » — évite les flashs blancs
 // pendant les transitions et sous les surfaces translucides.
