@@ -149,3 +149,15 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 ### Reste à faire
 - [ ] SQL « connexion sociale » + providers OAuth (Google).
 - [ ] Theme "Méditerranée".
+
+---
+
+## 2026-07-17 (suite) — Fix: logo redondant sur WelcomeScreen
+### Fait
+- [x] Rebase de la branche sur origin/main (redesign « Dark Premium » + font
+      Plus Jakarta Sans déjà mergés via #80-#82).
+- [x] WelcomeScreen : suppression du texte « THL. » redondant à côté du logo
+      (le nouveau logo contient déjà « THL »); logo agrandi (52px).
+### Note
+- Erreur tsc locale « @expo-google-fonts/plus-jakarta-sans » = module non
+      installé en local seulement (déclaré dans package.json, installé par CI).
