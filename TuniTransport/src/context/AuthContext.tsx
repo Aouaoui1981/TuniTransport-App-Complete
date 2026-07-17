@@ -15,7 +15,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, IS_LIVE } from '../services/supabase';
 import { fetchProfile, updateProfile } from '../services/api';
 import { MOCK_USERS } from '../services/mockData';
-import { User, LoginPayload, RegisterPayload } from '../types';
+import { User, LoginPayload, RegisterPayload, OAuthProvider } from '../types';
+import { Platform } from 'react-native';
 
 const DEMO_SESSION_KEY = 'tt_demo_user';
 
@@ -32,6 +33,8 @@ interface AuthContextValue {
   passwordRecovery: boolean;
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<RegisterResult>;
+  /** Social login (Google / Apple / Facebook) via Supabase OAuth. */
+  signInWithProvider: (provider: OAuthProvider) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   /** Sets a new password during the recovery flow, then clears it. */
@@ -205,6 +208,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // ── social login (OAuth) ─────────────────────────────────────────────────
+
+  const signInWithProvider = useCallback(async (provider: OAuthProvider) => {
+    if (!IS_LIVE || !supabase) {
+      throw new Error('La connexion sociale est disponible sur l’application en ligne.');
+    }
+    // Web: redirect flow. Supabase sends the user to the provider then back to
+    // the app origin, where detectSessionInUrl establishes the session and the
+    // onAuthStateChange listener picks it up.
+    const redirectTo =
+      Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : undefined;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: redirectTo ? { redirectTo } : undefined,
+    });
+    if (error) throw new Error(error.message);
+  }, []);
+
   // ── logout ─────────────────────────────────────────────────────────────
 
   const logout = useCallback(async () => {
@@ -265,6 +286,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       passwordRecovery,
       login,
       register,
+      signInWithProvider,
       logout,
       updateUser,
       completePasswordReset,
@@ -276,6 +298,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       passwordRecovery,
       login,
       register,
+      signInWithProvider,
       logout,
       updateUser,
       completePasswordReset,

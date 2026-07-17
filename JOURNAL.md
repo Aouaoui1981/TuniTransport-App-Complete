@@ -45,6 +45,33 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
   + nouveaux : AdminUsersScreen, AdminShipmentsScreen, AdminReviewsScreen,
   AdminBroadcastScreen ; supabase/schema.sql.
 ### Reste à faire
-- [ ] Exécuter la section SQL « pouvoirs étendus » sur Supabase prod.
-- [ ] Ouvrir/merger la PR de ce build, puis vérifier en ligne.
+- [ ] Theme "Méditerranée" (en attente des fichiers).
+
+---
+
+## 2026-07-17 — Connexion sociale (Google / Apple / Facebook)
+### Fait
+- [x] Boutons de connexion sociale (Google/Apple/Facebook) sur Login + Register
+      (`SocialAuthButtons`, `supabase.auth.signInWithOAuth`).
+- [x] Écran « Compléter mon profil » (`CompleteProfileScreen`) : après une
+      connexion sociale, choix du rôle + nom + téléphone avant d'entrer.
+- [x] Colonne `profiles.onboarded` + `handle_new_user` compatible OAuth
+      (récupère nom/avatar du provider, `onboarded=false` si pas de rôle).
+- [x] Gate de navigation : `isAuthenticated && !onboarded` → CompleteProfile.
+- [x] `updateProfile` accepte désormais `role` et `onboarded`.
+- [x] Typecheck OK.
+### Base de données — À EXÉCUTER en prod (pas encore appliqué)
+- Section « Connexion sociale + onboarding » à la fin de `schema.sql`
+  (colonne `onboarded` + nouvelle version de `handle_new_user`).
+### Setup Supabase requis (côté utilisateur, hors code)
+- Activer chaque provider dans Auth → Providers (Google/Apple/Facebook) avec
+  Client ID + Secret de chaque console développeur, et Redirect URL Supabase.
+### Fichiers touchés
+- src/components/SocialAuthButtons.tsx (nouveau),
+  src/screens/auth/CompleteProfileScreen.tsx (nouveau),
+  LoginScreen.tsx, RegisterScreen.tsx, AuthContext.tsx, AppNavigator.tsx,
+  services/api.ts, types/index.ts, supabase/schema.sql.
+### Reste à faire
+- [ ] Exécuter la section SQL « connexion sociale » sur prod.
+- [ ] Configurer les providers OAuth dans Supabase (Google d'abord).
 - [ ] Theme "Méditerranée" (en attente des fichiers).

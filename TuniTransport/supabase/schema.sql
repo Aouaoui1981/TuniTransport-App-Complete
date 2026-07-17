@@ -1566,3 +1566,60 @@ end; $$;
 
 revoke execute on function public.create_announcement(text, text) from public, anon;
 grant execute on function public.create_announcement(text, text) to authenticated;
+
+-- ═══════════════════════════════════════════
+-- THL -- Connexion sociale (Google / Apple / Facebook) + onboarding
+-- ═══════════════════════════════════════════
+-- Existing project: run this whole section once in the SQL Editor.
+-- Les inscriptions par OAuth n'ont ni rôle, ni téléphone : on marque le
+-- compte « non onboardé » pour forcer un écran « Compléter mon profil ».
+
+-- 1. Indicateur d'onboarding. Les comptes existants sont considérés complets.
+alter table public.profiles
+  add column if not exists onboarded boolean not null default true;
+
+-- 2. Trigger de création de compte, compatible e-mail/mot de passe ET OAuth.
+--    - e-mail/mot de passe : le rôle est fourni → onboarded = true.
+--    - OAuth (Google/Apple/Facebook) : pas de rôle → onboarded = false, et on
+--      récupère le nom / l'avatar fournis par le provider.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_meta      jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
+  v_role      text  := coalesce(v_meta ->> 'role', 'sender');
+  v_first     text  := coalesce(v_meta ->> 'first_name', '');
+  v_last      text  := coalesce(v_meta ->> 'last_name', '');
+  v_full      text  := coalesce(v_meta ->> 'full_name', v_meta ->> 'name', '');
+  v_avatar    text  := coalesce(v_meta ->> 'avatar_url', v_meta ->> 'picture');
+  v_onboarded boolean := (v_meta ? 'role');
+begin
+  -- Provider social : dériver prénom / nom depuis le nom complet.
+  if v_first = '' and v_full <> '' then
+    v_first := split_part(v_full, ' ', 1);
+    v_last  := coalesce(nullif(trim(substr(v_full, length(split_part(v_full, ' ', 1)) + 1)), ''), '');
+  end if;
+
+  insert into public.profiles (id, email, first_name, last_name, phone, role, avatar_url, onboarded)
+  values (
+    new.id,
+    new.email,
+    v_first,
+    v_last,
+    coalesce(v_meta ->> 'phone', ''),
+    v_role::user_role,
+    v_avatar,
+    v_onboarded
+  );
+
+  if v_role = 'transporter' and coalesce(v_meta ->> 'payout_iban', '') <> '' then
+    insert into public.payout_accounts (user_id, holder, iban)
+    values (new.id, coalesce(v_meta ->> 'payout_holder', ''), v_meta ->> 'payout_iban')
+    on conflict (user_id) do nothing;
+  end if;
+
+  return new;
+end;
+$$;

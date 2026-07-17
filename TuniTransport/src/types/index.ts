@@ -45,7 +45,11 @@ export interface User {
   isAdmin?: boolean;
   /** Suspended by an admin — blocked from using the app. */
   suspended?: boolean;
+  /** false for social-login accounts that still need to choose role/details. */
+  onboarded?: boolean;
 }
+
+export type OAuthProvider = 'google' | 'apple' | 'facebook';
 
 /** Avis public laissé par un expéditeur sur un transporteur (ou l'inverse). */
 export interface Review {
