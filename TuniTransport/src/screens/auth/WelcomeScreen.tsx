@@ -1,10 +1,18 @@
 // ──────────────────────────────────────────────────────────────────────────
-// THL — WelcomeScreen : accueil « Dark Premium » (thème Méditerranée nuit).
-// Fond cinématique en dégradé, lueurs d'ambiance, cartes de verre, bandeau
-// stats en dégradé, CTA lumineux à halo. Piloté par les tokens DARK.
+// THL — WelcomeScreen : accueil « Dark Premium » avec hero photo (ferry THL).
+// Image plein cadre en haut qui se fond dans le fond sombre, puis contenu
+// (titre, stats, cartes de verre, CTA lumineux). Piloté par les tokens DARK.
 // ──────────────────────────────────────────────────────────────────────────
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  ImageBackground,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -40,60 +48,73 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
-      {/* Fond cinématique */}
       <LinearGradient
         colors={DARK.gradients.base}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* Lueurs d'ambiance */}
-      <LinearGradient
-        colors={DARK.gradients.glow}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.glowTop}
-        pointerEvents="none"
-      />
-      <View style={styles.glowTeal} pointerEvents="none" />
 
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          {/* Top bar */}
-          <View style={styles.topBar}>
-            <View style={styles.logoRow}>
-              <Image
-                source={require('../../../assets/logo-mark.png')}
-                style={styles.logoMark}
-                resizeMode="contain"
-              />
-              <Text style={styles.wordmark}>
-                THL<Text style={styles.wordmarkDot}>.</Text>
-              </Text>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Hero photo — ferry THL */}
+        <ImageBackground
+          source={require('../../../assets/ferry-hero.png')}
+          resizeMode="cover"
+          style={styles.hero}
+        >
+          {/* Voile haut (lisibilité de la barre) */}
+          <LinearGradient
+            colors={['rgba(5,11,18,0.55)', 'transparent']}
+            style={styles.heroTopScrim}
+            pointerEvents="none"
+          />
+          {/* Fondu bas vers le fond sombre */}
+          <LinearGradient
+            colors={['transparent', 'rgba(10,20,32,0.65)', DARK.colors.bgBase]}
+            locations={[0, 0.65, 1]}
+            style={styles.heroBottomFade}
+            pointerEvents="none"
+          />
+
+          <SafeAreaView edges={['top']}>
+            <View style={styles.topBar}>
+              <View style={styles.logoRow}>
+                <Image
+                  source={require('../../../assets/logo-mark.png')}
+                  style={styles.logoMark}
+                  resizeMode="contain"
+                />
+                <Text style={styles.wordmark}>
+                  THL<Text style={styles.wordmarkDot}>.</Text>
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.loginChip}
+                onPress={() => navigation.navigate('Login')}
+              >
+                <Text style={styles.loginChipText}>Se connecter</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.loginChip}
-              onPress={() => navigation.navigate('Login')}
-            >
-              <Text style={styles.loginChipText}>Se connecter</Text>
-            </TouchableOpacity>
-          </View>
+          </SafeAreaView>
 
-          {/* Hero */}
-          <View style={styles.hero}>
+          <View style={styles.heroBadgeWrap}>
             <View style={styles.badge}>
               <Ionicons name="boat-outline" size={14} color={DARK.colors.secondary} />
-              <Text style={styles.badgeText}>France ⇄ Tunisie · par ferry</Text>
+              <Text style={styles.badgeText}>Trans-Méditerranée · par ferry</Text>
             </View>
-            <Text style={styles.heroTitle}>
-              Vos colis entre la France et la Tunisie,{' '}
-              <Text style={styles.heroAccent}>en toute confiance</Text>
-            </Text>
-            <Text style={styles.heroSub}>
-              THL met en relation les expéditeurs avec des transporteurs de confiance
-              voyageant en ferry. Colis légers à 4€/kg, objets volumineux aux enchères.
-            </Text>
           </View>
+        </ImageBackground>
+
+        {/* Contenu sombre */}
+        <View style={styles.body}>
+          <Text style={styles.heroTitle}>
+            Vos colis entre la France et la Tunisie,{' '}
+            <Text style={styles.heroAccent}>en toute confiance</Text>
+          </Text>
+          <Text style={styles.heroSub}>
+            THL met en relation les expéditeurs avec des transporteurs de confiance
+            voyageant en ferry. Colis légers à 4€/kg, objets volumineux aux enchères.
+          </Text>
 
           {/* Stats strip */}
           <LinearGradient
@@ -181,48 +202,34 @@ export default function WelcomeScreen() {
             </Text>
             <Ionicons name="chevron-forward" size={15} color={DARK.colors.textSecondary} />
           </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: DARK.colors.bgBase },
-  safe: { flex: 1 },
-  scroll: { paddingHorizontal: SPACING.xxl, paddingBottom: SPACING.xxxl },
+  scroll: { paddingBottom: SPACING.xxxl },
 
-  // Lueurs d'ambiance
-  glowTop: {
-    position: 'absolute',
-    top: -120,
-    left: -60,
-    right: -60,
-    height: 380,
-    borderRadius: 380,
-  },
-  glowTeal: {
-    position: 'absolute',
-    top: 180,
-    right: -140,
-    width: 300,
-    height: 300,
-    borderRadius: 300,
-    backgroundColor: DARK.colors.glowTeal,
-  },
+  // Hero photo
+  hero: { width: '100%', height: 360, justifyContent: 'space-between' },
+  heroTopScrim: { position: 'absolute', top: 0, left: 0, right: 0, height: 150 },
+  heroBottomFade: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 190 },
 
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: SPACING.lg,
+    paddingHorizontal: SPACING.xxl,
+    paddingTop: SPACING.md,
   },
   logoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
-  logoMark: { width: 46, height: 46 },
+  logoMark: { width: 42, height: 42 },
   wordmark: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: '800',
-    color: DARK.colors.text,
+    color: DARK.colors.white,
     letterSpacing: -0.5,
   },
   wordmarkDot: { color: DARK.colors.secondary },
@@ -231,29 +238,31 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
     borderWidth: 1,
-    borderColor: DARK.colors.borderStrong,
-    backgroundColor: DARK.colors.surfaceGlass,
+    borderColor: 'rgba(255,255,255,0.35)',
+    backgroundColor: 'rgba(5,11,18,0.35)',
   },
-  loginChipText: { color: DARK.colors.text, fontWeight: '600', fontSize: FONTS.sizes.sm },
+  loginChipText: { color: DARK.colors.white, fontWeight: '600', fontSize: FONTS.sizes.sm },
 
-  hero: { marginTop: SPACING.xxxl },
+  heroBadgeWrap: { paddingHorizontal: SPACING.xxl, paddingBottom: SPACING.xl },
   badge: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
-    backgroundColor: DARK.colors.surfaceGlass,
+    backgroundColor: 'rgba(5,11,18,0.55)',
     borderWidth: 1,
-    borderColor: DARK.colors.border,
+    borderColor: DARK.colors.borderStrong,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs + 2,
     borderRadius: RADIUS.full,
-    marginBottom: SPACING.lg,
   },
-  badgeText: { color: DARK.colors.secondary, fontWeight: '700', fontSize: FONTS.sizes.xs },
+  badgeText: { color: DARK.colors.white, fontWeight: '700', fontSize: FONTS.sizes.xs },
+
+  // Corps
+  body: { paddingHorizontal: SPACING.xxl, marginTop: -SPACING.sm },
   heroTitle: {
-    fontSize: 34,
-    lineHeight: 42,
+    fontSize: 32,
+    lineHeight: 40,
     fontWeight: '800',
     color: DARK.colors.text,
     letterSpacing: -1,
@@ -267,7 +276,7 @@ const styles = StyleSheet.create({
   },
 
   statsCard: {
-    marginTop: SPACING.xxxl,
+    marginTop: SPACING.xxl,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: RADIUS.xl,
@@ -289,7 +298,7 @@ const styles = StyleSheet.create({
   },
   statDivider: { width: 1, height: 34, backgroundColor: 'rgba(255,255,255,0.15)' },
 
-  trust: { marginTop: SPACING.xxxl, gap: SPACING.md },
+  trust: { marginTop: SPACING.xxl, gap: SPACING.md },
   trustCard: {
     flexDirection: 'row',
     gap: SPACING.lg,
@@ -323,7 +332,7 @@ const styles = StyleSheet.create({
     color: DARK.colors.textSecondary,
   },
 
-  actions: { marginTop: SPACING.xxxl, gap: SPACING.md },
+  actions: { marginTop: SPACING.xxl, gap: SPACING.md },
   primaryButtonWrap: {
     borderRadius: RADIUS.lg,
     ...DARK.shadows.glowPrimary,
