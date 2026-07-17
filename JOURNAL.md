@@ -134,3 +134,18 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - [ ] Exécuter la section SQL « connexion sociale » sur prod.
 - [ ] Configurer les providers OAuth dans Supabase (Google d'abord).
 - [ ] Theme "Méditerranée" (en attente des fichiers).
+
+---
+
+## 2026-07-17 (suite) — Nouveau logo THL
+### Fait
+- [x] Nouveau logo THL (boîte orange + THL bleu marine, fourni par
+      l'utilisateur, fond transparent) intégré.
+- [x] Régénération des assets via PIL depuis le PNG source :
+      icon.png (fond blanc, iOS), adaptive-icon.png (transparent, zone sûre
+      Android), favicon.png, splash-icon.png, logo-mark.png, logo-full.png.
+- [x] WelcomeScreen (logo-mark) et WhitePaper (logo-full) affichent le
+      nouveau logo automatiquement (resizeMode contain).
+### Reste à faire
+- [ ] SQL « connexion sociale » + providers OAuth (Google).
+- [ ] Theme "Méditerranée".
