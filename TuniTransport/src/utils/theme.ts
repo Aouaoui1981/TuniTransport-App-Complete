@@ -150,3 +150,55 @@ export const SHADOWS = {
     elevation: 6,
   },
 } as const;
+
+// ──────────────────────────────────────────────────────────────────────────
+// Thème sombre « Méditerranée nuit » — Dark Premium (cinématique, lueurs)
+// Tokens additionnels, n'affectent pas les écrans clairs existants.
+// ──────────────────────────────────────────────────────────────────────────
+export const DARK = {
+  colors: {
+    bgDeep: '#050B12',
+    bgBase: '#0A1420',
+    surface: '#101E2E',
+    surfaceGlass: 'rgba(255,255,255,0.05)',
+    border: 'rgba(255,255,255,0.08)',
+    borderStrong: 'rgba(255,255,255,0.14)',
+    text: '#EDF2F8',
+    textSecondary: '#9DB0C4',
+    textLight: '#63788E',
+    primary: '#3D82F6',
+    secondary: '#2DD4BF',
+    accent: '#F5B342',
+    white: '#FFFFFF',
+    // Voiles de lumière d'ambiance
+    glowBlue: 'rgba(37,99,235,0.20)',
+    glowTeal: 'rgba(13,148,136,0.16)',
+  },
+  gradients: {
+    // Fond d'écran cinématique (3 arrêts, jamais de noir pur)
+    base: ['#0E1C2C', '#0A1420', '#050B12'] as const,
+    // Bouton CTA lumineux bleu → sarcelle
+    cta: ['#2563EB', '#0D9488'] as const,
+    // Bandeau de statistiques
+    stats: ['#12314F', '#0C2233'] as const,
+    // Lueur douce (vers transparent) pour blobs d'ambiance
+    glow: ['rgba(37,99,235,0.22)', 'rgba(37,99,235,0)'] as const,
+  },
+  shadows: {
+    // Halo lumineux derrière le CTA primaire
+    glowPrimary: {
+      shadowColor: '#2563EB',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.55,
+      shadowRadius: 22,
+      elevation: 10,
+    },
+    card: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.35,
+      shadowRadius: 18,
+      elevation: 6,
+    },
+  },
+} as const;
