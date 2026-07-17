@@ -19,6 +19,7 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
+import CompleteProfileScreen from '../screens/auth/CompleteProfileScreen';
 // Sender screens
 import SenderHomeScreen from '../screens/sender/SenderHomeScreen';
 import ShipmentsScreen from '../screens/sender/ShipmentsScreen';
@@ -200,6 +201,12 @@ export default function AppNavigator() {
   // until the user sets a new password (or cancels), regardless of auth state.
   if (passwordRecovery) {
     return <ResetPasswordScreen />;
+  }
+
+  // Social login (Google/Apple/Facebook): the account exists but has no role /
+  // details yet — force the "complete profile" screen before entering the app.
+  if (isAuthenticated && user && user.onboarded === false) {
+    return <CompleteProfileScreen />;
   }
 
   return (

@@ -62,6 +62,7 @@ interface ProfileRow {
   identity_rejection_reason?: string;
   is_admin?: boolean;
   suspended?: boolean;
+  onboarded?: boolean;
 }
 
 interface TrackingEventRow {
@@ -183,6 +184,7 @@ export function mapProfile(row: ProfileRow): User {
     identityRejectionReason: row.identity_rejection_reason ?? undefined,
     isAdmin: row.is_admin ?? false,
     suspended: row.suspended ?? false,
+    onboarded: row.onboarded ?? true,
   };
 }
 
@@ -286,6 +288,8 @@ export async function updateProfile(userId: string, updates: Partial<User>): Pro
   if (updates.phone !== undefined) payload.phone = updates.phone;
   if (updates.avatar !== undefined) payload.avatar_url = updates.avatar;
   if (updates.truckDetails !== undefined) payload.truck_details = updates.truckDetails;
+  if (updates.role !== undefined) payload.role = updates.role;
+  if (updates.onboarded !== undefined) payload.onboarded = updates.onboarded;
   const { error } = await db().from('profiles').update(payload).eq('id', userId);
   if (error) throw error;
 }

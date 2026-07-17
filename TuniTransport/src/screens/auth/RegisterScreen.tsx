@@ -22,6 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { UserRole } from '../../types';
 import { getErrorMessage } from '../../utils/errors';
+import SocialAuthButtons from '../../components/SocialAuthButtons';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^\+?[0-9 .-]{8,}$/;
@@ -439,6 +440,14 @@ export default function RegisterScreen() {
             )}
           </TouchableOpacity>
 
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>ou</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <SocialAuthButtons />
+
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Déjà un compte ? </Text>
             <TouchableOpacity
@@ -587,6 +596,15 @@ const styles = StyleSheet.create({
   submitButtonDisabled: { opacity: 0.6 },
   submitButtonContent: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   submitButtonText: { color: COLORS.white, fontWeight: '700', fontSize: FONTS.sizes.lg },
+
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginVertical: SPACING.xl,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
+  dividerText: { color: COLORS.textLight, fontSize: FONTS.sizes.sm },
 
   footerRow: {
     flexDirection: 'row',

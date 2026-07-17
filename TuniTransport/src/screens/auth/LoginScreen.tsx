@@ -20,6 +20,7 @@ import { showAlert } from '../../utils/alert';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { getErrorMessage } from '../../utils/errors';
+import SocialAuthButtons from '../../components/SocialAuthButtons';
 
 const DEMO_ACCOUNTS = [
   { icon: 'cube' as const, label: 'Expéditeur démo', email: 'sender@demo.com', color: COLORS.primary },
@@ -256,6 +257,8 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
+          <SocialAuthButtons />
+
           <View style={styles.demoBox}>
             <View style={styles.demoHeader}>
               <Ionicons name="flask-outline" size={16} color={COLORS.textSecondary} />
@@ -403,6 +406,7 @@ const styles = StyleSheet.create({
   dividerText: { color: COLORS.textLight, fontSize: FONTS.sizes.sm },
 
   demoBox: {
+    marginTop: SPACING.xl,
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
