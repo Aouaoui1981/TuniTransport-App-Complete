@@ -23,6 +23,7 @@ import { showAlert } from '../../utils/alert';
 import { getErrorMessage } from '../../utils/errors';
 import { Card } from '../../components';
 import { IS_LIVE } from '../../services/supabase';
+import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { fetchAdminStats } from '../../services/api';
 import { AdminStats } from '../../types';
@@ -37,9 +38,16 @@ const STAT_TILES: { key: keyof AdminStats; label: string; icon: keyof typeof Ion
 
 export default function AdminDashboardScreen() {
   const navigation = useAppNavigation();
+  const { user, logout } = useAuth();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const confirmLogout = () =>
+    showAlert('Se déconnecter', 'Voulez-vous vraiment vous déconnecter ?', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Se déconnecter', style: 'destructive', onPress: () => logout() },
+    ]);
 
   const load = useCallback(async () => {
     if (!IS_LIVE) {
@@ -79,7 +87,23 @@ export default function AdminDashboardScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <View style={styles.topBar}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.topTitle}>Administration</Text>
+          <Text style={styles.topSub} numberOfLines={1}>
+            {user ? `${user.firstName} ${user.lastName}` : 'THL'}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={confirmLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Se déconnecter"
+        >
+          <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
+        </TouchableOpacity>
+      </View>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -205,6 +229,32 @@ export default function AdminDashboardScreen() {
                 <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
               </Card>
             </TouchableOpacity>
+
+            <Text style={styles.sectionTitle}>Mon compte</Text>
+
+            <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('EditProfile')}>
+              <Card style={styles.actionCard}>
+                <View style={[styles.actionIcon, { backgroundColor: COLORS.borderLight }]}>
+                  <Ionicons name="person-outline" size={22} color={COLORS.textSecondary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.actionTitle}>Modifier le profil</Text>
+                  <Text style={styles.actionSub}>Nom, photo, coordonnées</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
+              </Card>
+            </TouchableOpacity>
+
+            <TouchableOpacity activeOpacity={0.8} onPress={confirmLogout}>
+              <Card style={styles.actionCard}>
+                <View style={[styles.actionIcon, { backgroundColor: COLORS.dangerLight }]}>
+                  <Ionicons name="log-out-outline" size={22} color={COLORS.danger} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.actionTitle, { color: COLORS.danger }]}>Se déconnecter</Text>
+                </View>
+              </Card>
+            </TouchableOpacity>
           </>
         )}
       </ScrollView>
@@ -216,6 +266,24 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: SPACING.lg, paddingBottom: SPACING.xxxl },
+
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.sm,
+  },
+  topTitle: { fontSize: FONTS.sizes.xxl, fontWeight: '800', color: COLORS.text },
+  topSub: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary, marginTop: 1 },
+  logoutBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.dangerLight,
+  },
   demoNote: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary, textAlign: 'center', padding: SPACING.md },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md },
