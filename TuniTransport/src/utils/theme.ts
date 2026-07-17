@@ -41,7 +41,8 @@ export const COLORS = {
   // Texte (blanc cassé → gris bleuté)
   text: '#EDF2F8',
   textSecondary: '#9DB0C4',
-  textLight: '#647B92',
+  // Éclairci pour la lisibilité des indices/placeholders (~4.7:1 sur surface)
+  textLight: '#7E8EA1',
   onPrimary: '#FFFFFF',
   onAccent: '#0A1420',
   // Bordures translucides (visibles sur sombre)
