@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { Card, SectionHeader, StatusBadge, EmptyState } from '../../components';
+import PressableScale from '../../components/PressableScale';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
@@ -51,37 +52,41 @@ export default function SenderHomeScreen() {
 
         {/* Quick actions */}
         <View style={styles.quickRow}>
-          <TouchableOpacity
+          <PressableScale
+            containerStyle={styles.quickCardWrap}
             style={[styles.quickCard, { backgroundColor: COLORS.primaryLight }]}
-            activeOpacity={0.85}
             onPress={() => navigation.navigate('CreateShipment', { type: 'small' })}
+            accessibilityRole="button"
+            accessibilityLabel="Envoyer un petit colis"
           >
             <Ionicons name="cube" size={26} color={COLORS.primary} />
             <Text style={[styles.quickTitle, { color: COLORS.primaryDark }]}>Petit colis</Text>
             <Text style={styles.quickSub}>{PRICE_PER_KG}€/kg</Text>
-          </TouchableOpacity>
+          </PressableScale>
 
-          <TouchableOpacity
+          <PressableScale
+            containerStyle={styles.quickCardWrap}
             style={[styles.quickCard, { backgroundColor: COLORS.accentLight }]}
-            activeOpacity={0.85}
             onPress={() => navigation.navigate('CreateShipment', { type: 'large' })}
+            accessibilityRole="button"
+            accessibilityLabel="Envoyer un gros objet"
           >
             <Ionicons name="bicycle" size={26} color={COLORS.accent} />
             <Text style={[styles.quickTitle, { color: COLORS.accent }]}>Gros objet</Text>
             <Text style={styles.quickSub}>Prix négociable</Text>
-          </TouchableOpacity>
+          </PressableScale>
 
-          <TouchableOpacity
+          <PressableScale
+            containerStyle={styles.quickCardWrap}
             style={[styles.quickCard, { backgroundColor: COLORS.secondaryLight }]}
-            activeOpacity={0.85}
-            onPress={() =>
-              navigation.navigate('Main', { screen: 'Carte' })
-            }
+            onPress={() => navigation.navigate('Main', { screen: 'Carte' })}
+            accessibilityRole="button"
+            accessibilityLabel="Voir la carte des itinéraires"
           >
             <Ionicons name="map" size={26} color={COLORS.secondaryDark} />
             <Text style={[styles.quickTitle, { color: COLORS.secondaryDark }]}>Carte</Text>
             <Text style={styles.quickSub}>Itinéraires</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
 
         {/* Stats */}
@@ -225,6 +230,7 @@ const styles = StyleSheet.create({
   },
 
   quickRow: { flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.xl },
+  quickCardWrap: { flex: 1 },
   quickCard: {
     flex: 1,
     borderRadius: RADIUS.xl,

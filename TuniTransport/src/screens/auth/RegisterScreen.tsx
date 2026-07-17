@@ -23,6 +23,7 @@ import { useAppNavigation, RootStackParamList } from '../../navigation/AppNaviga
 import { UserRole } from '../../types';
 import { getErrorMessage } from '../../utils/errors';
 import SocialAuthButtons from '../../components/SocialAuthButtons';
+import PressableScale from '../../components/PressableScale';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^\+?[0-9 .-]{8,}$/;
@@ -415,13 +416,12 @@ export default function RegisterScreen() {
             </View>
           )}
 
-          <TouchableOpacity
+          <PressableScale
             style={[
               styles.submitButton,
               { backgroundColor: roleColor },
               submitting && styles.submitButtonDisabled,
             ]}
-            activeOpacity={0.85}
             onPress={handleRegister}
             disabled={submitting}
             accessibilityRole="button"
@@ -438,7 +438,7 @@ export default function RegisterScreen() {
                 S'inscrire comme {isSender ? 'expéditeur' : 'transporteur'}
               </Text>
             )}
-          </TouchableOpacity>
+          </PressableScale>
 
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
