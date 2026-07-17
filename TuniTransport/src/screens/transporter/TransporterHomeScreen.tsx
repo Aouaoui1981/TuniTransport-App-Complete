@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: RADIUS.full,
   },
-  ratingText: { fontSize: FONTS.sizes.xs, fontWeight: '700', color: '#B45309' },
+  ratingText: { fontSize: FONTS.sizes.xs, fontWeight: '700', color: COLORS.accent },
   bell: {
     width: 44,
     height: 44,

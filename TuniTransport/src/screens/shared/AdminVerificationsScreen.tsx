@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     fontSize: FONTS.sizes.sm,
     color: COLORS.text,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceAlt,
   },
   actionsRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
   actionBtn: {
