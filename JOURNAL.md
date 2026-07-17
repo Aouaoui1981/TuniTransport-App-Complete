@@ -5,6 +5,38 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 
 ---
 
+## 2026-07-17 (suite) — Refonte UI « Dark Premium » complète
+### Fait
+- [x] Redesign de `WelcomeScreen` (landing) : badge ferry, bandeau stats en
+      dégradé, cartes de confiance, CTA dégradé. (PR #71)
+- [x] Style « Dark Premium » (Méditerranée nuit) : ajout des tokens `DARK`
+      dans `theme.ts` (fond dégradé cinématique, surfaces de verre, bordures
+      hairline, accents bleu/sarcelle, halo CTA), Welcome refait en sombre.
+      (PR #72)
+- [x] Photo hero du ferry THL (`assets/ferry-hero.png`) en plein cadre sur
+      Welcome, fondu vers le fond sombre. (PR #73)
+- [x] **Application entière passée en sombre** en inversant les valeurs des
+      tokens `COLORS` dans `theme.ts` (toutes les clés conservées). Correctifs
+      ciblés : 1 fond blanc (AdminVerifications), 4 couleurs ambre codées en
+      dur → `COLORS.accent`, `App.tsx` StatusBar `light` + thème de navigation
+      sombre. (PR #74)
+- [x] Lancement sombre : `app.json` `userInterfaceStyle: dark`, fonds splash /
+      icône adaptative Android / racine en `#0A1420` (supprime le flash blanc).
+      Logo vérifié lisible sur sombre. (PR #75)
+- [x] `.gitignore` ajouté (caches Python des scripts skill). (PR #70)
+### Reste à faire
+- [ ] (optionnel) Micro-animations « scale » au press sur boutons/cartes.
+- [ ] (optionnel) Empty states illustrés en sombre.
+- [ ] Vérifier le contraste des écrans denses (Création d'envoi, Admin) sur device.
+### Fichiers touchés
+- TuniTransport/src/utils/theme.ts, TuniTransport/App.tsx,
+  TuniTransport/app.json, TuniTransport/src/screens/auth/WelcomeScreen.tsx,
+  TuniTransport/assets/ferry-hero.png (nouveau), + correctifs sombres :
+  AdminVerificationsScreen, UserReviewsScreen, SenderHomeScreen,
+  TransporterHomeScreen, CreateShipmentScreen. .gitignore (nouveau).
+
+---
+
 ## 2026-07-17 — Config MCP + thème « Méditerranée »
 ### Fait
 - [x] Ajout du serveur MCP `21st` (HTTP) au scope projet dans `.mcp.json`,
