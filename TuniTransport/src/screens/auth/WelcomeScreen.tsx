@@ -57,8 +57,8 @@ export default function WelcomeScreen() {
       />
       {/* Voile sombre fixe pour garder le contenu lisible par-dessus */}
       <LinearGradient
-        colors={['rgba(5,11,18,0.30)', 'rgba(5,11,18,0.60)', 'rgba(5,11,18,0.93)']}
-        locations={[0, 0.42, 1]}
+        colors={['rgba(5,11,18,0.18)', 'rgba(5,11,18,0.40)', 'rgba(5,11,18,0.82)']}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
