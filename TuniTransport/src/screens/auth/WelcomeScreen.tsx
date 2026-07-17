@@ -19,6 +19,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SPACING, RADIUS, FONTS, DARK } from '../../utils/theme';
 import { useAppNavigation } from '../../navigation/AppNavigator';
+import PressableScale from '../../components/PressableScale';
 
 const TRUST_POINTS: {
   icon: keyof typeof Ionicons.glyphMap;
@@ -156,10 +157,11 @@ export default function WelcomeScreen() {
 
           {/* CTAs */}
           <View style={styles.actions}>
-            <TouchableOpacity
-              activeOpacity={0.9}
+            <PressableScale
               style={styles.primaryButtonWrap}
               onPress={() => navigation.navigate('Register', { role: 'sender' })}
+              accessibilityRole="button"
+              accessibilityLabel="J'envoie un colis"
             >
               <LinearGradient
                 colors={DARK.gradients.cta}
@@ -170,16 +172,17 @@ export default function WelcomeScreen() {
                 <Ionicons name="cube-outline" size={20} color={DARK.colors.white} />
                 <Text style={styles.primaryButtonText}>J'envoie un colis</Text>
               </LinearGradient>
-            </TouchableOpacity>
+            </PressableScale>
 
-            <TouchableOpacity
+            <PressableScale
               style={styles.secondaryButton}
-              activeOpacity={0.85}
               onPress={() => navigation.navigate('Register', { role: 'transporter' })}
+              accessibilityRole="button"
+              accessibilityLabel="Je transporte des colis"
             >
               <Ionicons name="car-outline" size={20} color={DARK.colors.text} />
               <Text style={styles.secondaryButtonText}>Je transporte des colis</Text>
-            </TouchableOpacity>
+            </PressableScale>
 
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={styles.loginLink}>

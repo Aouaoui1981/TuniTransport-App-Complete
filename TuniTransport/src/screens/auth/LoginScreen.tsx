@@ -21,6 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { getErrorMessage } from '../../utils/errors';
 import SocialAuthButtons from '../../components/SocialAuthButtons';
+import PressableScale from '../../components/PressableScale';
 
 const DEMO_ACCOUNTS = [
   { icon: 'cube' as const, label: 'Expéditeur démo', email: 'sender@demo.com', color: COLORS.primary },
@@ -232,9 +233,8 @@ export default function LoginScreen() {
             <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
+          <PressableScale
             style={[styles.loginButton, submitting && styles.loginButtonDisabled]}
-            activeOpacity={0.85}
             onPress={handleLogin}
             disabled={submitting}
             accessibilityRole="button"
@@ -249,7 +249,7 @@ export default function LoginScreen() {
             ) : (
               <Text style={styles.loginButtonText}>Se connecter</Text>
             )}
-          </TouchableOpacity>
+          </PressableScale>
 
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
