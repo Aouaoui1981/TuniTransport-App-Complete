@@ -6,6 +6,7 @@ import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, Image }
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../utils/theme';
 import { ShipmentStatus } from '../types';
+import PressableScale from './PressableScale';
 
 // ── StatusBadge ──────────────────────────────────────────────────────────
 
@@ -95,18 +96,33 @@ export function EmptyState({
   icon,
   title,
   message,
+  actionLabel,
+  onAction,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   message: string;
+  /** Libellé optionnel d'un bouton d'action (ex. « Créer un envoi »). */
+  actionLabel?: string;
+  onAction?: () => void;
 }) {
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIconWrap}>
-        <Ionicons name={icon} size={36} color={COLORS.textLight} />
+        <Ionicons name={icon} size={34} color={COLORS.secondary} />
       </View>
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptyMessage}>{message}</Text>
+      {actionLabel && onAction ? (
+        <PressableScale
+          style={styles.emptyAction}
+          onPress={onAction}
+          accessibilityRole="button"
+          accessibilityLabel={actionLabel}
+        >
+          <Text style={styles.emptyActionText}>{actionLabel}</Text>
+        </PressableScale>
+      ) : null}
     </View>
   );
 }
@@ -191,14 +207,26 @@ const styles = StyleSheet.create({
 
   empty: { alignItems: 'center', paddingVertical: SPACING.xxxl, paddingHorizontal: SPACING.xl },
   emptyIconWrap: {
-    width: 72,
-    height: 72,
+    width: 80,
+    height: 80,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.borderLight,
+    backgroundColor: 'rgba(45,212,191,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(45,212,191,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.lg,
   },
+  emptyAction: {
+    marginTop: SPACING.xl,
+    backgroundColor: 'rgba(45,212,191,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(45,212,191,0.30)',
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+  },
+  emptyActionText: { color: COLORS.secondary, fontWeight: '700', fontSize: FONTS.sizes.md },
   emptyTitle: { fontSize: FONTS.sizes.lg, fontWeight: '700', color: COLORS.text, marginBottom: SPACING.xs },
   emptyMessage: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary, textAlign: 'center' },
 });
