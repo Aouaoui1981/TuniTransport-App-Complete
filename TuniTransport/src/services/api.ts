@@ -32,6 +32,10 @@ import {
   PayoutRequestAdmin,
   PayoutStatus,
   AdminStats,
+  AdminUser,
+  AdminShipment,
+  AdminReview,
+  Announcement,
 } from '../types';
 
 function db() {
@@ -57,6 +61,7 @@ interface ProfileRow {
   identity_document_type?: string;
   identity_rejection_reason?: string;
   is_admin?: boolean;
+  suspended?: boolean;
 }
 
 interface TrackingEventRow {
@@ -177,6 +182,7 @@ export function mapProfile(row: ProfileRow): User {
     identityDocumentType: row.identity_document_type ?? undefined,
     identityRejectionReason: row.identity_rejection_reason ?? undefined,
     isAdmin: row.is_admin ?? false,
+    suspended: row.suspended ?? false,
   };
 }
 
@@ -854,6 +860,107 @@ export async function setPayoutStatus(requestId: string, status: PayoutStatus): 
     p_request_id: requestId,
     p_status: status,
   });
+  if (error) throw error;
+}
+
+// ── Admin : gestion des utilisateurs ──────────────────────────────────────
+
+export async function listUsersAdmin(search = ''): Promise<AdminUser[]> {
+  const { data, error } = await db().rpc('list_users_admin', { p_search: search });
+  if (error) throw error;
+  return ((data ?? []) as any[]).map((row) => ({
+    id: row.id,
+    email: row.email ?? '',
+    firstName: row.first_name ?? '',
+    lastName: row.last_name ?? '',
+    phone: row.phone ?? '',
+    role: row.role as UserRole,
+    isAdmin: row.is_admin ?? false,
+    identityStatus: (row.identity_status as IdentityStatus) ?? 'unsubmitted',
+    suspended: row.suspended ?? false,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function setUserSuspended(userId: string, suspended: boolean): Promise<void> {
+  const { error } = await db().rpc('set_user_suspended', { p_user_id: userId, p_suspended: suspended });
+  if (error) throw error;
+}
+
+export async function setUserAdmin(userId: string, isAdmin: boolean): Promise<void> {
+  const { error } = await db().rpc('set_user_admin', { p_user_id: userId, p_is_admin: isAdmin });
+  if (error) throw error;
+}
+
+export async function adminSetIdentity(userId: string, status: IdentityStatus): Promise<void> {
+  const { error } = await db().rpc('admin_set_identity', { p_user_id: userId, p_status: status });
+  if (error) throw error;
+}
+
+// ── Admin : gestion des envois ────────────────────────────────────────────
+
+export async function listShipmentsAdmin(search = ''): Promise<AdminShipment[]> {
+  const { data, error } = await db().rpc('list_shipments_admin', { p_search: search });
+  if (error) throw error;
+  return ((data ?? []) as any[]).map((row) => ({
+    id: row.id,
+    senderName: row.sender_name ?? '',
+    transporterName: row.transporter_name ?? '',
+    type: row.type ?? '',
+    status: row.status as ShipmentStatus,
+    price: row.price != null ? Number(row.price) : undefined,
+    pickupCity: row.pickup_city ?? '',
+    deliveryCity: row.delivery_city ?? '',
+    createdAt: row.created_at,
+  }));
+}
+
+export async function adminCancelShipment(shipmentId: string): Promise<void> {
+  const { error } = await db().rpc('admin_cancel_shipment', { p_shipment_id: shipmentId });
+  if (error) throw error;
+}
+
+// ── Admin : modération des avis ───────────────────────────────────────────
+
+export async function listReviewsAdmin(): Promise<AdminReview[]> {
+  const { data, error } = await db().rpc('list_reviews_admin');
+  if (error) throw error;
+  return ((data ?? []) as any[]).map((row) => ({
+    id: row.id,
+    stars: row.stars,
+    comment: row.comment ?? undefined,
+    tags: row.tags ?? undefined,
+    photos: row.photos ?? undefined,
+    createdAt: row.created_at,
+    raterName: row.rater_name ?? 'Utilisateur',
+    ratedName: row.rated_name ?? 'Utilisateur',
+  }));
+}
+
+export async function adminDeleteReview(reviewId: string): Promise<void> {
+  const { error } = await db().rpc('admin_delete_review', { p_review_id: reviewId });
+  if (error) throw error;
+}
+
+// ── Annonces (broadcast) ──────────────────────────────────────────────────
+
+export async function fetchAnnouncements(): Promise<Announcement[]> {
+  const { data, error } = await db()
+    .from('announcements')
+    .select('id, title, body, created_at')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return ((data ?? []) as any[]).map((row) => ({
+    id: row.id,
+    title: row.title,
+    body: row.body,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function createAnnouncement(title: string, body: string): Promise<void> {
+  const { error } = await db().rpc('create_announcement', { p_title: title, p_body: body });
   if (error) throw error;
 }
 

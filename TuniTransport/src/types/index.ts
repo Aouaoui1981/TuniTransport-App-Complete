@@ -43,6 +43,8 @@ export interface User {
   identityRejectionReason?: string;
   /** Platform staff — unlocks the identity review screen. */
   isAdmin?: boolean;
+  /** Suspended by an admin — blocked from using the app. */
+  suspended?: boolean;
 }
 
 /** Avis public laissé par un expéditeur sur un transporteur (ou l'inverse). */
@@ -273,4 +275,51 @@ export interface AdminStats {
   pendingKyc: number;
   pendingPayoutsCount: number;
   pendingPayoutsAmount: number;
+}
+
+// Utilisateur vu par l'administrateur (gestion des comptes).
+export interface AdminUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  role: UserRole;
+  isAdmin: boolean;
+  identityStatus: IdentityStatus;
+  suspended: boolean;
+  createdAt: string;
+}
+
+// Envoi vu par l'administrateur (supervision).
+export interface AdminShipment {
+  id: string;
+  senderName: string;
+  transporterName: string;
+  type: string;
+  status: ShipmentStatus;
+  price?: number;
+  pickupCity: string;
+  deliveryCity: string;
+  createdAt: string;
+}
+
+// Avis vu par l'administrateur (modération).
+export interface AdminReview {
+  id: string;
+  stars: number;
+  comment?: string;
+  tags?: string[];
+  photos?: string[];
+  createdAt: string;
+  raterName: string;
+  ratedName: string;
+}
+
+// Annonce diffusée à tous les utilisateurs.
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  createdAt: string;
 }

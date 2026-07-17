@@ -78,7 +78,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             if (session?.user) {
               const profile = await fetchProfile(session.user.id);
-              if (profile && isMounted.current) {
+              if (profile?.suspended) {
+                await supabase!.auth.signOut();
+                if (isMounted.current) setUser(null);
+              } else if (profile && isMounted.current) {
                 setUser({ ...profile, email: session.user.email ?? profile.email });
               }
             } else {
@@ -129,6 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw new Error('E-mail ou mot de passe incorrect.');
         const profile = await fetchProfile(data.user.id);
         if (!profile) throw new Error('Profil introuvable.');
+        if (profile.suspended) {
+          await supabase.auth.signOut();
+          throw new Error('Votre compte a été suspendu. Contactez le support.');
+        }
         setUser({ ...profile, email: data.user.email ?? profile.email });
       } else {
         // Demo mode: any credentials work; role inferred from the email.

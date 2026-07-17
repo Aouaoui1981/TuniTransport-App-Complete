@@ -45,6 +45,10 @@ import IdentityVerificationScreen from '../screens/shared/IdentityVerificationSc
 import AdminVerificationsScreen from '../screens/shared/AdminVerificationsScreen';
 import AdminDashboardScreen from '../screens/shared/AdminDashboardScreen';
 import AdminPayoutsScreen from '../screens/shared/AdminPayoutsScreen';
+import AdminUsersScreen from '../screens/shared/AdminUsersScreen';
+import AdminShipmentsScreen from '../screens/shared/AdminShipmentsScreen';
+import AdminReviewsScreen from '../screens/shared/AdminReviewsScreen';
+import AdminBroadcastScreen from '../screens/shared/AdminBroadcastScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import LegalPageScreen from '../screens/shared/LegalPageScreen';
 import WhitePaperScreen from '../screens/shared/WhitePaperScreen';
@@ -83,6 +87,10 @@ export type RootStackParamList = {
   AdminDashboard: undefined;
   AdminVerifications: undefined;
   AdminPayouts: undefined;
+  AdminUsers: undefined;
+  AdminShipments: undefined;
+  AdminReviews: undefined;
+  AdminBroadcast: undefined;
   Notifications: undefined;
   Legal: { page: LegalPageKey };
   WhitePaper: undefined;
@@ -273,6 +281,26 @@ export default function AppNavigator() {
             name="AdminPayouts"
             component={AdminPayoutsScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Demandes de retrait' }}
+          />
+          <Stack.Screen
+            name="AdminUsers"
+            component={AdminUsersScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Utilisateurs' }}
+          />
+          <Stack.Screen
+            name="AdminShipments"
+            component={AdminShipmentsScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Envois' }}
+          />
+          <Stack.Screen
+            name="AdminReviews"
+            component={AdminReviewsScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Modération des avis' }}
+          />
+          <Stack.Screen
+            name="AdminBroadcast"
+            component={AdminBroadcastScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Annonces' }}
           />
           <Stack.Screen
             name="Notifications"
