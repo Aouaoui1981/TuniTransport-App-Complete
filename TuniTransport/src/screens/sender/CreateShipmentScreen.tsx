@@ -29,6 +29,7 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { showAlert } from '../../utils/alert';
 import { Card } from '../../components';
+import VerificationRequired from '../../components/VerificationRequired';
 import { LegalConsent, ConsentCheckbox } from '../../components/LegalConsent';
 import { PRICE_PER_KG, computeWeightPrice, OVERSIZED_EXAMPLES } from '../../utils/pricing';
 import { useAuth } from '../../context/AuthContext';
@@ -191,7 +192,7 @@ export default function CreateShipmentScreen() {
       // In live mode the photos go to Supabase Storage first; in demo mode
       // the local URIs are kept as-is (in-memory data only). En édition, les
       // photos déjà en ligne (URL http…) sont conservées telles quelles.
-      const shipmentPhotos = !isSmall ? photoUris : [];
+      const shipmentPhotos = photoUris;
       const photoUrls =
         IS_LIVE && user
           ? await Promise.all(
@@ -302,6 +303,12 @@ export default function CreateShipmentScreen() {
     );
   }
 
+  // Identité non vérifiée : bloquer AVANT le formulaire (au lieu d'échouer à
+  // la publication). L'édition d'un envoi existant n'est pas concernée.
+  if (!isEditing && IS_LIVE && user && user.identityStatus !== 'verified') {
+    return <VerificationRequired status={user.identityStatus} action="publier un envoi" />;
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
@@ -408,29 +415,6 @@ export default function CreateShipmentScreen() {
                 value={dimensions}
                 onChangeText={setDimensions}
               />
-              <View style={styles.photoRow}>
-                {photoUris.map((uri, index) => (
-                  <View key={`${uri}-${index}`} style={styles.photoThumbWrap}>
-                    <Image source={{ uri }} style={styles.photoThumb} />
-                    <TouchableOpacity
-                      style={styles.photoRemove}
-                      activeOpacity={0.8}
-                      onPress={() => removePhoto(index)}
-                      accessibilityLabel="Supprimer la photo"
-                    >
-                      <Ionicons name="close" size={14} color={COLORS.white} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-                {photoUris.length < MAX_PHOTOS && (
-                  <TouchableOpacity style={styles.photoAdd} activeOpacity={0.7} onPress={addPhoto}>
-                    <Ionicons name="camera-outline" size={22} color={COLORS.textLight} />
-                    <Text style={styles.photoAddText}>
-                      {photoUris.length === 0 ? 'Photos' : `${photoUris.length}/${MAX_PHOTOS}`}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
               <View style={styles.auctionInfo}>
                 <Ionicons name="information-circle" size={18} color={COLORS.accent} />
                 <Text style={styles.auctionInfoText}>
@@ -441,6 +425,37 @@ export default function CreateShipmentScreen() {
               </View>
             </Card>
           )}
+
+          {/* Photos (tous les envois) — jusqu'à 5 */}
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>Photos du colis</Text>
+            <Text style={styles.photoHint}>
+              Ajoutez jusqu'à {MAX_PHOTOS} photos ({photoUris.length}/{MAX_PHOTOS}).
+            </Text>
+            <View style={styles.photoRow}>
+              {photoUris.map((uri, index) => (
+                <View key={`${uri}-${index}`} style={styles.photoThumbWrap}>
+                  <Image source={{ uri }} style={styles.photoThumb} />
+                  <TouchableOpacity
+                    style={styles.photoRemove}
+                    activeOpacity={0.8}
+                    onPress={() => removePhoto(index)}
+                    accessibilityLabel="Supprimer la photo"
+                  >
+                    <Ionicons name="close" size={14} color={COLORS.white} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              {photoUris.length < MAX_PHOTOS && (
+                <TouchableOpacity style={styles.photoAdd} activeOpacity={0.7} onPress={addPhoto}>
+                  <Ionicons name="camera-outline" size={22} color={COLORS.textLight} />
+                  <Text style={styles.photoAddText}>
+                    {photoUris.length === 0 ? 'Ajouter' : `${photoUris.length}/${MAX_PHOTOS}`}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </Card>
 
           {/* Pickup address */}
           <Card style={styles.section}>
@@ -601,6 +616,7 @@ const styles = StyleSheet.create({
   priceFormula: { fontSize: FONTS.sizes.xs, color: COLORS.primaryDark, marginTop: 2, opacity: 0.8 },
   priceValue: { fontSize: FONTS.sizes.xxxl, fontWeight: '800', color: COLORS.primary },
 
+  photoHint: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary, marginBottom: SPACING.md },
   photoRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

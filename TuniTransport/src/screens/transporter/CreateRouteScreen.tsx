@@ -20,6 +20,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
+import VerificationRequired from '../../components/VerificationRequired';
 
 const FERRY_COMPANIES = ['Corsica Linea', 'CTN', 'GNV'] as const;
 const CROSSING_DAYS = 1; // typical France → Tunisia ferry crossing
@@ -99,6 +100,11 @@ export default function CreateRouteScreen() {
       setSaving(false);
     }
   };
+
+  // Identité non vérifiée : bloquer AVANT le formulaire d'ajout de trajet.
+  if (IS_LIVE && user && user.identityStatus !== 'verified') {
+    return <VerificationRequired status={user.identityStatus} action="publier un trajet" />;
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
