@@ -80,6 +80,8 @@ export default function ShipmentsScreen() {
               icon="cube-outline"
               title="Aucun envoi"
               message="Aucun envoi ne correspond à ce filtre."
+              actionLabel="Créer un envoi"
+              onAction={() => navigation.navigate('CreateShipment')}
             />
           </Card>
         }
