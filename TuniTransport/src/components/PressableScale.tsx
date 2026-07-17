@@ -16,13 +16,17 @@ import {
 type Props = Omit<PressableProps, 'style'> & {
   /** Facteur de réduction au press (défaut 0.96). */
   scaleTo?: number;
+  /** Style visuel (fond, radius, padding…) — porté par la vue animée. */
   style?: StyleProp<ViewStyle>;
+  /** Style de mise en page (flex, largeur…) — porté par le Pressable. */
+  containerStyle?: StyleProp<ViewStyle>;
   children: React.ReactNode;
 };
 
 export default function PressableScale({
   scaleTo = 0.96,
   style,
+  containerStyle,
   children,
   onPressIn,
   onPressOut,
@@ -49,7 +53,12 @@ export default function PressableScale({
   };
 
   return (
-    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} {...rest}>
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={containerStyle}
+      {...rest}
+    >
       <Animated.View style={[style, { transform: [{ scale }] }]}>{children}</Animated.View>
     </Pressable>
   );
