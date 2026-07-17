@@ -1,12 +1,14 @@
 // ──────────────────────────────────────────────────────────────────────────
-// THL — WelcomeScreen : page d'accueil style "landing" (fond clair, titre
-// XXL avec mot accentué, points de confiance en pastilles pastel, CTA pleins)
+// THL — WelcomeScreen : accueil "landing" premium (thème Méditerranée).
+// Badge ferry, titre XXL, points de confiance en cartes, bandeau de stats
+// en dégradé mer, CTA principal dégradé. Tout est piloté par les design tokens.
 // ──────────────────────────────────────────────────────────────────────────
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { COLORS, SPACING, RADIUS, FONTS, SHADOWS, GRADIENTS } from '../../utils/theme';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 
 const TRUST_POINTS: {
@@ -59,6 +61,10 @@ export default function WelcomeScreen() {
 
         {/* Hero */}
         <View style={styles.hero}>
+          <View style={styles.badge}>
+            <Ionicons name="boat-outline" size={14} color={COLORS.primary} />
+            <Text style={styles.badgeText}>France ⇄ Tunisie · par ferry</Text>
+          </View>
           <Text style={styles.heroTitle}>
             Vos colis entre la France et la Tunisie,{' '}
             <Text style={styles.heroAccent}>en toute confiance</Text>
@@ -69,12 +75,35 @@ export default function WelcomeScreen() {
           </Text>
         </View>
 
-        {/* Trust points */}
+        {/* Stats strip — bandeau dégradé mer */}
+        <LinearGradient
+          colors={GRADIENTS.sea}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.statsCard}
+        >
+          <View style={styles.statCol}>
+            <Text style={styles.statValue}>4€/kg</Text>
+            <Text style={styles.statLabel}>Colis léger</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statCol}>
+            <Text style={styles.statValue}>100%</Text>
+            <Text style={styles.statLabel}>Sécurisé</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statCol}>
+            <Text style={styles.statValue}>FR ⇄ TN</Text>
+            <Text style={styles.statLabel}>Par ferry</Text>
+          </View>
+        </LinearGradient>
+
+        {/* Trust points — cartes */}
         <View style={styles.trust}>
           {TRUST_POINTS.map((point) => (
-            <View key={point.icon} style={styles.trustRow}>
+            <View key={point.icon} style={styles.trustCard}>
               <View style={styles.trustChip}>
-                <Ionicons name={point.icon} size={24} color={COLORS.primary} />
+                <Ionicons name={point.icon} size={22} color={COLORS.primary} />
               </View>
               <View style={styles.trustTextWrap}>
                 <Text style={styles.trustTitle}>{point.title}</Text>
@@ -84,33 +113,22 @@ export default function WelcomeScreen() {
           ))}
         </View>
 
-        {/* Stats strip */}
-        <View style={styles.statsCard}>
-          <View style={styles.statCol}>
-            <Text style={styles.statValue}>4€/kg</Text>
-            <Text style={styles.statLabel}>Colis léger</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statCol}>
-            <Text style={styles.statValue}>100%</Text>
-            <Text style={styles.statLabel}>Paiement sécurisé</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statCol}>
-            <Text style={styles.statValue}>FR ⇄ TN</Text>
-            <Text style={styles.statLabel}>Par ferry</Text>
-          </View>
-        </View>
-
         {/* CTAs */}
         <View style={styles.actions}>
           <TouchableOpacity
-            style={styles.primaryButton}
-            activeOpacity={0.85}
+            activeOpacity={0.9}
+            style={styles.primaryButtonWrap}
             onPress={() => navigation.navigate('Register', { role: 'sender' })}
           >
-            <Ionicons name="cube-outline" size={20} color={COLORS.white} />
-            <Text style={styles.primaryButtonText}>J'envoie un colis</Text>
+            <LinearGradient
+              colors={GRADIENTS.sea}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.primaryButton}
+            >
+              <Ionicons name="cube-outline" size={20} color={COLORS.white} />
+              <Text style={styles.primaryButtonText}>J'envoie un colis</Text>
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -177,7 +195,19 @@ const styles = StyleSheet.create({
   },
   loginChipText: { color: COLORS.text, fontWeight: '600', fontSize: FONTS.sizes.sm },
 
-  hero: { marginTop: SPACING.xxxl * 1.25 },
+  hero: { marginTop: SPACING.xxxl },
+  badge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    backgroundColor: COLORS.primaryLight,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs + 2,
+    borderRadius: RADIUS.full,
+    marginBottom: SPACING.lg,
+  },
+  badgeText: { color: COLORS.primary, fontWeight: '700', fontSize: FONTS.sizes.xs },
   heroTitle: {
     fontSize: 34,
     lineHeight: 42,
@@ -193,12 +223,43 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
 
-  trust: { marginTop: SPACING.xxxl, gap: SPACING.xl },
-  trustRow: { flexDirection: 'row', gap: SPACING.lg, alignItems: 'flex-start' },
-  trustChip: {
-    width: 52,
-    height: 52,
+  statsCard: {
+    marginTop: SPACING.xxxl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: RADIUS.xl,
+    paddingVertical: SPACING.xl,
+    paddingHorizontal: SPACING.md,
+    ...SHADOWS.primary,
+  },
+  statCol: { flex: 1, alignItems: 'center' },
+  statValue: { fontSize: FONTS.sizes.xl, fontWeight: '800', color: COLORS.white },
+  statLabel: {
+    marginTop: 3,
+    fontSize: FONTS.sizes.xs,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.85)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statDivider: { width: 1, height: 34, backgroundColor: 'rgba(255,255,255,0.25)' },
+
+  trust: { marginTop: SPACING.xxxl, gap: SPACING.md },
+  trustCard: {
+    flexDirection: 'row',
+    gap: SPACING.lg,
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    padding: SPACING.lg,
+    ...SHADOWS.sm,
+  },
+  trustChip: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.md,
     backgroundColor: COLORS.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -216,38 +277,18 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
 
-  statsCard: {
-    marginTop: SPACING.xxxl,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    paddingVertical: SPACING.xl,
-    paddingHorizontal: SPACING.md,
-    ...SHADOWS.md,
-  },
-  statCol: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: FONTS.sizes.xl, fontWeight: '800', color: COLORS.primary },
-  statLabel: {
-    marginTop: 2,
-    fontSize: FONTS.sizes.xs,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statDivider: { width: 1, height: 34, backgroundColor: COLORS.borderLight },
-
   actions: { marginTop: SPACING.xxxl, gap: SPACING.md },
+  primaryButtonWrap: {
+    borderRadius: RADIUS.lg,
+    ...SHADOWS.primary,
+  },
   primaryButton: {
     flexDirection: 'row',
     gap: SPACING.sm,
-    backgroundColor: COLORS.primary,
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.lg + 2,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOWS.lg,
   },
   primaryButtonText: { color: COLORS.white, fontWeight: '700', fontSize: FONTS.sizes.lg },
   secondaryButton: {
