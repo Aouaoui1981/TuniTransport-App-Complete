@@ -169,3 +169,11 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - [x] Lettres « THL » du logo recolorees en teal #2DD4BF (couleur accent),
       boite gardee orange. Regeneration de tous les assets (icon, favicon,
       splash, adaptive-icon, logo-mark, logo-full).
+
+---
+
+## 2026-07-17 (suite) — Fond fixe (fourgon THL) sur WelcomeScreen
+### Fait
+- [x] Nouvelle image de fond (fourgon THL, cote mediterranee) -> assets/hero-van.jpg.
+- [x] WelcomeScreen : image de fond FIXE (ne defile plus) + voile sombre
+      pour lisibilite ; le contenu scrolle par-dessus. Titre avec ombre.

@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -49,63 +48,52 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
-      <LinearGradient
-        colors={DARK.gradients.base}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
+
+      {/* Image de fond FIXE (ne défile pas quand on scrolle) */}
+      <Image
+        source={require('../../../assets/hero-van.jpg')}
         style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
+      {/* Voile sombre fixe pour garder le contenu lisible par-dessus */}
+      <LinearGradient
+        colors={['rgba(5,11,18,0.30)', 'rgba(5,11,18,0.60)', 'rgba(5,11,18,0.93)']}
+        locations={[0, 0.42, 1]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
       />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Hero photo — ferry THL */}
-        <ImageBackground
-          source={require('../../../assets/ferry-hero.png')}
-          resizeMode="cover"
-          style={styles.hero}
-        >
-          {/* Voile haut (lisibilité de la barre) */}
-          <LinearGradient
-            colors={['rgba(5,11,18,0.55)', 'transparent']}
-            style={styles.heroTopScrim}
-            pointerEvents="none"
-          />
-          {/* Fondu bas vers le fond sombre */}
-          <LinearGradient
-            colors={['transparent', 'rgba(10,20,32,0.65)', DARK.colors.bgBase]}
-            locations={[0, 0.65, 1]}
-            style={styles.heroBottomFade}
-            pointerEvents="none"
-          />
-
-          <SafeAreaView edges={['top']}>
-            <View style={styles.topBar}>
-              <View style={styles.logoRow}>
-                {/* Le logo contient déjà « THL » — pas de texte redondant. */}
-                <Image
-                  source={require('../../../assets/logo-mark.png')}
-                  style={styles.logoMark}
-                  resizeMode="contain"
-                  accessibilityLabel="THL"
-                />
-              </View>
-              <TouchableOpacity
-                style={styles.loginChip}
-                onPress={() => navigation.navigate('Login')}
-              >
-                <Text style={styles.loginChipText}>Se connecter</Text>
-              </TouchableOpacity>
+        {/* En-tête transparent au-dessus de l'image fixe */}
+        <SafeAreaView edges={['top']}>
+          <View style={styles.topBar}>
+            <View style={styles.logoRow}>
+              {/* Le logo contient déjà « THL » — pas de texte redondant. */}
+              <Image
+                source={require('../../../assets/logo-mark.png')}
+                style={styles.logoMark}
+                resizeMode="contain"
+                accessibilityLabel="THL"
+              />
             </View>
-          </SafeAreaView>
-
-          <View style={styles.heroBadgeWrap}>
-            <View style={styles.badge}>
-              <Ionicons name="boat-outline" size={14} color={DARK.colors.secondary} />
-              <Text style={styles.badgeText}>Trans-Méditerranée · par ferry</Text>
-            </View>
+            <TouchableOpacity
+              style={styles.loginChip}
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Text style={styles.loginChipText}>Se connecter</Text>
+            </TouchableOpacity>
           </View>
-        </ImageBackground>
+        </SafeAreaView>
 
-        {/* Contenu sombre */}
+        {/* Espace laissant voir l'image de fond, avec le badge */}
+        <View style={styles.heroSpacer}>
+          <View style={styles.badge}>
+            <Ionicons name="boat-outline" size={14} color={DARK.colors.secondary} />
+            <Text style={styles.badgeText}>Trans-Méditerranée · par ferry</Text>
+          </View>
+        </View>
+
+        {/* Contenu */}
         <View style={styles.body}>
           <Text style={styles.heroTitle}>
             Vos colis entre la France et la Tunisie,{' '}
@@ -260,14 +248,25 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: DARK.colors.white, fontWeight: '700', fontSize: FONTS.sizes.xs },
 
+  // Zone laissant apparaître l'image de fond fixe
+  heroSpacer: {
+    height: 210,
+    justifyContent: 'flex-end',
+    paddingHorizontal: SPACING.xxl,
+    paddingBottom: SPACING.lg,
+  },
+
   // Corps
-  body: { paddingHorizontal: SPACING.xxl, marginTop: -SPACING.sm },
+  body: { paddingHorizontal: SPACING.xxl, marginTop: SPACING.sm },
   heroTitle: {
     fontSize: 32,
     lineHeight: 40,
     fontFamily: FONTS.family.extrabold,
     color: DARK.colors.text,
     letterSpacing: -1,
+    textShadowColor: 'rgba(0,0,0,0.45)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 10,
   },
   heroAccent: { color: DARK.colors.secondary },
   heroSub: {
