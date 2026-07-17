@@ -3,7 +3,7 @@
 // Feed derived from live app data: shipment tracking events, bids received
 // and unread conversations. Each entry navigates to the related screen.
 // ──────────────────────────────────────────────────────────────────────────
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,9 @@ import { EmptyState, statusLabel } from '../../components';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
+import { IS_LIVE } from '../../services/supabase';
+import { fetchAnnouncements } from '../../services/api';
+import { Announcement } from '../../types';
 
 type NotificationItem = {
   id: string;
@@ -41,10 +44,30 @@ export default function NotificationsScreen() {
   const navigation = useAppNavigation();
   const { user } = useAuth();
   const { shipments, conversations } = useData();
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+  useEffect(() => {
+    if (!IS_LIVE) return;
+    fetchAnnouncements().then(setAnnouncements).catch(() => undefined);
+  }, []);
 
   const items = useMemo<NotificationItem[]>(() => {
     if (!user) return [];
     const list: NotificationItem[] = [];
+
+    // Annonces diffusées par l'administration à tous les utilisateurs.
+    for (const a of announcements) {
+      list.push({
+        id: `ann-${a.id}`,
+        icon: 'megaphone-outline',
+        color: COLORS.primary,
+        bg: COLORS.primaryLight,
+        title: a.title,
+        body: a.body,
+        timestamp: a.createdAt,
+        onPress: () => undefined,
+      });
+    }
 
     const mine = shipments.filter(
       (s) => s.senderId === user.id || s.transporterId === user.id
@@ -104,7 +127,7 @@ export default function NotificationsScreen() {
     }
 
     return list.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-  }, [user, shipments, conversations, navigation]);
+  }, [user, shipments, conversations, announcements, navigation]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>

@@ -1386,3 +1386,183 @@ $$;
 
 revoke execute on function public.set_payout_status(uuid, text) from public, anon;
 grant execute on function public.set_payout_status(uuid, text) to authenticated;
+
+-- ═══════════════════════════════════════════
+-- THL -- Panneau d'administration : pouvoirs étendus
+-- ═══════════════════════════════════════════
+-- Existing project: run this whole section once in the SQL Editor.
+-- Gestion des utilisateurs, des envois, des avis et des annonces.
+-- Toutes les fonctions sont réservées aux administrateurs (is_admin()).
+
+-- Suspension d'un compte (bloque la connexion à l'application).
+alter table public.profiles
+  add column if not exists suspended boolean not null default false;
+
+-- ── Gestion des utilisateurs ──────────────────────────────────────────────
+create or replace function public.list_users_admin(p_search text default '')
+returns table (
+  id uuid, email text, first_name text, last_name text, phone text,
+  role text, is_admin boolean, identity_status text, suspended boolean,
+  created_at timestamptz
+)
+language sql
+security definer set search_path = public
+as $$
+  select p.id, p.email, p.first_name, p.last_name, p.phone,
+         p.role::text, p.is_admin, p.identity_status::text, p.suspended, p.created_at
+  from public.profiles p
+  where public.is_admin()
+    and (
+      coalesce(p_search, '') = ''
+      or p.email ilike '%' || p_search || '%'
+      or (p.first_name || ' ' || p.last_name) ilike '%' || p_search || '%'
+      or p.phone ilike '%' || p_search || '%'
+    )
+  order by p.created_at desc
+  limit 500;
+$$;
+
+revoke execute on function public.list_users_admin(text) from public, anon;
+grant execute on function public.list_users_admin(text) to authenticated;
+
+create or replace function public.set_user_suspended(p_user_id uuid, p_suspended boolean)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'Réservé aux administrateurs.'; end if;
+  update public.profiles set suspended = p_suspended where id = p_user_id;
+end; $$;
+
+revoke execute on function public.set_user_suspended(uuid, boolean) from public, anon;
+grant execute on function public.set_user_suspended(uuid, boolean) to authenticated;
+
+create or replace function public.set_user_admin(p_user_id uuid, p_is_admin boolean)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'Réservé aux administrateurs.'; end if;
+  update public.profiles set is_admin = p_is_admin where id = p_user_id;
+end; $$;
+
+revoke execute on function public.set_user_admin(uuid, boolean) from public, anon;
+grant execute on function public.set_user_admin(uuid, boolean) to authenticated;
+
+create or replace function public.admin_set_identity(p_user_id uuid, p_status text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'Réservé aux administrateurs.'; end if;
+  if p_status not in ('unsubmitted', 'pending', 'verified', 'rejected') then
+    raise exception 'Statut invalide.';
+  end if;
+  update public.profiles
+  set identity_status = p_status,
+      identity_reviewed_at = now()
+  where id = p_user_id;
+end; $$;
+
+revoke execute on function public.admin_set_identity(uuid, text) from public, anon;
+grant execute on function public.admin_set_identity(uuid, text) to authenticated;
+
+-- ── Gestion des envois ────────────────────────────────────────────────────
+create or replace function public.list_shipments_admin(p_search text default '')
+returns table (
+  id uuid, sender_name text, transporter_name text, type text, status text,
+  price numeric, pickup_city text, delivery_city text, created_at timestamptz
+)
+language sql
+security definer set search_path = public
+as $$
+  select s.id,
+         coalesce(s.sender_name, '') as sender_name,
+         coalesce(s.transporter_name, '') as transporter_name,
+         s.type::text, s.status::text, s.price,
+         (s.pickup_address ->> 'city'), (s.delivery_address ->> 'city'),
+         s.created_at
+  from public.shipments s
+  where public.is_admin()
+    and (
+      coalesce(p_search, '') = ''
+      or s.sender_name ilike '%' || p_search || '%'
+      or s.transporter_name ilike '%' || p_search || '%'
+    )
+  order by s.created_at desc
+  limit 300;
+$$;
+
+revoke execute on function public.list_shipments_admin(text) from public, anon;
+grant execute on function public.list_shipments_admin(text) to authenticated;
+
+create or replace function public.admin_cancel_shipment(p_shipment_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'Réservé aux administrateurs.'; end if;
+  update public.shipments set status = 'cancelled' where id = p_shipment_id;
+  insert into public.tracking_events (shipment_id, status, description)
+  values (p_shipment_id, 'cancelled', 'Envoi annulé par l''administration.');
+end; $$;
+
+revoke execute on function public.admin_cancel_shipment(uuid) from public, anon;
+grant execute on function public.admin_cancel_shipment(uuid) to authenticated;
+
+-- ── Modération des avis ───────────────────────────────────────────────────
+create or replace function public.list_reviews_admin()
+returns table (
+  id uuid, stars integer, comment text, tags text[], photos text[],
+  created_at timestamptz, rater_name text, rated_name text
+)
+language sql
+security definer set search_path = public
+as $$
+  select r.id, r.stars, r.comment, r.tags, r.photos, r.created_at,
+         coalesce(pr.first_name, 'Utilisateur') as rater_name,
+         coalesce(pd.first_name, 'Utilisateur') as rated_name
+  from public.ratings r
+  left join public.profiles pr on pr.id = r.rater_id
+  left join public.profiles pd on pd.id = r.rated_user_id
+  where public.is_admin()
+  order by r.created_at desc
+  limit 300;
+$$;
+
+revoke execute on function public.list_reviews_admin() from public, anon;
+grant execute on function public.list_reviews_admin() to authenticated;
+
+create or replace function public.admin_delete_review(p_review_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'Réservé aux administrateurs.'; end if;
+  delete from public.ratings where id = p_review_id;
+end; $$;
+
+revoke execute on function public.admin_delete_review(uuid) from public, anon;
+grant execute on function public.admin_delete_review(uuid) to authenticated;
+
+-- ── Annonces (notifications diffusées à tous) ─────────────────────────────
+create table if not exists public.announcements (
+  id         uuid primary key default gen_random_uuid(),
+  title      text not null,
+  body       text not null,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.announcements enable row level security;
+
+drop policy if exists "announcements_select" on public.announcements;
+create policy "announcements_select" on public.announcements
+  for select to authenticated using (true);
+
+create or replace function public.create_announcement(p_title text, p_body text)
+returns public.announcements language plpgsql security definer set search_path = public as $$
+declare v_a public.announcements;
+begin
+  if not public.is_admin() then raise exception 'Réservé aux administrateurs.'; end if;
+  if coalesce(trim(p_title), '') = '' or coalesce(trim(p_body), '') = '' then
+    raise exception 'Titre et message requis.';
+  end if;
+  insert into public.announcements (title, body, created_by)
+  values (p_title, p_body, auth.uid())
+  returning * into v_a;
+  return v_a;
+end; $$;
+
+revoke execute on function public.create_announcement(text, text) from public, anon;
+grant execute on function public.create_announcement(text, text) to authenticated;

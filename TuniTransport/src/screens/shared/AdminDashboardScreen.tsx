@@ -153,6 +153,58 @@ export default function AdminDashboardScreen() {
                 <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
               </Card>
             </TouchableOpacity>
+
+            <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('AdminUsers')}>
+              <Card style={styles.actionCard}>
+                <View style={[styles.actionIcon, { backgroundColor: COLORS.primaryLight }]}>
+                  <Ionicons name="people-outline" size={22} color={COLORS.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.actionTitle}>Gestion des utilisateurs</Text>
+                  <Text style={styles.actionSub}>Suspendre, vérifier, nommer admin</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
+              </Card>
+            </TouchableOpacity>
+
+            <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('AdminShipments')}>
+              <Card style={styles.actionCard}>
+                <View style={[styles.actionIcon, { backgroundColor: COLORS.accentLight }]}>
+                  <Ionicons name="archive-outline" size={22} color={COLORS.accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.actionTitle}>Supervision des envois</Text>
+                  <Text style={styles.actionSub}>Consulter et annuler les envois</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
+              </Card>
+            </TouchableOpacity>
+
+            <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('AdminReviews')}>
+              <Card style={styles.actionCard}>
+                <View style={[styles.actionIcon, { backgroundColor: COLORS.secondaryLight }]}>
+                  <Ionicons name="star-outline" size={22} color={COLORS.secondaryDark} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.actionTitle}>Modération des avis</Text>
+                  <Text style={styles.actionSub}>Supprimer un avis inapproprié</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
+              </Card>
+            </TouchableOpacity>
+
+            <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('AdminBroadcast')}>
+              <Card style={styles.actionCard}>
+                <View style={[styles.actionIcon, { backgroundColor: COLORS.primaryLight }]}>
+                  <Ionicons name="megaphone-outline" size={22} color={COLORS.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.actionTitle}>Annonces</Text>
+                  <Text style={styles.actionSub}>Diffuser un message à tous les utilisateurs</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
+              </Card>
+            </TouchableOpacity>
           </>
         )}
       </ScrollView>
