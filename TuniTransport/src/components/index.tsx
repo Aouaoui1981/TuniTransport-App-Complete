@@ -4,7 +4,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../utils/theme';
+import { COLORS, SPACING, RADIUS, FONTS, SHADOWS, BEVEL } from '../utils/theme';
 import { ShipmentStatus } from '../types';
 import PressableScale from './PressableScale';
 
@@ -193,7 +193,8 @@ const styles = StyleSheet.create({
     padding: SPACING.xl,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
-    ...SHADOWS.md,
+    ...BEVEL,
+    ...SHADOWS.raised,
   },
 
   sectionHeader: {
