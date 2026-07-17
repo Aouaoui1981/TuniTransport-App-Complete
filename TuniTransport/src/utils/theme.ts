@@ -200,19 +200,19 @@ export const DARK = {
   gradients: {
     // Fond d'écran cinématique (3 arrêts, jamais de noir pur)
     base: ['#0E1C2C', '#0A1420', '#050B12'] as const,
-    // Bouton CTA lumineux bleu → sarcelle
-    cta: ['#2563EB', '#0D9488'] as const,
+    // Bouton CTA aux couleurs du logo : teal (THL) → orange (boîte)
+    cta: ['#2DD4BF', '#F5B342'] as const,
     // Bandeau de statistiques
     stats: ['#12314F', '#0C2233'] as const,
     // Lueur douce (vers transparent) pour blobs d'ambiance
     glow: ['rgba(37,99,235,0.22)', 'rgba(37,99,235,0)'] as const,
   },
   shadows: {
-    // Halo lumineux derrière le CTA primaire
+    // Halo lumineux derrière le CTA primaire (teal, aux couleurs du logo)
     glowPrimary: {
-      shadowColor: '#2563EB',
+      shadowColor: '#2DD4BF',
       shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.55,
+      shadowOpacity: 0.45,
       shadowRadius: 22,
       elevation: 10,
     },

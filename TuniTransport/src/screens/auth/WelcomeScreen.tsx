@@ -179,7 +179,7 @@ export default function WelcomeScreen() {
               accessibilityRole="button"
               accessibilityLabel="Je transporte des colis"
             >
-              <Ionicons name="car-outline" size={20} color={DARK.colors.text} />
+              <Ionicons name="car-outline" size={20} color={DARK.colors.secondary} />
               <Text style={styles.secondaryButtonText}>Je transporte des colis</Text>
             </PressableScale>
 
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     backgroundColor: DARK.colors.surfaceGlass,
     borderWidth: 1,
-    borderColor: DARK.colors.borderStrong,
+    borderColor: 'rgba(45,212,191,0.35)',
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.lg + 2,
     alignItems: 'center',
