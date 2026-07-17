@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { SPACING, RADIUS, FONTS, DARK } from '../../utils/theme';
+import { SPACING, RADIUS, FONTS, DARK, SHADOWS, BEVEL } from '../../utils/theme';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import PressableScale from '../../components/PressableScale';
 
@@ -285,6 +285,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: DARK.colors.border,
+    ...BEVEL,
     paddingVertical: SPACING.xl,
     paddingHorizontal: SPACING.md,
     ...DARK.shadows.card,
@@ -310,6 +311,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: DARK.colors.border,
+    ...BEVEL,
+    ...SHADOWS.raised,
     padding: SPACING.lg,
   },
   trustChip: {

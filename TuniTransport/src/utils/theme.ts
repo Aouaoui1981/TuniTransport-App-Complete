@@ -157,6 +157,21 @@ export const SHADOWS = {
     shadowRadius: 16,
     elevation: 6,
   },
+  // Ombre profonde « surélevée » — effet 3D (carte qui flotte au-dessus du fond)
+  raised: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.45,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+} as const;
+
+// Biseau 3D : liseré clair en haut (lumière) + liseré sombre en bas (ombre).
+// À étaler sur une carte pour lui donner un relief « extrudé » sur fond sombre.
+export const BEVEL = {
+  borderTopColor: 'rgba(255,255,255,0.14)',
+  borderBottomColor: 'rgba(0,0,0,0.35)',
 } as const;
 
 // ──────────────────────────────────────────────────────────────────────────

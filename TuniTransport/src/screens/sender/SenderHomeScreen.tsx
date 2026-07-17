@@ -5,7 +5,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { COLORS, SPACING, RADIUS, FONTS, SHADOWS, BEVEL } from '../../utils/theme';
 import { Card, SectionHeader, StatusBadge, EmptyState } from '../../components';
 import PressableScale from '../../components/PressableScale';
 import { useAuth } from '../../context/AuthContext';
@@ -237,7 +237,10 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     alignItems: 'center',
     gap: SPACING.xs,
-    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    ...BEVEL,
+    ...SHADOWS.raised,
   },
   quickTitle: { fontSize: FONTS.sizes.sm, fontWeight: '700' },
   quickSub: { fontSize: FONTS.sizes.xs, color: COLORS.textSecondary },
