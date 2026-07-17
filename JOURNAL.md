@@ -5,6 +5,33 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 
 ---
 
+## 2026-07-17 — Config MCP + thème « Méditerranée »
+### Fait
+- [x] Ajout du serveur MCP `21st` (HTTP) au scope projet dans `.mcp.json`,
+      clé API stockée en référence `${API_KEY_21ST}` (pas de secret commité).
+      → PR #68 mergée dans `main`.
+- [x] Rafraîchissement complet des design tokens (`utils/theme.ts`) via la
+      skill `ui-ux-pro-max` : palette « Méditerranée » WCAG-AA (bleu mer
+      profond `#1257A5` ~7:1, sarcelle `#0D9488`, ambre/sable `#E8890C`),
+      ombres teintées marine, dégradés `GRADIENTS` (sea/sunset/mist),
+      tokens ajoutés (onPrimary, accentDark, muted, overlay, poids de
+      police, interlignes). Toutes les clés historiques conservées → tous
+      les écrans profitent du rafraîchissement sans autre modification.
+- [x] `theme.ts` sans erreur de type (typecheck complet impossible ici :
+      `node_modules` non installé dans le clone frais — erreurs uniquement
+      « Cannot find module », non liées au changement).
+### À faire côté utilisateur (pour activer le MCP 21st)
+- Définir `API_KEY_21ST` dans les variables d'environnement (claude.ai/code).
+- Approuver le serveur MCP au prochain démarrage de session.
+### Reste à faire
+- [ ] (optionnel) Charger la police « Plus Jakarta Sans » via expo-font et
+      brancher `FONTS.family` (placeholder « System » pour l'instant).
+- [ ] Vérifier le rendu des écrans avec la nouvelle palette sur device.
+### Fichiers touchés
+- .mcp.json (nouveau), TuniTransport/src/utils/theme.ts, JOURNAL.md.
+
+---
+
 ## 2026-07-16 — Session interrompue (limite hebdomadaire)
 ### Fait
 - Typecheck en cours, non terminé (classifier Bash indisponible côté infra)
