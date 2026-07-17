@@ -15,6 +15,36 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - Les 3 fonctions sont SECURITY DEFINER, réservées aux admins
   (`profiles.is_admin = true`), EXECUTE retiré à `anon`
 ### Reste à faire
-- [ ] Rapatrier ces 2 migrations dans le dossier migrations du repo (étape 3)
-- [ ] Terminer le typecheck puis commit final
 - [ ] Intégrer le nouveau theme "Méditerranée" (fichiers fournis séparément)
+
+---
+
+## 2026-07-16 (suite) — Reprise et finalisation
+### Fait
+- [x] 2 migrations admin rapatriées dans `TuniTransport/supabase/migrations/`
+      (`20260716120000_create_admin_stats_function.sql`,
+       `20260716120100_create_payout_admin_functions.sql`) — SQL déjà en prod,
+      NON ré-appliqué.
+- [x] `JOURNAL.md` + `CLAUDE.md` (règle « Journal de bord ») créés.
+- [x] Typecheck terminé : `npx tsc --noEmit` → OK (0 erreur).
+- [x] Build « Panneau admin — pouvoirs étendus » (commit `5bc9adf`) :
+      gestion des utilisateurs (suspendre / vérifier / nommer admin),
+      supervision des envois (annuler), modération des avis (supprimer),
+      annonces diffusées à tous (broadcast → notifications).
+### Base de données — À EXÉCUTER en prod (pas encore appliqué)
+- La section « Panneau d'administration : pouvoirs étendus » à la fin de
+  `TuniTransport/supabase/schema.sql` (colonne `profiles.suspended`, table
+  `announcements`, RPC `list_users_admin`, `set_user_suspended`,
+  `set_user_admin`, `admin_set_identity`, `list_shipments_admin`,
+  `admin_cancel_shipment`, `list_reviews_admin`, `admin_delete_review`,
+  `create_announcement`).
+### Fichiers touchés (session)
+- src/context/AuthContext.tsx, src/navigation/AppNavigator.tsx,
+  src/services/api.ts, src/types/index.ts,
+  src/screens/shared/AdminDashboardScreen.tsx, NotificationsScreen.tsx,
+  + nouveaux : AdminUsersScreen, AdminShipmentsScreen, AdminReviewsScreen,
+  AdminBroadcastScreen ; supabase/schema.sql.
+### Reste à faire
+- [ ] Exécuter la section SQL « pouvoirs étendus » sur Supabase prod.
+- [ ] Ouvrir/merger la PR de ce build, puis vérifier en ligne.
+- [ ] Theme "Méditerranée" (en attente des fichiers).
