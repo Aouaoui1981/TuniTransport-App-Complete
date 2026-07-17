@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   logoMark: { width: 42, height: 42 },
   wordmark: {
     fontSize: FONTS.sizes.xxl,
-    fontWeight: '800',
+    fontFamily: FONTS.family.extrabold,
     color: DARK.colors.white,
     letterSpacing: -0.5,
   },
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 32,
     lineHeight: 40,
-    fontWeight: '800',
+    fontFamily: FONTS.family.extrabold,
     color: DARK.colors.text,
     letterSpacing: -1,
   },

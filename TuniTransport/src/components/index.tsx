@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: SPACING.md,
   },
-  sectionTitle: { fontSize: FONTS.sizes.xl, fontWeight: '700', color: COLORS.text },
+  sectionTitle: { fontSize: FONTS.sizes.xl, fontFamily: FONTS.family.bold, color: COLORS.text },
   sectionAction: { fontSize: FONTS.sizes.md, fontWeight: '600', color: COLORS.primary },
 
   empty: { alignItems: 'center', paddingVertical: SPACING.xxxl, paddingHorizontal: SPACING.xl },
