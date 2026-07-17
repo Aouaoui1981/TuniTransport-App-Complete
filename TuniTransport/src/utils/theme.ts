@@ -83,14 +83,15 @@ export const RADIUS = {
 } as const;
 
 export const FONTS = {
-  // Famille recommandée : « Plus Jakarta Sans » (lisible sur mobile, compatible
-  // Dynamic Type iOS / mise à l'échelle Android). Tant qu'elle n'est pas chargée
-  // via expo-font, RN retombe proprement sur la police système.
+  // Famille d'affichage « Plus Jakarta Sans » (chargée dans App.tsx via
+  // @expo-google-fonts). Si le chargement échoue, RN retombe sur la police
+  // système. Utilisée sur les titres/affichage ; le corps reste en système.
   family: {
-    regular: 'System',
-    medium: 'System',
-    semibold: 'System',
-    bold: 'System',
+    regular: 'PlusJakartaSans_400Regular',
+    medium: 'PlusJakartaSans_500Medium',
+    semibold: 'PlusJakartaSans_600SemiBold',
+    bold: 'PlusJakartaSans_700Bold',
+    extrabold: 'PlusJakartaSans_800ExtraBold',
   },
   weights: {
     regular: '400',

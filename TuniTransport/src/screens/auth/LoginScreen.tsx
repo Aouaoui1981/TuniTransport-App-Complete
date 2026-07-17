@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  heading: { fontSize: FONTS.sizes.xxxl, fontWeight: '800', color: COLORS.text },
+  heading: { fontSize: FONTS.sizes.xxxl, fontFamily: FONTS.family.extrabold, color: COLORS.text },
   subheading: {
     fontSize: FONTS.sizes.md,
     color: COLORS.textSecondary,
