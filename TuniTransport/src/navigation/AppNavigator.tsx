@@ -53,6 +53,7 @@ import AdminBroadcastScreen from '../screens/shared/AdminBroadcastScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import LegalPageScreen from '../screens/shared/LegalPageScreen';
 import WhitePaperScreen from '../screens/shared/WhitePaperScreen';
+import RouteMapScreen from '../screens/shared/RouteMapScreen';
 import { LEGAL_PAGES, LegalPageKey } from '../content/legal';
 
 // ── Param lists ──────────────────────────────────────────────────────────
@@ -95,6 +96,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   Legal: { page: LegalPageKey };
   WhitePaper: undefined;
+  RouteMap: undefined;
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -222,10 +224,20 @@ export default function AppNavigator() {
             component={WhitePaperScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Livre blanc' }}
           />
+          <Stack.Screen
+            name="RouteMap"
+            component={RouteMapScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Itinéraire' }}
+          />
         </>
       ) : (
         <>
           <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen
+            name="RouteMap"
+            component={RouteMapScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Itinéraire' }}
+          />
           <Stack.Screen
             name="ShipmentDetail"
             component={ShipmentDetailScreen}

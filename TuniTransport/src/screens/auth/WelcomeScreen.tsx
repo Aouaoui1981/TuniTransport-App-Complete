@@ -181,9 +181,24 @@ export default function WelcomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Livre blanc */}
+          {/* Itinéraire interactif */}
           <TouchableOpacity
             style={styles.whitePaperLink}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('RouteMap')}
+            accessibilityRole="button"
+            accessibilityLabel="Voir l'itinéraire France Tunisie"
+          >
+            <Ionicons name="map-outline" size={18} color={DARK.colors.secondary} />
+            <Text style={styles.whitePaperLinkText}>
+              Voir l'itinéraire France → Tunisie
+            </Text>
+            <Ionicons name="chevron-forward" size={15} color={DARK.colors.textSecondary} />
+          </TouchableOpacity>
+
+          {/* Livre blanc */}
+          <TouchableOpacity
+            style={[styles.whitePaperLink, { marginTop: SPACING.md }]}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('WhitePaper')}
             accessibilityRole="button"
