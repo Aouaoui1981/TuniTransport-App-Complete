@@ -5,47 +5,53 @@
 // chaque écran bénéficie du rafraîchissement sans modification.
 // ──────────────────────────────────────────────────────────────────────────
 
+// ══════════════════════════════════════════════════════════════════════════
+// Thème « Méditerranée nuit » — Dark Premium (appliqué à toute l'application).
+// Les valeurs sont sombres ; toutes les clés historiques sont conservées afin
+// que chaque écran passe en sombre sans modification. Les variantes « *Light »
+// deviennent des teintes translucides (fonds de pastilles/badges sur sombre).
+// ══════════════════════════════════════════════════════════════════════════
 export const COLORS = {
-  // Primaire — bleu Méditerranée profond (contraste ≈ 7.1:1 sur blanc)
-  primary: '#1257A5',
-  primaryDark: '#0C3F7A',
-  primaryLight: '#E4EEF9',
-  // Secondaire — sarcelle méditerranéenne
-  secondary: '#0D9488',
-  secondaryDark: '#0F766E',
-  secondaryLight: '#D5F2EE',
-  // Accent — ambre / sable chaud (soleil, mise en avant)
-  accent: '#E8890C',
-  accentDark: '#B45309',
-  accentLight: '#FEF0D9',
-  // Sémantique d'état
-  danger: '#DC2626',
-  dangerLight: '#FDE7E7',
-  success: '#16A34A',
-  successLight: '#DCFCE7',
-  warning: '#D97706',
-  warningLight: '#FEF3C7',
-  info: '#2563EB',
-  infoLight: '#DBEAFE',
-  // Surfaces & fonds
-  background: '#F3F7FB',
-  surface: '#FFFFFF',
-  surfaceAlt: '#EDF2F8',
-  muted: '#E9EFF6',
-  // Texte (encre bleu-marine, plus chaleureuse que le slate pur)
-  text: '#0F2438',
-  textSecondary: '#51617A',
-  textLight: '#90A0B5',
+  // Primaire — bleu lumineux (lisible sur fond sombre)
+  primary: '#3D82F6',
+  primaryDark: '#2563EB',
+  primaryLight: 'rgba(61,130,246,0.16)',
+  // Secondaire — sarcelle méditerranéenne vive
+  secondary: '#2DD4BF',
+  secondaryDark: '#14B8A6',
+  secondaryLight: 'rgba(45,212,191,0.16)',
+  // Accent — ambre / sable chaud
+  accent: '#F5B342',
+  accentDark: '#E8890C',
+  accentLight: 'rgba(245,179,66,0.16)',
+  // Sémantique d'état (teintes claires pour contraste sur sombre)
+  danger: '#F87171',
+  dangerLight: 'rgba(248,113,113,0.16)',
+  success: '#34D399',
+  successLight: 'rgba(52,211,153,0.16)',
+  warning: '#FBBF24',
+  warningLight: 'rgba(251,191,36,0.16)',
+  info: '#3D82F6',
+  infoLight: 'rgba(61,130,246,0.16)',
+  // Surfaces & fonds (jamais de noir pur)
+  background: '#0A1420',
+  surface: '#101E2E',
+  surfaceAlt: '#16273A',
+  muted: '#16273A',
+  // Texte (blanc cassé → gris bleuté)
+  text: '#EDF2F8',
+  textSecondary: '#9DB0C4',
+  textLight: '#647B92',
   onPrimary: '#FFFFFF',
-  onAccent: '#FFFFFF',
-  // Bordures
-  border: '#E1E8F0',
-  borderLight: '#EFF3F8',
+  onAccent: '#0A1420',
+  // Bordures translucides (visibles sur sombre)
+  border: 'rgba(255,255,255,0.10)',
+  borderLight: 'rgba(255,255,255,0.06)',
   // Utilitaires
   white: '#FFFFFF',
-  ring: '#1257A5',
-  // Voile / scrim des modales & feuilles (≈ 55 % — legibilité du 1er plan)
-  overlay: 'rgba(9, 23, 38, 0.55)',
+  ring: '#3D82F6',
+  // Voile / scrim des modales & feuilles (≈ 66 % — legibilité du 1er plan)
+  overlay: 'rgba(2, 6, 12, 0.66)',
 } as const;
 
 // Dégradés prêts à l'emploi pour expo-linear-gradient

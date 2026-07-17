@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: RADIUS.full,
   },
-  tagText: { fontSize: FONTS.sizes.xs, fontWeight: '700', color: '#B45309' },
+  tagText: { fontSize: FONTS.sizes.xs, fontWeight: '700', color: COLORS.accent },
 
   photosRow: { gap: SPACING.sm, paddingTop: SPACING.xs },
   photo: {

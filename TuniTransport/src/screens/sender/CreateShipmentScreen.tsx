@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     padding: SPACING.md,
   },
-  auctionInfoText: { flex: 1, fontSize: FONTS.sizes.sm, color: '#92400E' },
+  auctionInfoText: { flex: 1, fontSize: FONTS.sizes.sm, color: COLORS.accent },
 
   publishButton: {
     flexDirection: 'row',

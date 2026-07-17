@@ -67,7 +67,7 @@ export default function SenderHomeScreen() {
             onPress={() => navigation.navigate('CreateShipment', { type: 'large' })}
           >
             <Ionicons name="bicycle" size={26} color={COLORS.accent} />
-            <Text style={[styles.quickTitle, { color: '#B45309' }]}>Gros objet</Text>
+            <Text style={[styles.quickTitle, { color: COLORS.accent }]}>Gros objet</Text>
             <Text style={styles.quickSub}>Prix négociable</Text>
           </TouchableOpacity>
 

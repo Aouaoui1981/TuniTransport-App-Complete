@@ -6,7 +6,7 @@
 // ──────────────────────────────────────────────────────────────────────────
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -14,7 +14,23 @@ import { AuthProvider } from './src/context/AuthContext';
 import { DataProvider } from './src/context/DataContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AppAlertHost from './src/components/AppAlert';
+import { COLORS } from './src/utils/theme';
 import { IS_STRIPE_LIVE, STRIPE_PUBLISHABLE_KEY } from './src/services/stripe';
+
+// Thème de navigation sombre « Méditerranée nuit » — évite les flashs blancs
+// pendant les transitions et sous les surfaces translucides.
+const NavDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: COLORS.background,
+    card: COLORS.surface,
+    text: COLORS.text,
+    border: COLORS.border,
+    primary: COLORS.primary,
+    notification: COLORS.danger,
+  },
+};
 
 let StripeProvider: React.ComponentType<any> | null = null;
 if (IS_STRIPE_LIVE) {
@@ -30,8 +46,8 @@ function Root() {
   return (
     <AuthProvider>
       <DataProvider>
-        <NavigationContainer>
-          <StatusBar style="auto" />
+        <NavigationContainer theme={NavDarkTheme}>
+          <StatusBar style="light" />
           <AppNavigator />
           <AppAlertHost />
         </NavigationContainer>
