@@ -80,14 +80,13 @@ export default function WelcomeScreen() {
           <SafeAreaView edges={['top']}>
             <View style={styles.topBar}>
               <View style={styles.logoRow}>
+                {/* Le logo contient déjà « THL » — pas de texte redondant. */}
                 <Image
                   source={require('../../../assets/logo-mark.png')}
                   style={styles.logoMark}
                   resizeMode="contain"
+                  accessibilityLabel="THL"
                 />
-                <Text style={styles.wordmark}>
-                  THL<Text style={styles.wordmarkDot}>.</Text>
-                </Text>
               </View>
               <TouchableOpacity
                 style={styles.loginChip}
@@ -228,7 +227,7 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
   },
   logoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
-  logoMark: { width: 42, height: 42 },
+  logoMark: { width: 52, height: 52 },
   wordmark: {
     fontSize: FONTS.sizes.xxl,
     fontFamily: FONTS.family.extrabold,
