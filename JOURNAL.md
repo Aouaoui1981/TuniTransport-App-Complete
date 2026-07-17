@@ -161,3 +161,11 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 ### Note
 - Erreur tsc locale « @expo-google-fonts/plus-jakarta-sans » = module non
       installé en local seulement (déclaré dans package.json, installé par CI).
+
+---
+
+## 2026-07-17 (suite) — Logo THL recolore en teal
+### Fait
+- [x] Lettres « THL » du logo recolorees en teal #2DD4BF (couleur accent),
+      boite gardee orange. Regeneration de tous les assets (icon, favicon,
+      splash, adaptive-icon, logo-mark, logo-full).
