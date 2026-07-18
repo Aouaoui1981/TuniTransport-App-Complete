@@ -63,7 +63,6 @@ export default function WelcomeScreen() {
         source={require('../../../assets/welcome-hero.png')}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
-        pointerEvents="none"
       />
       {/* Voile dégradé : léger en haut, opaque en bas pour la lisibilité */}
       <LinearGradient
