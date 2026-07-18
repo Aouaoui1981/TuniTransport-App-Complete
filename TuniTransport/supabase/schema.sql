@@ -1623,3 +1623,60 @@ begin
   return new;
 end;
 $$;
+
+-- ──────────────────────────────────────────────────────────────────────────
+-- Suppression de compte (libre-service, sans accès à la base)
+--
+-- Permet à un utilisateur (expéditeur ou transporteur) de supprimer
+-- définitivement son propre compte depuis l'application. La suppression de la
+-- ligne auth.users efface en cascade le profil et TOUTES les données liées
+-- (envois, trajets, avis, messages, coordonnées bancaires…) grâce aux
+-- « on delete cascade » posés sur profiles(id).
+--
+-- Garde-fous : on refuse la suppression tant qu'un envoi est en cours (argent
+-- potentiellement sous séquestre) ou qu'une demande de retrait est en attente,
+-- afin de ne pas effacer un dossier financier non soldé.
+-- ──────────────────────────────────────────────────────────────────────────
+create or replace function public.delete_own_account()
+returns void
+language plpgsql
+security definer set search_path = public, auth
+as $$
+declare
+  uid uuid := auth.uid();
+  active_shipments int;
+  pending_payouts int;
+begin
+  if uid is null then
+    raise exception 'Non authentifié.';
+  end if;
+
+  -- Envois encore en cours, que l'utilisateur soit expéditeur ou transporteur.
+  select count(*) into active_shipments
+  from public.shipments s
+  where (s.sender_id = uid or s.transporter_id = uid)
+    and s.status not in ('delivered', 'cancelled');
+
+  if active_shipments > 0 then
+    raise exception
+      'Vous avez % envoi(s) en cours. Terminez-les ou annulez-les avant de supprimer votre compte.',
+      active_shipments;
+  end if;
+
+  -- Demande de retrait non encore traitée.
+  select count(*) into pending_payouts
+  from public.payout_requests pr
+  where pr.transporter_id = uid and pr.status = 'pending';
+
+  if pending_payouts > 0 then
+    raise exception
+      'Vous avez une demande de retrait en attente. Patientez jusqu''à son traitement avant de supprimer votre compte.';
+  end if;
+
+  -- Suppression du compte d'authentification → cascade sur tout le reste.
+  delete from auth.users where id = uid;
+end;
+$$;
+
+revoke execute on function public.delete_own_account() from public, anon;
+grant execute on function public.delete_own_account() to authenticated;

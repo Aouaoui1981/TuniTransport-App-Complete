@@ -177,3 +177,29 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - [x] Nouvelle image de fond (fourgon THL, cote mediterranee) -> assets/hero-van.jpg.
 - [x] WelcomeScreen : image de fond FIXE (ne defile plus) + voile sombre
       pour lisibilite ; le contenu scrolle par-dessus. Titre avec ombre.
+
+---
+
+## 2026-07-17 (suite) — Suppression de compte + e-mail d'approbation KYC
+### Fait
+- [x] Suppression de compte en libre-service (expediteur/transporteur) :
+      RPC delete_own_account() SECURITY DEFINER supprime auth.users -> cascade
+      sur profil et toutes les donnees. Garde-fous : refus si envoi en cours
+      ou demande de retrait en attente. AuthContext.deleteAccount() + bouton
+      « Supprimer mon compte » (double confirmation) dans ProfileScreen.
+- [x] E-mail auto quand l'admin approuve une identite : edge function
+      notify-verification (Resend, best-effort), invoquee apres reviewIdentity.
+      api.notifyIdentityApproved().
+- [x] Message « delai de verification 24 h max » ajoute : IdentityVerification
+      (statut + alerte d'envoi), VerificationRequired (etat pending).
+### Reste a faire
+- [ ] Appliquer la migration delete_own_account en prod (via MCP ou SQL editor).
+- [ ] Deployer la edge function notify-verification.
+- [ ] Configurer Resend : secret RESEND_API_KEY (+ RESEND_FROM) sur le projet
+      Supabase ; sans cela l'e-mail est simplement ignore (no-op).
+### Fichiers touches
+- supabase/schema.sql, supabase/migrations/20260717090000_delete_own_account.sql
+- supabase/functions/notify-verification/index.ts
+- src/services/api.ts, src/context/AuthContext.tsx
+- src/screens/shared/ProfileScreen.tsx, AdminVerificationsScreen.tsx,
+  IdentityVerificationScreen.tsx, src/components/VerificationRequired.tsx

@@ -1097,6 +1097,29 @@ export async function reviewIdentity(
   if (error) throw error;
 }
 
+/**
+ * Notifie l'utilisateur par e-mail que son identité vient d'être approuvée.
+ * Best-effort : appelée après review_identity côté admin ; ne doit jamais
+ * bloquer l'approbation (l'appelant l'entoure d'un try/catch silencieux).
+ */
+export async function notifyIdentityApproved(userId: string): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.functions.invoke('notify-verification', {
+    body: { userId },
+  });
+  if (error) throw error;
+}
+
+/**
+ * Supprime définitivement le compte de l'utilisateur courant (profil + toutes
+ * les données liées, en cascade). Refusé par le serveur s'il reste un envoi en
+ * cours ou une demande de retrait en attente.
+ */
+export async function deleteOwnAccount(): Promise<void> {
+  const { error } = await db().rpc('delete_own_account');
+  if (error) throw error;
+}
+
 export async function submitIdentityVerification(
   userId: string,
   documentType: string,

@@ -13,7 +13,7 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, IS_LIVE } from '../services/supabase';
-import { fetchProfile, updateProfile } from '../services/api';
+import { fetchProfile, updateProfile, deleteOwnAccount } from '../services/api';
 import { MOCK_USERS } from '../services/mockData';
 import { User, LoginPayload, RegisterPayload, OAuthProvider } from '../types';
 import { Platform } from 'react-native';
@@ -36,6 +36,8 @@ interface AuthContextValue {
   /** Social login (Google / Apple / Facebook) via Supabase OAuth. */
   signInWithProvider: (provider: OAuthProvider) => Promise<void>;
   logout: () => Promise<void>;
+  /** Supprime définitivement le compte courant, puis déconnecte. */
+  deleteAccount: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   /** Sets a new password during the recovery flow, then clears it. */
   completePasswordReset: (newPassword: string) => Promise<void>;
@@ -237,6 +239,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  // ── deleteAccount ────────────────────────────────────────────────────────
+
+  const deleteAccount = useCallback(async () => {
+    if (!IS_LIVE || !supabase) {
+      // Mode démo : pas de compte serveur, on efface simplement la session.
+      await AsyncStorage.removeItem(DEMO_SESSION_KEY);
+      if (isMounted.current) setUser(null);
+      return;
+    }
+    // Supprime le compte côté serveur (peut lever une erreur métier :
+    // envoi en cours, retrait en attente…), puis déconnecte localement.
+    await deleteOwnAccount();
+    await supabase.auth.signOut();
+    if (isMounted.current) setUser(null);
+  }, []);
+
   // ── updateUser ─────────────────────────────────────────────────────────
 
   const updateUser = useCallback(
@@ -288,6 +306,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       signInWithProvider,
       logout,
+      deleteAccount,
       updateUser,
       completePasswordReset,
       cancelPasswordReset,
@@ -300,6 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       signInWithProvider,
       logout,
+      deleteAccount,
       updateUser,
       completePasswordReset,
       cancelPasswordReset,

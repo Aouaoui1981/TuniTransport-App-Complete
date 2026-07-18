@@ -144,7 +144,7 @@ export default function IdentityVerificationScreen() {
       if (isMounted.current) {
         showAlert(
           'Document envoyé',
-          "Votre pièce d'identité a été envoyée. Vous serez notifié une fois la vérification effectuée.",
+          "Votre pièce d'identité a été envoyée. Nos équipes l'examinent sous 24 h maximum. Vous serez notifié par e-mail dès l'approbation.",
           [{ text: 'OK', onPress: () => navigation.goBack() }]
         );
       }
@@ -170,9 +170,9 @@ export default function IdentityVerificationScreen() {
             <Text style={[styles.statusTitle, { color: meta.color }]}>{meta.title}</Text>
             <Text style={styles.statusSubtitle}>
               {identityStatus === 'unsubmitted' &&
-                "Envoyez une pièce d'identité pour débloquer toutes les fonctionnalités."}
+                "Envoyez une pièce d'identité pour débloquer toutes les fonctionnalités. Vérification sous 24 h maximum."}
               {identityStatus === 'pending' &&
-                'Votre document est en cours de vérification par notre équipe.'}
+                'Votre document est en cours de vérification (sous 24 h maximum). Vous serez notifié par e-mail dès l’approbation.'}
               {identityStatus === 'verified' && 'Votre identité a été confirmée. Merci !'}
               {identityStatus === 'rejected' &&
                 (user.identityRejectionReason || 'Veuillez soumettre un nouveau document.')}

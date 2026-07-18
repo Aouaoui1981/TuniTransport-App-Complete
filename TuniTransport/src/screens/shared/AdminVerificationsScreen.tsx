@@ -29,6 +29,7 @@ import {
   listPendingIdentities,
   getIdentityDocumentUrl,
   reviewIdentity,
+  notifyIdentityApproved,
 } from '../../services/api';
 
 const DOCUMENT_LABELS: Record<string, string> = {
@@ -66,9 +67,19 @@ function PendingCard({ item, onDone }: { item: PendingIdentity; onDone: () => vo
     setBusy(approve ? 'approve' : 'reject');
     try {
       await reviewIdentity(item.id, approve, approve ? undefined : reason.trim() || undefined);
+      if (approve) {
+        // Notification e-mail best-effort : ne doit pas bloquer l'approbation.
+        try {
+          await notifyIdentityApproved(item.id);
+        } catch (mailErr) {
+          console.warn("Notification e-mail d'approbation non envoyée:", mailErr);
+        }
+      }
       showAlert(
         approve ? 'Identité approuvée' : 'Document rejeté',
-        `${item.firstName} ${item.lastName} a été notifié dans son profil.`
+        approve
+          ? `${item.firstName} ${item.lastName} a été notifié (profil + e-mail).`
+          : `${item.firstName} ${item.lastName} a été notifié dans son profil.`
       );
       onDone();
     } catch (e) {
