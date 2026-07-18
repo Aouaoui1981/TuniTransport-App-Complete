@@ -1680,3 +1680,25 @@ $$;
 
 revoke execute on function public.delete_own_account() from public, anon;
 grant execute on function public.delete_own_account() to authenticated;
+
+-- ──────────────────────────────────────────────────────────────────────────
+-- Sécurisation pré-bêta (advisor Supabase)
+-- ──────────────────────────────────────────────────────────────────────────
+alter function public.get_latest_shipment_locations(uuid[]) set search_path = public;
+alter function public.review_identity(uuid, boolean, text) set search_path = public;
+alter function public.list_pending_identities() set search_path = public;
+alter function public.enforce_shipment_update() set search_path = public;
+alter function public.set_updated_at() set search_path = public;
+alter function public.is_identity_verified() set search_path = public;
+alter function public.is_admin() set search_path = public;
+alter function public.protect_profile_columns() set search_path = public;
+
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+revoke all on function public.recompute_rating() from public, anon, authenticated;
+revoke all on function public.protect_profile_columns() from public, anon, authenticated;
+revoke all on function public.enforce_shipment_update() from public, anon, authenticated;
+revoke all on function public.set_updated_at() from public, anon, authenticated;
+revoke all on function public.prune_shipment_locations() from public, anon, authenticated;
+
+drop policy if exists "shipment_photos_select" on storage.objects;
+drop policy if exists "review_photos_read" on storage.objects;
