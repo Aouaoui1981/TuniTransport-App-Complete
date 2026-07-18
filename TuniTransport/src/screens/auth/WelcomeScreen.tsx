@@ -49,30 +49,12 @@ export default function WelcomeScreen() {
     <View style={styles.root}>
       <StatusBar style="light" />
 
-      {/* Dégradé de base (repli sous l'image) */}
+      {/* Fond dégradé aux couleurs de la marque (fixe) — pas d'image */}
       <LinearGradient
         colors={['#0F3B3A', '#0E2233', '#0A1420', '#050B12']}
         locations={[0, 0.32, 0.7, 1]}
         start={{ x: 0.15, y: 0 }}
         end={{ x: 0.85, y: 1 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-      {/* Photo de fond fixe (cartons THL) — ne défile pas */}
-      <Image
-        source={require('../../../assets/welcome-hero.png')}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-      />
-      {/* Voile dégradé : léger en haut, opaque en bas pour la lisibilité */}
-      <LinearGradient
-        colors={[
-          'rgba(10,20,32,0.35)',
-          'rgba(10,20,32,0.62)',
-          'rgba(8,15,25,0.9)',
-          'rgba(5,11,18,0.98)',
-        ]}
-        locations={[0, 0.4, 0.72, 1]}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
