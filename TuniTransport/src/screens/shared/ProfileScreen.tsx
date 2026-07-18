@@ -78,7 +78,7 @@ const IDENTITY_META: Record<
 
 export default function ProfileScreen() {
   const navigation = useAppNavigation();
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
 
   if (!user) return null;
 
@@ -95,6 +95,7 @@ export default function ProfileScreen() {
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [savingPass, setSavingPass] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const showPaymentInfo = () => {
     const message = isSender
@@ -158,6 +159,29 @@ export default function ProfileScreen() {
       { text: 'Annuler', style: 'cancel' },
       { text: 'Se déconnecter', style: 'destructive', onPress: () => logout() },
     ]);
+  };
+
+  const runDeleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      // La déconnexion est gérée par deleteAccount : l'app revient à l'accueil.
+    } catch (e) {
+      setDeleting(false);
+      showAlert('Suppression impossible', getErrorMessage(e, 'Réessayez plus tard.'));
+    }
+  };
+
+  const confirmDeleteAccount = () => {
+    showAlert(
+      'Supprimer mon compte',
+      'Cette action est définitive. Votre profil et toutes vos données (envois, trajets, avis, messages, coordonnées bancaires) seront supprimés et ne pourront pas être récupérés.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Supprimer définitivement', style: 'destructive', onPress: runDeleteAccount },
+      ]
+    );
   };
 
   return (
@@ -254,6 +278,22 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.logoutBtn} onPress={confirmLogout}>
           <Ionicons name="log-out-outline" size={18} color={COLORS.danger} />
           <Text style={styles.logoutText}>Se déconnecter</Text>
+        </TouchableOpacity>
+
+        {/* Danger zone : suppression définitive du compte */}
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={confirmDeleteAccount}
+          disabled={deleting}
+        >
+          {deleting ? (
+            <ActivityIndicator color={COLORS.danger} size="small" />
+          ) : (
+            <>
+              <Ionicons name="trash-outline" size={16} color={COLORS.danger} />
+              <Text style={styles.deleteText}>Supprimer mon compte</Text>
+            </>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.version}>THL v1.1.0</Text>
@@ -443,6 +483,16 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.lg,
   },
   logoutText: { color: COLORS.danger, fontWeight: '700', fontSize: FONTS.sizes.lg },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.md,
+    marginTop: SPACING.md,
+    minHeight: 44,
+  },
+  deleteText: { color: COLORS.danger, fontWeight: '600', fontSize: FONTS.sizes.sm },
   version: {
     textAlign: 'center',
     color: COLORS.textLight,

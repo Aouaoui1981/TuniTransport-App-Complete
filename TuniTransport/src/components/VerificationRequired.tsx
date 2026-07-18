@@ -36,7 +36,7 @@ export default function VerificationRequired({
         <Text style={styles.title}>{pending ? 'Vérification en cours' : 'Vérification requise'}</Text>
         <Text style={styles.text}>
           {pending
-            ? `Votre identité est en cours de vérification. Vous pourrez ${action} dès que votre compte sera approuvé.`
+            ? `Votre identité est en cours de vérification (sous 24 h maximum). Vous pourrez ${action} dès que votre compte sera approuvé — vous serez notifié par e-mail.`
             : rejected
               ? `Votre dernière vérification a été refusée. Veuillez la refaire avant de ${action}.`
               : `Vous devez d'abord faire vérifier votre identité avant de ${action}.`}
