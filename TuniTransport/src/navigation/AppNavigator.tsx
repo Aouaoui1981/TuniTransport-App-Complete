@@ -229,6 +229,15 @@ export default function AppNavigator() {
             component={RouteMapScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Itinéraire' }}
           />
+          {/* Pages légales accessibles avant connexion (consentement à l'inscription). */}
+          <Stack.Screen
+            name="Legal"
+            component={LegalPageScreen}
+            options={({ route }) => ({
+              ...SUBSCREEN_HEADER,
+              title: LEGAL_PAGES[route.params.page].title,
+            })}
+          />
         </>
       ) : (
         <>

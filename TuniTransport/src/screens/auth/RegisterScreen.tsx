@@ -50,6 +50,7 @@ export default function RegisterScreen() {
   const [bankHolder, setBankHolder] = useState('');
   const [bankIban, setBankIban] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [focused, setFocused] = useState<Field | null>(null);
@@ -107,6 +108,13 @@ export default function RegisterScreen() {
     const firstInvalid = (Object.keys(validators) as Field[]).find((f) => nextErrors[f]);
     if (firstInvalid) {
       refs[firstInvalid].current?.focus();
+      return;
+    }
+    if (!acceptedTerms) {
+      showAlert(
+        'Conditions à accepter',
+        "Pour créer un compte, veuillez accepter les Conditions générales et la Politique de confidentialité."
+      );
       return;
     }
     setSubmitting(true);
@@ -416,11 +424,44 @@ export default function RegisterScreen() {
             </View>
           )}
 
+          {/* Consentement : Conditions générales + Politique de confidentialité */}
+          <TouchableOpacity
+            style={styles.consentRow}
+            activeOpacity={0.7}
+            onPress={() => setAcceptedTerms((v) => !v)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: acceptedTerms }}
+            accessibilityLabel="J'accepte les conditions générales et la politique de confidentialité"
+          >
+            <Ionicons
+              name={acceptedTerms ? 'checkbox' : 'square-outline'}
+              size={22}
+              color={acceptedTerms ? roleColor : COLORS.textLight}
+            />
+            <Text style={styles.consentText}>
+              J'accepte les{' '}
+              <Text
+                style={[styles.consentLink, { color: roleColor }]}
+                onPress={() => navigation.navigate('Legal', { page: 'terms' })}
+              >
+                Conditions générales
+              </Text>{' '}
+              et la{' '}
+              <Text
+                style={[styles.consentLink, { color: roleColor }]}
+                onPress={() => navigation.navigate('Legal', { page: 'privacy' })}
+              >
+                Politique de confidentialité
+              </Text>
+              .
+            </Text>
+          </TouchableOpacity>
+
           <PressableScale
             style={[
               styles.submitButton,
               { backgroundColor: roleColor },
-              submitting && styles.submitButtonDisabled,
+              (submitting || !acceptedTerms) && styles.submitButtonDisabled,
             ]}
             onPress={handleRegister}
             disabled={submitting}
@@ -585,6 +626,21 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
+  consentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.md,
+    paddingRight: SPACING.sm,
+  },
+  consentText: {
+    flex: 1,
+    fontSize: FONTS.sizes.sm,
+    lineHeight: 20,
+    color: COLORS.textSecondary,
+  },
+  consentLink: { fontWeight: '700' },
   submitButton: {
     borderRadius: RADIUS.lg,
     height: 52,
