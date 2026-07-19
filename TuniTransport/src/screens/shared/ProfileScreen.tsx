@@ -30,10 +30,11 @@ import { LEGAL_PAGES, LegalPageKey } from '../../content/legal';
 const MENU: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  action?: 'editProfile' | 'notifications' | 'payment' | 'security' | 'disputes' | 'support';
+  action?: 'editProfile' | 'notifications' | 'payment' | 'security' | 'disputes' | 'support' | 'referral';
   legalPage?: LegalPageKey;
 }[] = [
   { icon: 'person-outline', label: 'Modifier le profil', action: 'editProfile' },
+  { icon: 'gift-outline', label: 'Parrainage — gagnez 10 €', action: 'referral' },
   { icon: 'card-outline', label: 'Moyens de paiement', action: 'payment' },
   { icon: 'notifications-outline', label: 'Notifications', action: 'notifications' },
   { icon: 'flag-outline', label: 'Mes signalements', action: 'disputes' },
@@ -153,6 +154,8 @@ export default function ProfileScreen() {
       navigation.navigate('MyDisputes');
     } else if (item.action === 'support') {
       navigation.navigate('Support');
+    } else if (item.action === 'referral') {
+      navigation.navigate('Referral');
     } else if (item.legalPage) {
       navigation.navigate('Legal', { page: item.legalPage });
     } else {

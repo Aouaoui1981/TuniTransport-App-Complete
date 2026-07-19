@@ -49,6 +49,7 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [bankHolder, setBankHolder] = useState('');
   const [bankIban, setBankIban] = useState('');
+  const [referralCode, setReferralCode] = useState(route.params?.referralCode ?? '');
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -130,6 +131,7 @@ export default function RegisterScreen() {
         ...(role === 'transporter' && cleanIban
           ? { payoutIban: cleanIban, payoutHolder: bankHolder.trim() }
           : {}),
+        ...(referralCode.trim() ? { referralCode: referralCode.trim() } : {}),
       });
       if (result.emailConfirmationRequired) {
         showAlert(
@@ -423,6 +425,22 @@ export default function RegisterScreen() {
               </View>
             </View>
           )}
+
+          {/* Code de parrainage (facultatif) */}
+          <Text style={styles.inputLabel}>Code de parrainage (facultatif)</Text>
+          <View style={styles.inputWrap}>
+            <Ionicons name="gift-outline" size={20} color={COLORS.textLight} />
+            <TextInput
+              style={styles.input}
+              placeholder="Ex : A1B2C3"
+              placeholderTextColor={COLORS.textLight}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              value={referralCode}
+              onChangeText={setReferralCode}
+              accessibilityLabel="Code de parrainage"
+            />
+          </View>
 
           {/* Consentement : Conditions générales + Politique de confidentialité */}
           <TouchableOpacity
