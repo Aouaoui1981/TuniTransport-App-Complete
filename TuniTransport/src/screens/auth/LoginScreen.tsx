@@ -12,21 +12,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
+import { COLORS, SPACING, RADIUS, FONTS, SHADOWS, DARK } from '../../utils/theme';
 import { showAlert } from '../../utils/alert';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { getErrorMessage } from '../../utils/errors';
 import SocialAuthButtons from '../../components/SocialAuthButtons';
 import PressableScale from '../../components/PressableScale';
-
-const DEMO_ACCOUNTS = [
-  { icon: 'cube' as const, label: 'Expéditeur démo', email: 'sender@demo.com', color: COLORS.primary },
-  { icon: 'car' as const, label: 'Transporteur démo', email: 'transport@demo.com', color: COLORS.secondary },
-];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -107,10 +104,13 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <View style={styles.brandRow}>
-            <View style={styles.logoTile}>
-              <Ionicons name="boat" size={26} color={COLORS.primary} />
-            </View>
-            <View>
+            <Image
+              source={require('../../../assets/logo-mark.png')}
+              style={styles.logoMark}
+              resizeMode="contain"
+              accessibilityLabel="THL"
+            />
+            <View style={{ flex: 1 }}>
               <Text style={styles.heading} accessibilityRole="header">
                 Bienvenue
               </Text>
@@ -131,7 +131,7 @@ export default function LoginScreen() {
             <Ionicons
               name="mail-outline"
               size={20}
-              color={emailInvalid ? COLORS.danger : focused === 'email' ? COLORS.primary : COLORS.textLight}
+              color={emailInvalid ? COLORS.danger : focused === 'email' ? COLORS.secondary : COLORS.textLight}
             />
             <TextInput
               ref={emailRef}
@@ -180,7 +180,7 @@ export default function LoginScreen() {
               name="lock-closed-outline"
               size={20}
               color={
-                passwordInvalid ? COLORS.danger : focused === 'password' ? COLORS.primary : COLORS.textLight
+                passwordInvalid ? COLORS.danger : focused === 'password' ? COLORS.secondary : COLORS.textLight
               }
             />
             <TextInput
@@ -234,21 +234,28 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <PressableScale
-            style={[styles.loginButton, submitting && styles.loginButtonDisabled]}
+            style={[styles.loginButtonWrap, submitting && styles.loginButtonDisabled]}
             onPress={handleLogin}
             disabled={submitting}
             accessibilityRole="button"
             accessibilityLabel="Se connecter"
             accessibilityState={{ disabled: submitting, busy: submitting }}
           >
-            {submitting ? (
-              <View style={styles.loginButtonContent}>
-                <ActivityIndicator color={COLORS.white} />
-                <Text style={styles.loginButtonText}>Connexion…</Text>
-              </View>
-            ) : (
-              <Text style={styles.loginButtonText}>Se connecter</Text>
-            )}
+            <LinearGradient
+              colors={DARK.gradients.cta}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.loginButton}
+            >
+              {submitting ? (
+                <View style={styles.loginButtonContent}>
+                  <ActivityIndicator color={COLORS.white} />
+                  <Text style={styles.loginButtonText}>Connexion…</Text>
+                </View>
+              ) : (
+                <Text style={styles.loginButtonText}>Se connecter</Text>
+              )}
+            </LinearGradient>
           </PressableScale>
 
           <View style={styles.dividerRow}>
@@ -258,37 +265,6 @@ export default function LoginScreen() {
           </View>
 
           <SocialAuthButtons />
-
-          <View style={styles.demoBox}>
-            <View style={styles.demoHeader}>
-              <Ionicons name="flask-outline" size={16} color={COLORS.textSecondary} />
-              <Text style={styles.demoTitle}>Comptes de démonstration</Text>
-            </View>
-            {DEMO_ACCOUNTS.map((acc) => (
-              <TouchableOpacity
-                key={acc.email}
-                style={styles.demoRow}
-                activeOpacity={0.7}
-                onPress={() => {
-                  setEmail(acc.email);
-                  setPassword('demo123');
-                  setErrors({});
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={`Remplir avec le compte ${acc.label}`}
-              >
-                <View style={[styles.demoIcon, { backgroundColor: `${acc.color}18` }]}>
-                  <Ionicons name={acc.icon} size={18} color={acc.color} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.demoLabel}>{acc.label}</Text>
-                  <Text style={styles.demoEmail}>{acc.email}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
-              </TouchableOpacity>
-            ))}
-            <Text style={styles.demoHint}>Mot de passe : demo123</Text>
-          </View>
 
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Pas encore de compte ? </Text>
@@ -325,17 +301,10 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.lg,
+    gap: SPACING.md,
     marginBottom: SPACING.xxl,
   },
-  logoTile: {
-    width: 56,
-    height: 56,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  logoMark: { width: 58, height: 58 },
 
   heading: { fontSize: FONTS.sizes.xxxl, fontFamily: FONTS.family.extrabold, color: COLORS.text },
   subheading: {
@@ -363,7 +332,7 @@ const styles = StyleSheet.create({
     height: 52,
   },
   inputWrapFocused: {
-    borderColor: COLORS.primary,
+    borderColor: COLORS.secondary,
     ...SHADOWS.sm,
   },
   inputWrapError: {
@@ -382,15 +351,17 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, color: COLORS.danger, fontSize: FONTS.sizes.sm },
 
   forgot: { alignSelf: 'flex-end', marginBottom: SPACING.xl, minHeight: 32, justifyContent: 'center' },
-  forgotText: { color: COLORS.primary, fontSize: FONTS.sizes.sm, fontWeight: '600' },
+  forgotText: { color: COLORS.secondary, fontSize: FONTS.sizes.sm, fontWeight: '600' },
 
+  loginButtonWrap: {
+    borderRadius: RADIUS.lg,
+    ...DARK.shadows.glowPrimary,
+  },
   loginButton: {
-    backgroundColor: COLORS.primary,
     borderRadius: RADIUS.lg,
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOWS.md,
   },
   loginButtonDisabled: { opacity: 0.6 },
   loginButtonContent: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
@@ -405,30 +376,6 @@ const styles = StyleSheet.create({
   dividerLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
   dividerText: { color: COLORS.textLight, fontSize: FONTS.sizes.sm },
 
-  demoBox: {
-    marginTop: SPACING.xl,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    padding: SPACING.lg,
-    gap: SPACING.md,
-    ...SHADOWS.sm,
-  },
-  demoHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
-  demoTitle: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.textSecondary },
-  demoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, minHeight: 44 },
-  demoIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  demoLabel: { fontSize: FONTS.sizes.md, fontWeight: '600', color: COLORS.text },
-  demoEmail: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary },
-  demoHint: { fontSize: FONTS.sizes.xs, color: COLORS.textLight, textAlign: 'center' },
-
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -436,5 +383,5 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xxl,
   },
   footerText: { color: COLORS.textSecondary, fontSize: FONTS.sizes.md },
-  footerLink: { color: COLORS.primary, fontWeight: '700', fontSize: FONTS.sizes.md },
+  footerLink: { color: COLORS.secondary, fontWeight: '700', fontSize: FONTS.sizes.md },
 });
