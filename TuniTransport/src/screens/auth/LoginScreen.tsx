@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -103,10 +104,18 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <View style={styles.brandRow}>
-            <Text style={styles.heading} accessibilityRole="header">
-              Bienvenue
-            </Text>
-            <Text style={styles.subheading}>Connectez-vous à votre compte</Text>
+            <Image
+              source={require('../../../assets/logo-mark.png')}
+              style={styles.logoMark}
+              resizeMode="contain"
+              accessibilityLabel="THL"
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.heading} accessibilityRole="header">
+                Bienvenue
+              </Text>
+              <Text style={styles.subheading}>Connectez-vous à votre compte</Text>
+            </View>
           </View>
 
           <Text style={styles.inputLabel} nativeID="email-label">
@@ -290,8 +299,12 @@ const styles = StyleSheet.create({
   },
 
   brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
     marginBottom: SPACING.xxl,
   },
+  logoMark: { width: 58, height: 58 },
 
   heading: { fontSize: FONTS.sizes.xxxl, fontFamily: FONTS.family.extrabold, color: COLORS.text },
   subheading: {
