@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────
-// THL — Boutons de connexion sociale (Google / Apple / Facebook)
+// THL — Boutons de connexion sociale (Google / Apple)
 // Utilisés sur les écrans de connexion et d'inscription. La connexion réelle
-// passe par Supabase OAuth (redirection sur le web).
+// passe par Supabase OAuth (redirection sur le web). À activer plus tard.
 // ──────────────────────────────────────────────────────────────────────────
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
@@ -21,7 +21,6 @@ const PROVIDERS: {
 }[] = [
   { key: 'google', label: 'Continuer avec Google', icon: 'logo-google', color: '#DB4437' },
   { key: 'apple', label: 'Continuer avec Apple', icon: 'logo-apple', color: COLORS.text },
-  { key: 'facebook', label: 'Continuer avec Facebook', icon: 'logo-facebook', color: '#1877F2' },
 ];
 
 export default function SocialAuthButtons() {
