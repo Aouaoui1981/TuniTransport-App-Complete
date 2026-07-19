@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { SPACING, RADIUS, FONTS, DARK, SHADOWS, BEVEL } from '../../utils/theme';
+import { SPACING, RADIUS, FONTS, DARK } from '../../utils/theme';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import PressableScale from '../../components/PressableScale';
 import OnboardingOverlay from '../../components/OnboardingOverlay';
@@ -105,44 +105,17 @@ export default function WelcomeScreen() {
             <Text style={styles.heroAccent}>en toute confiance</Text>
           </Text>
           <Text style={styles.heroSub}>
-            THL met en relation les expéditeurs avec des transporteurs de confiance
-            voyageant en ferry. Colis légers à 4€/kg, objets volumineux aux enchères.
+            Expédiez avec des transporteurs vérifiés voyageant en ferry. Colis légers dès 4€/kg.
           </Text>
 
-          {/* Stats strip */}
-          <LinearGradient
-            colors={DARK.gradients.stats}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.statsCard}
-          >
-            <View style={styles.statCol}>
-              <Text style={styles.statValue}>4€/kg</Text>
-              <Text style={styles.statLabel}>Colis léger</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statCol}>
-              <Text style={styles.statValue}>100%</Text>
-              <Text style={styles.statLabel}>Sécurisé</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statCol}>
-              <Text style={styles.statValue}>FR ⇄ TN</Text>
-              <Text style={styles.statLabel}>Par ferry</Text>
-            </View>
-          </LinearGradient>
-
-          {/* Trust points — cartes de verre */}
-          <View style={styles.trust}>
+          {/* Points de confiance — rangée compacte */}
+          <View style={styles.trustRow}>
             {TRUST_POINTS.map((point) => (
-              <View key={point.icon} style={styles.trustCard}>
+              <View key={point.icon} style={styles.trustItem}>
                 <View style={styles.trustChip}>
-                  <Ionicons name={point.icon} size={22} color={DARK.colors.secondary} />
+                  <Ionicons name={point.icon} size={20} color={DARK.colors.secondary} />
                 </View>
-                <View style={styles.trustTextWrap}>
-                  <Text style={styles.trustTitle}>{point.title}</Text>
-                  <Text style={styles.trustText}>{point.text}</Text>
-                </View>
+                <Text style={styles.trustItemLabel}>{point.title}</Text>
               </View>
             ))}
           </View>
@@ -243,71 +216,50 @@ const styles = StyleSheet.create({
 
   // Badge sous la barre supérieure
   heroSpacer: {
-    paddingTop: SPACING.xxl,
+    paddingTop: SPACING.md,
     paddingHorizontal: SPACING.xxl,
-    paddingBottom: SPACING.sm,
+    paddingBottom: SPACING.xs,
   },
 
   // Corps
-  body: { paddingHorizontal: SPACING.xxl, marginTop: SPACING.sm },
+  body: { paddingHorizontal: SPACING.xxl, marginTop: SPACING.xs },
   heroTitle: {
-    fontSize: 32,
-    lineHeight: 40,
+    fontSize: 26,
+    lineHeight: 32,
     fontFamily: FONTS.family.extrabold,
     color: DARK.colors.text,
-    letterSpacing: -1,
+    letterSpacing: -0.8,
     textShadowColor: 'rgba(0,0,0,0.45)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 10,
   },
   heroAccent: { color: DARK.colors.secondary },
   heroSub: {
-    marginTop: SPACING.lg,
-    fontSize: FONTS.sizes.lg,
-    lineHeight: 26,
+    marginTop: SPACING.sm,
+    fontSize: FONTS.sizes.md,
+    lineHeight: 21,
     color: DARK.colors.textSecondary,
   },
 
-  statsCard: {
-    marginTop: SPACING.xxl,
+  trustRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: DARK.colors.border,
-    ...BEVEL,
-    paddingVertical: SPACING.xl,
-    paddingHorizontal: SPACING.md,
-    ...DARK.shadows.card,
+    gap: SPACING.sm,
+    marginTop: SPACING.xl,
   },
-  statCol: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: FONTS.sizes.xl, fontWeight: '800', color: DARK.colors.white },
-  statLabel: {
-    marginTop: 3,
-    fontSize: FONTS.sizes.xs,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statDivider: { width: 1, height: 34, backgroundColor: 'rgba(255,255,255,0.15)' },
-
-  trust: { marginTop: SPACING.xxl, gap: SPACING.md },
-  trustCard: {
-    flexDirection: 'row',
-    gap: SPACING.lg,
+  trustItem: {
+    flex: 1,
     alignItems: 'center',
+    gap: SPACING.sm,
     backgroundColor: DARK.colors.surfaceGlass,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: DARK.colors.border,
-    ...BEVEL,
-    ...SHADOWS.raised,
-    padding: SPACING.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xs,
   },
   trustChip: {
-    width: 48,
-    height: 48,
+    width: 42,
+    height: 42,
     borderRadius: RADIUS.md,
     backgroundColor: 'rgba(45,212,191,0.12)',
     borderWidth: 1,
@@ -315,20 +267,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  trustTextWrap: { flex: 1 },
-  trustTitle: {
-    fontSize: FONTS.sizes.lg,
+  trustItemLabel: {
+    fontSize: FONTS.sizes.xs,
     fontWeight: '700',
     color: DARK.colors.text,
-    marginBottom: 2,
-  },
-  trustText: {
-    fontSize: FONTS.sizes.md,
-    lineHeight: 21,
-    color: DARK.colors.textSecondary,
+    textAlign: 'center',
   },
 
-  actions: { marginTop: SPACING.xxl, gap: SPACING.md },
+  actions: { marginTop: SPACING.xl, gap: SPACING.md },
   primaryButtonWrap: {
     borderRadius: RADIUS.lg,
     ...DARK.shadows.glowPrimary,
