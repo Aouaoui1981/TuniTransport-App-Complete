@@ -50,6 +50,9 @@ import AdminUsersScreen from '../screens/shared/AdminUsersScreen';
 import AdminShipmentsScreen from '../screens/shared/AdminShipmentsScreen';
 import AdminReviewsScreen from '../screens/shared/AdminReviewsScreen';
 import AdminBroadcastScreen from '../screens/shared/AdminBroadcastScreen';
+import AdminDisputesScreen from '../screens/shared/AdminDisputesScreen';
+import ReportProblemScreen from '../screens/shared/ReportProblemScreen';
+import MyDisputesScreen from '../screens/shared/MyDisputesScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import LegalPageScreen from '../screens/shared/LegalPageScreen';
 import WhitePaperScreen from '../screens/shared/WhitePaperScreen';
@@ -93,6 +96,9 @@ export type RootStackParamList = {
   AdminShipments: undefined;
   AdminReviews: undefined;
   AdminBroadcast: undefined;
+  AdminDisputes: undefined;
+  ReportProblem: { shipmentId: string };
+  MyDisputes: undefined;
   Notifications: undefined;
   Legal: { page: LegalPageKey };
   WhitePaper: undefined;
@@ -330,6 +336,21 @@ export default function AppNavigator() {
             name="AdminBroadcast"
             component={AdminBroadcastScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Annonces' }}
+          />
+          <Stack.Screen
+            name="AdminDisputes"
+            component={AdminDisputesScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Signalements' }}
+          />
+          <Stack.Screen
+            name="ReportProblem"
+            component={ReportProblemScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Signaler un problème' }}
+          />
+          <Stack.Screen
+            name="MyDisputes"
+            component={MyDisputesScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Mes signalements' }}
           />
           <Stack.Screen
             name="Notifications"
