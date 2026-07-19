@@ -155,6 +155,27 @@ export default function WelcomeScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Offre de parrainage */}
+          <View style={styles.referral}>
+            <View style={styles.referralBadge}>
+              <Text style={styles.referralBadgeText}>OFFRE DE LANCEMENT</Text>
+            </View>
+            <View style={styles.referralBody}>
+              <View style={styles.referralIcon}>
+                <Ionicons name="gift" size={26} color={DARK.colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.referralTitle}>
+                  Parrainez et gagnez <Text style={styles.referralAmount}>10 €</Text>
+                </Text>
+                <Text style={styles.referralText}>
+                  10 € offerts pour chaque expéditeur que vous invitez et qui réalise son
+                  premier envoi.
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -307,4 +328,50 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
   },
   loginLinkAccent: { color: DARK.colors.secondary, fontWeight: '700' },
+
+  referral: {
+    marginTop: SPACING.xxl,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(245,179,66,0.35)',
+    backgroundColor: 'rgba(245,179,66,0.06)',
+    padding: SPACING.lg,
+  },
+  referralBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(245,179,66,0.16)',
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 4,
+    marginBottom: SPACING.md,
+  },
+  referralBadgeText: {
+    color: DARK.colors.accent,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  referralBody: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  referralIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: RADIUS.lg,
+    backgroundColor: 'rgba(245,179,66,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,179,66,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  referralTitle: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '800',
+    color: DARK.colors.text,
+    marginBottom: 3,
+  },
+  referralAmount: { color: DARK.colors.accent },
+  referralText: {
+    fontSize: FONTS.sizes.sm,
+    lineHeight: 19,
+    color: DARK.colors.textSecondary,
+  },
 });
