@@ -182,6 +182,15 @@ export default function IdentityVerificationScreen() {
 
         {canResubmit && (
           <>
+            <View style={styles.matchHint}>
+              <Ionicons name="information-circle-outline" size={18} color={COLORS.primary} />
+              <Text style={styles.matchHintText}>
+                Le nom et le prénom sur votre pièce doivent correspondre à ceux de votre
+                compte : <Text style={styles.matchHintStrong}>{user.firstName} {user.lastName}</Text>.
+                Sinon, la vérification sera refusée.
+              </Text>
+            </View>
+
             <Text style={styles.label}>Type de document</Text>
             <View style={styles.typeRow}>
               {(['cin', 'passport'] as DocType[]).map((type) => (
@@ -279,6 +288,16 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     marginBottom: SPACING.xs,
   },
+  matchHint: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryLight,
+    marginBottom: SPACING.sm,
+  },
+  matchHintText: { flex: 1, fontSize: FONTS.sizes.sm, color: COLORS.textSecondary, lineHeight: 19 },
+  matchHintStrong: { color: COLORS.text, fontWeight: '800' },
   typeRow: { flexDirection: 'row', gap: SPACING.sm },
   typeChip: {
     flex: 1,
