@@ -15,7 +15,8 @@ export type LegalPageKey =
   | 'prohibited'
   | 'disclaimer'
   | 'about'
-  | 'contact';
+  | 'contact'
+  | 'referral';
 
 export interface LegalSection {
   heading?: string;
@@ -299,6 +300,56 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
         heading: 'Urgences envoi',
         body:
           "Pour un problème sur un envoi en cours (retard, litige à la livraison), contactez d'abord l'autre partie via la messagerie interne, puis le support si le désaccord persiste — l'historique des messages nous aide à trancher.",
+      },
+    ],
+  },
+
+  // ── Parrainage ──────────────────────────────────────────────────────────
+  referral: {
+    title: 'Conditions de parrainage',
+    icon: 'gift-outline',
+    updatedAt: 'Juillet 2026',
+    intro:
+      "Invitez vos proches sur THL et gagnez ensemble. Offre de lancement, valable pour une durée limitée.",
+    sections: [
+      {
+        heading: 'La récompense',
+        bullets: [
+          "10 € pour vous (le parrain), crédités sur votre compte THL.",
+          "5 € pour votre filleul (expéditeur ou transporteur), sur sa première opération.",
+        ],
+      },
+      {
+        heading: 'Comment ça marche',
+        bullets: [
+          "Partagez votre lien ou code de parrainage avec la personne invitée.",
+          "Elle crée un compte via votre lien (ou saisit votre code à l'inscription).",
+          "La récompense est débloquée lorsque le filleul réalise sa première opération éligible confirmée : un envoi payé et livré (expéditeur) ou un trajet mené jusqu'à la livraison (transporteur).",
+        ],
+      },
+      {
+        heading: 'Conditions',
+        bullets: [
+          "Le parrain et le filleul doivent avoir un compte dont l'identité est vérifiée.",
+          "Le filleul doit être un nouvel utilisateur (adresse e-mail et identité jamais inscrites sur THL).",
+          "La première opération doit être réalisée dans un délai d'un (1) mois après l'inscription du filleul ; passé ce délai, la récompense est perdue.",
+          "La récompense n'est pas due à la simple inscription : elle dépend d'une première opération réellement confirmée.",
+          "Plafond : jusqu'à 20 parrainages récompensés par mois et par compte.",
+          "Le crédit gagné est utilisable sur THL (frais d'envoi) et peut expirer 6 mois après son obtention s'il n'est pas utilisé.",
+        ],
+      },
+      {
+        heading: 'Prévention des abus',
+        bullets: [
+          "L'auto-parrainage est interdit (même personne, même appareil ou même moyen de paiement).",
+          "Tout usage frauduleux (faux comptes, opérations fictives) entraîne l'annulation des récompenses et peut mener à la suspension du compte.",
+          "THL peut vérifier l'éligibilité avant de créditer une récompense.",
+        ],
+      },
+      {
+        heading: 'Modifications',
+        body:
+          "Il s'agit d'une offre de lancement à durée limitée. THL peut modifier, suspendre ou mettre fin au programme de parrainage à tout moment ; les récompenses déjà validées restent acquises.",
       },
     ],
   },
