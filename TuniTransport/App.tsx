@@ -22,6 +22,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { DataProvider } from './src/context/DataContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AppAlertHost from './src/components/AppAlert';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import { COLORS } from './src/utils/theme';
 import { injectWebStyles } from './src/utils/webStyles';
 import { injectPWA } from './src/utils/pwa';
@@ -99,7 +100,9 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>{content}</SafeAreaProvider>
+      <SafeAreaProvider>
+        <ErrorBoundary>{content}</ErrorBoundary>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
