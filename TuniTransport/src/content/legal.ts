@@ -225,16 +225,29 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
           "THL est une plateforme de mise en relation. Le contrat de transport lie exclusivement l'expéditeur et le transporteur. THL n'intervient pas dans l'exécution du transport.",
       },
       {
-        heading: '2. Limites de responsabilité',
+        heading: '2. Qui est responsable du colis ?',
         bullets: [
-          "THL ne peut être tenue responsable de la perte, du vol, de la casse ou du retard d'un envoi.",
-          "Les contrôles, taxes et saisies douanières relèvent de la responsabilité des parties.",
-          "L'exactitude des déclarations (contenu, poids, valeur) relève de la seule responsabilité de l'expéditeur.",
-          "L'assurance éventuelle des biens transportés relève de l'initiative des parties.",
+          "Avant la prise en charge : l'expéditeur peut annuler et être intégralement remboursé (voir la Politique de remboursement).",
+          "Pendant le transport (de la collecte à la livraison) : le transporteur est responsable du colis qui lui est confié.",
+          "THL est un intermédiaire de mise en relation : elle ne transporte pas les colis et ne peut être tenue responsable de la perte, du vol, de la casse ou du retard d'un envoi.",
         ],
       },
       {
-        heading: '3. Consentement obligatoire',
+        heading: '3. Assurance et valeur déclarée',
+        bullets: [
+          "Aucune assurance n'est incluse par défaut. Pour un objet de valeur, convenez d'une couverture avec le transporteur avant l'envoi et conservez une preuve d'achat.",
+          "Ne confiez pas d'objets interdits ni d'objets dont la perte serait irremplaçable.",
+          "Les contrôles, taxes et saisies douanières relèvent de la responsabilité des parties.",
+          "L'exactitude des déclarations (contenu, poids, valeur) relève de la seule responsabilité de l'expéditeur.",
+        ],
+      },
+      {
+        heading: '4. En cas de problème',
+        body:
+          "En cas de perte, de dommage ou de retard, contactez d'abord l'autre partie via la messagerie, puis ouvrez un signalement depuis l'envoi concerné (« Signaler un problème »). Notre équipe examine l'historique pour vous aider à trouver une solution.",
+      },
+      {
+        heading: '5. Consentement obligatoire',
         body:
           "Avant de publier un envoi (expéditeur) ou de faire une offre / prendre en charge un envoi (transporteur), chaque partie doit cocher la case d'acceptation des Conditions générales, de la liste des Objets interdits et de la présente Décharge. Sans cette acceptation, l'opération est bloquée.",
       },
