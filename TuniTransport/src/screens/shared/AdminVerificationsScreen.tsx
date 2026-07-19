@@ -37,6 +37,15 @@ const DOCUMENT_LABELS: Record<string, string> = {
   passport: 'Passeport',
 };
 
+// Motifs de rejet fréquents (remplissent le champ d'un tap). Le premier vise
+// la non-concordance du nom déclaré avec la pièce d'identité.
+const PRESET_REASONS = [
+  'Le nom / prénom ne correspond pas à ceux du compte.',
+  'Document illisible ou photo floue.',
+  'Document expiré.',
+  "Le document ne correspond pas au type sélectionné.",
+];
+
 function PendingCard({ item, onDone }: { item: PendingIdentity; onDone: () => void }) {
   const [frontUrl, setFrontUrl] = useState<string | null>(null);
   const [backUrl, setBackUrl] = useState<string | null>(null);
@@ -116,6 +125,18 @@ function PendingCard({ item, onDone }: { item: PendingIdentity; onDone: () => vo
       </View>
       <Text style={styles.submittedAt}>Soumis le {submittedLabel}</Text>
 
+      {/* Contrôle de concordance du nom : le nom sur la pièce DOIT correspondre. */}
+      <View style={styles.nameCheck}>
+        <Ionicons name="person-circle-outline" size={18} color={COLORS.primary} />
+        <Text style={styles.nameCheckText}>
+          Le nom sur la pièce doit correspondre à{' '}
+          <Text style={styles.nameCheckStrong}>
+            {item.firstName} {item.lastName}
+          </Text>
+          . Sinon, refusez la vérification.
+        </Text>
+      </View>
+
       <View style={styles.photosRow}>
         <View style={styles.photoWrap}>
           <Text style={styles.photoLabel}>Recto</Text>
@@ -141,9 +162,25 @@ function PendingCard({ item, onDone }: { item: PendingIdentity; onDone: () => vo
         ) : null}
       </View>
 
+      <View style={styles.presetRow}>
+        {PRESET_REASONS.map((r) => (
+          <TouchableOpacity
+            key={r}
+            style={styles.presetChip}
+            onPress={() => setReason(r)}
+            accessibilityRole="button"
+            accessibilityLabel={`Motif : ${r}`}
+          >
+            <Text style={styles.presetChipText} numberOfLines={1}>
+              {r}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <TextInput
         style={styles.reasonInput}
-        placeholder="Motif du rejet (optionnel, visible par l'utilisateur)"
+        placeholder="Motif du rejet (visible par l'utilisateur)"
         placeholderTextColor={COLORS.textLight}
         value={reason}
         onChangeText={setReason}
@@ -262,6 +299,26 @@ const styles = StyleSheet.create({
   },
   docBadgeText: { fontSize: FONTS.sizes.xs, fontWeight: '600', color: COLORS.primary },
   submittedAt: { fontSize: FONTS.sizes.xs, color: COLORS.textLight, marginTop: 4 },
+  nameCheck: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+    padding: SPACING.sm,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryLight,
+  },
+  nameCheckText: { flex: 1, fontSize: FONTS.sizes.sm, color: COLORS.textSecondary, lineHeight: 18 },
+  nameCheckStrong: { color: COLORS.text, fontWeight: '800' },
+  presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs, marginTop: SPACING.md },
+  presetChip: {
+    maxWidth: '100%',
+    backgroundColor: COLORS.dangerLight,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 5,
+  },
+  presetChipText: { fontSize: FONTS.sizes.xs, fontWeight: '600', color: COLORS.danger },
   photosRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
   photoWrap: { flex: 1 },
   photoLabel: {
