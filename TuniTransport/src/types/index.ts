@@ -239,6 +239,8 @@ export interface RegisterPayload {
   // pour recevoir ses gains (stockées à part, jamais dans le profil public).
   payoutHolder?: string;
   payoutIban?: string;
+  /** Code de parrainage saisi à l'inscription (facultatif). */
+  referralCode?: string;
 }
 
 // Coordonnées bancaires du transporteur (privées).
@@ -352,4 +354,23 @@ export interface Dispute {
 export interface AdminDispute extends Dispute {
   reporterName: string;
   reporterRole: string;
+}
+
+// ── Parrainage ──────────────────────────────────────────────────────────────
+export interface ReferralSummary {
+  code: string;
+  balance: number;
+  invited: number;
+  rewarded: number;
+  /** true si l'utilisateur a lui-même été parrainé (a déjà utilisé un code). */
+  referred: boolean;
+}
+
+export type ReferralItemStatus = 'pending' | 'rewarded' | 'expired';
+
+export interface ReferralItem {
+  referredName: string;
+  status: ReferralItemStatus;
+  createdAt: string;
+  rewardedAt?: string;
 }

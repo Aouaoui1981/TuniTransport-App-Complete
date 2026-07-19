@@ -54,6 +54,7 @@ import AdminDisputesScreen from '../screens/shared/AdminDisputesScreen';
 import ReportProblemScreen from '../screens/shared/ReportProblemScreen';
 import MyDisputesScreen from '../screens/shared/MyDisputesScreen';
 import SupportScreen from '../screens/shared/SupportScreen';
+import ReferralScreen from '../screens/shared/ReferralScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import LegalPageScreen from '../screens/shared/LegalPageScreen';
 import WhitePaperScreen from '../screens/shared/WhitePaperScreen';
@@ -76,7 +77,7 @@ export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
   ForgotPassword: { email?: string } | undefined;
-  Register: { role?: UserRole } | undefined;
+  Register: { role?: UserRole; referralCode?: string } | undefined;
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   ShipmentDetail: { shipmentId: string };
   Tracking: { shipmentId: string };
@@ -101,6 +102,7 @@ export type RootStackParamList = {
   ReportProblem: { shipmentId: string };
   MyDisputes: undefined;
   Support: undefined;
+  Referral: undefined;
   Notifications: undefined;
   Legal: { page: LegalPageKey };
   WhitePaper: undefined;
@@ -358,6 +360,11 @@ export default function AppNavigator() {
             name="Support"
             component={SupportScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Aide & Support' }}
+          />
+          <Stack.Screen
+            name="Referral"
+            component={ReferralScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Parrainage' }}
           />
           <Stack.Screen
             name="Notifications"

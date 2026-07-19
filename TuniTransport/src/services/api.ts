@@ -40,6 +40,9 @@ import {
   DisputeCategory,
   DisputeStatus,
   AdminDispute,
+  ReferralSummary,
+  ReferralItem,
+  ReferralItemStatus,
 } from '../types';
 
 function db() {
@@ -1199,4 +1202,35 @@ export async function setDisputeStatus(
     p_note: note ?? null,
   });
   if (error) throw error;
+}
+
+// ── Parrainage ──────────────────────────────────────────────────────────────
+
+export async function applyReferralCode(code: string): Promise<void> {
+  const { error } = await db().rpc('apply_referral_code', { p_code: code });
+  if (error) throw error;
+}
+
+export async function fetchReferralSummary(): Promise<ReferralSummary> {
+  const { data, error } = await db().rpc('my_referral_summary');
+  if (error) throw error;
+  const row = (data ?? {}) as any;
+  return {
+    code: row.code ?? '',
+    balance: Number(row.balance ?? 0),
+    invited: Number(row.invited ?? 0),
+    rewarded: Number(row.rewarded ?? 0),
+    referred: Boolean(row.referred),
+  };
+}
+
+export async function listMyReferrals(): Promise<ReferralItem[]> {
+  const { data, error } = await db().rpc('list_my_referrals');
+  if (error) throw error;
+  return ((data ?? []) as any[]).map((row) => ({
+    referredName: row.referred_name ?? '',
+    status: row.status as ReferralItemStatus,
+    createdAt: row.created_at,
+    rewardedAt: row.rewarded_at ?? undefined,
+  }));
 }

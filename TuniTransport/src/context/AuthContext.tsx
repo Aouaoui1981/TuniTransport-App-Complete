@@ -13,7 +13,7 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, IS_LIVE } from '../services/supabase';
-import { fetchProfile, updateProfile, deleteOwnAccount } from '../services/api';
+import { fetchProfile, updateProfile, deleteOwnAccount, applyReferralCode } from '../services/api';
 import { MOCK_USERS } from '../services/mockData';
 import { User, LoginPayload, RegisterPayload, OAuthProvider } from '../types';
 import { Platform } from 'react-native';
@@ -181,6 +181,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (error) throw new Error(error.message);
         if (data.session && data.user) {
+          // Code de parrainage (facultatif) — best-effort, ne bloque jamais l'inscription.
+          if (payload.referralCode?.trim()) {
+            try {
+              await applyReferralCode(payload.referralCode.trim());
+            } catch (e) {
+              console.warn('Code de parrainage non appliqué:', e);
+            }
+          }
           const profile = await fetchProfile(data.user.id);
           if (profile) setUser({ ...profile, email: data.user.email ?? payload.email });
           return { emailConfirmationRequired: false };
