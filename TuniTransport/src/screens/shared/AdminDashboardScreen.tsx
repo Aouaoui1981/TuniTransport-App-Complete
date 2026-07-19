@@ -230,6 +230,19 @@ export default function AdminDashboardScreen() {
               </Card>
             </TouchableOpacity>
 
+            <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('AdminDisputes')}>
+              <Card style={styles.actionCard}>
+                <View style={[styles.actionIcon, { backgroundColor: COLORS.dangerLight }]}>
+                  <Ionicons name="flag-outline" size={22} color={COLORS.danger} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.actionTitle}>Signalements</Text>
+                  <Text style={styles.actionSub}>Traiter les litiges (perte, dommage, retard…)</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
+              </Card>
+            </TouchableOpacity>
+
             <Text style={styles.sectionTitle}>Mon compte</Text>
 
             <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('EditProfile')}>

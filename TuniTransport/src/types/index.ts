@@ -327,3 +327,29 @@ export interface Announcement {
   body: string;
   createdAt: string;
 }
+
+// ── Signalements / litiges ──────────────────────────────────────────────────
+export type DisputeStatus = 'open' | 'in_review' | 'resolved' | 'rejected';
+export type DisputeCategory =
+  | 'lost'
+  | 'damaged'
+  | 'delay'
+  | 'not_as_described'
+  | 'no_show'
+  | 'other';
+
+export interface Dispute {
+  id: string;
+  shipmentId: string;
+  category: DisputeCategory;
+  description: string;
+  status: DisputeStatus;
+  adminNote?: string;
+  createdAt: string;
+  resolvedAt?: string;
+}
+
+export interface AdminDispute extends Dispute {
+  reporterName: string;
+  reporterRole: string;
+}

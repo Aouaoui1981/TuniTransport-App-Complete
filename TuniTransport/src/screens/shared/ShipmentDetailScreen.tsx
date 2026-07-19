@@ -437,6 +437,22 @@ export default function ShipmentDetailScreen() {
               <Text style={styles.actionText}>Faire une offre</Text>
             </TouchableOpacity>
           ) : null}
+
+          {/* Signaler un problème : réservé aux parties d'un envoi engagé. */}
+          {(shipment.senderId === user?.id || shipment.transporterId === user?.id) &&
+          shipment.transporterId &&
+          shipment.status !== 'pending' &&
+          shipment.status !== 'cancelled' ? (
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.reportBtn]}
+              onPress={() => navigation.navigate('ReportProblem', { shipmentId: shipment.id })}
+            >
+              <Ionicons name="flag-outline" size={18} color={COLORS.danger} />
+              <Text style={[styles.actionText, { color: COLORS.danger }]}>
+                Signaler un problème
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -566,4 +582,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionText: { color: COLORS.white, fontWeight: '700', fontSize: FONTS.sizes.lg },
+  reportBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: COLORS.danger,
+  },
 });

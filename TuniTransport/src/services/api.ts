@@ -36,6 +36,10 @@ import {
   AdminShipment,
   AdminReview,
   Announcement,
+  Dispute,
+  DisputeCategory,
+  DisputeStatus,
+  AdminDispute,
 } from '../types';
 
 function db() {
@@ -1137,5 +1141,62 @@ export async function submitIdentityVerification(
       identity_rejection_reason: null,
     })
     .eq('id', userId);
+  if (error) throw error;
+}
+
+// ── Signalements / litiges ──────────────────────────────────────────────────
+
+function mapDispute(row: any): Dispute {
+  return {
+    id: row.id,
+    shipmentId: row.shipment_id,
+    category: row.category as DisputeCategory,
+    description: row.description ?? '',
+    status: row.status as DisputeStatus,
+    adminNote: row.admin_note ?? undefined,
+    createdAt: row.created_at,
+    resolvedAt: row.resolved_at ?? undefined,
+  };
+}
+
+export async function createDispute(
+  shipmentId: string,
+  category: DisputeCategory,
+  description: string
+): Promise<void> {
+  const { error } = await db().rpc('create_dispute', {
+    p_shipment_id: shipmentId,
+    p_category: category,
+    p_description: description,
+  });
+  if (error) throw error;
+}
+
+export async function listMyDisputes(): Promise<Dispute[]> {
+  const { data, error } = await db().rpc('list_my_disputes');
+  if (error) throw error;
+  return ((data ?? []) as any[]).map(mapDispute);
+}
+
+export async function listDisputesAdmin(): Promise<AdminDispute[]> {
+  const { data, error } = await db().rpc('list_disputes_admin');
+  if (error) throw error;
+  return ((data ?? []) as any[]).map((row) => ({
+    ...mapDispute(row),
+    reporterName: row.reporter_name ?? '',
+    reporterRole: row.reporter_role ?? '',
+  }));
+}
+
+export async function setDisputeStatus(
+  id: string,
+  status: DisputeStatus,
+  note?: string
+): Promise<void> {
+  const { error } = await db().rpc('set_dispute_status', {
+    p_id: id,
+    p_status: status,
+    p_note: note ?? null,
+  });
   if (error) throw error;
 }
