@@ -40,6 +40,7 @@ const MENU: {
   { icon: 'lock-closed-outline', label: 'Sécurité', action: 'security' },
   { icon: 'help-circle-outline', label: 'Aide & Support', action: 'support' },
   { icon: LEGAL_PAGES.terms.icon, label: LEGAL_PAGES.terms.title, legalPage: 'terms' },
+  { icon: LEGAL_PAGES.referral.icon, label: LEGAL_PAGES.referral.title, legalPage: 'referral' },
   { icon: LEGAL_PAGES.refund.icon, label: LEGAL_PAGES.refund.title, legalPage: 'refund' },
   { icon: LEGAL_PAGES.privacy.icon, label: LEGAL_PAGES.privacy.title, legalPage: 'privacy' },
   { icon: LEGAL_PAGES.prohibited.icon, label: LEGAL_PAGES.prohibited.title, legalPage: 'prohibited' },

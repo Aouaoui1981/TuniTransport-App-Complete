@@ -170,11 +170,21 @@ export default function WelcomeScreen() {
                   Parrainez et gagnez <Text style={styles.referralAmount}>10 €</Text>
                 </Text>
                 <Text style={styles.referralText}>
-                  10 € offerts pour chaque expéditeur ou transporteur que vous invitez, dès
-                  sa première opération sur THL.
+                  10 € pour vous et 5 € pour chaque expéditeur ou transporteur que vous
+                  invitez, dès sa première opération sur THL.
                 </Text>
               </View>
             </View>
+            <TouchableOpacity
+              style={styles.referralLink}
+              onPress={() => navigation.navigate('Legal', { page: 'referral' })}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Voir les conditions de parrainage"
+            >
+              <Text style={styles.referralLinkText}>Voir les conditions</Text>
+              <Ionicons name="chevron-forward" size={14} color={DARK.colors.accent} />
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -373,5 +383,17 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     lineHeight: 19,
     color: DARK.colors.textSecondary,
+  },
+  referralLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 2,
+    marginTop: SPACING.md,
+  },
+  referralLinkText: {
+    color: DARK.colors.accent,
+    fontWeight: '700',
+    fontSize: FONTS.sizes.sm,
   },
 });
