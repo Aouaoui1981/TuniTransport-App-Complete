@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SPACING, RADIUS, FONTS, DARK, SHADOWS, BEVEL } from '../../utils/theme';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import PressableScale from '../../components/PressableScale';
+import OnboardingOverlay from '../../components/OnboardingOverlay';
 
 const TRUST_POINTS: {
   icon: keyof typeof Ionicons.glyphMap;
@@ -47,6 +48,7 @@ export default function WelcomeScreen() {
 
   return (
     <View style={styles.root}>
+      <OnboardingOverlay />
       <StatusBar style="light" />
 
       {/* Fond dégradé aux couleurs de la marque (fixe) — pas d'image */}

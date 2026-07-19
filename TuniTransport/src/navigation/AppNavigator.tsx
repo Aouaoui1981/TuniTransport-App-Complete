@@ -53,6 +53,7 @@ import AdminBroadcastScreen from '../screens/shared/AdminBroadcastScreen';
 import AdminDisputesScreen from '../screens/shared/AdminDisputesScreen';
 import ReportProblemScreen from '../screens/shared/ReportProblemScreen';
 import MyDisputesScreen from '../screens/shared/MyDisputesScreen';
+import SupportScreen from '../screens/shared/SupportScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import LegalPageScreen from '../screens/shared/LegalPageScreen';
 import WhitePaperScreen from '../screens/shared/WhitePaperScreen';
@@ -99,6 +100,7 @@ export type RootStackParamList = {
   AdminDisputes: undefined;
   ReportProblem: { shipmentId: string };
   MyDisputes: undefined;
+  Support: undefined;
   Notifications: undefined;
   Legal: { page: LegalPageKey };
   WhitePaper: undefined;
@@ -351,6 +353,11 @@ export default function AppNavigator() {
             name="MyDisputes"
             component={MyDisputesScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Mes signalements' }}
+          />
+          <Stack.Screen
+            name="Support"
+            component={SupportScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Aide & Support' }}
           />
           <Stack.Screen
             name="Notifications"

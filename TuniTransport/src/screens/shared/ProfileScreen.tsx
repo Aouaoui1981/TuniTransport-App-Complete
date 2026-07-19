@@ -30,7 +30,7 @@ import { LEGAL_PAGES, LegalPageKey } from '../../content/legal';
 const MENU: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  action?: 'editProfile' | 'notifications' | 'payment' | 'security' | 'disputes';
+  action?: 'editProfile' | 'notifications' | 'payment' | 'security' | 'disputes' | 'support';
   legalPage?: LegalPageKey;
 }[] = [
   { icon: 'person-outline', label: 'Modifier le profil', action: 'editProfile' },
@@ -38,7 +38,7 @@ const MENU: {
   { icon: 'notifications-outline', label: 'Notifications', action: 'notifications' },
   { icon: 'flag-outline', label: 'Mes signalements', action: 'disputes' },
   { icon: 'lock-closed-outline', label: 'Sécurité', action: 'security' },
-  { icon: 'help-circle-outline', label: 'Aide & Support', legalPage: 'contact' },
+  { icon: 'help-circle-outline', label: 'Aide & Support', action: 'support' },
   { icon: LEGAL_PAGES.terms.icon, label: LEGAL_PAGES.terms.title, legalPage: 'terms' },
   { icon: LEGAL_PAGES.refund.icon, label: LEGAL_PAGES.refund.title, legalPage: 'refund' },
   { icon: LEGAL_PAGES.privacy.icon, label: LEGAL_PAGES.privacy.title, legalPage: 'privacy' },
@@ -150,6 +150,8 @@ export default function ProfileScreen() {
       openSecurity();
     } else if (item.action === 'disputes') {
       navigation.navigate('MyDisputes');
+    } else if (item.action === 'support') {
+      navigation.navigate('Support');
     } else if (item.legalPage) {
       navigation.navigate('Legal', { page: item.legalPage });
     } else {
