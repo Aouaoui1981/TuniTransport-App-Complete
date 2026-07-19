@@ -170,8 +170,8 @@ export default function WelcomeScreen() {
                   Parrainez et gagnez <Text style={styles.referralAmount}>10 €</Text>
                 </Text>
                 <Text style={styles.referralText}>
-                  10 € offerts pour chaque expéditeur que vous invitez et qui réalise son
-                  premier envoi.
+                  10 € offerts pour chaque expéditeur ou transporteur que vous invitez, dès
+                  sa première opération sur THL.
                 </Text>
               </View>
             </View>
