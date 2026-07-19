@@ -25,8 +25,11 @@ import AppAlertHost from './src/components/AppAlert';
 import { COLORS } from './src/utils/theme';
 import { injectWebStyles } from './src/utils/webStyles';
 import { injectPWA } from './src/utils/pwa';
+import { initMonitoring } from './src/utils/monitoring';
 import { IS_STRIPE_LIVE, STRIPE_PUBLISHABLE_KEY } from './src/services/stripe';
 
+// Suivi des erreurs (Sentry) — actif seulement si un DSN est configuré.
+initMonitoring();
 // Neutralise le contour bleu natif des champs sur le web (Safari/Chrome).
 injectWebStyles();
 // Active « Ajouter à l'écran d'accueil » (icône + plein écran) sur le web.
