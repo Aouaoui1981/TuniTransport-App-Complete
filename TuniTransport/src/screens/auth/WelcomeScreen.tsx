@@ -182,36 +182,6 @@ export default function WelcomeScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-
-          {/* Itinéraire interactif */}
-          <TouchableOpacity
-            style={styles.whitePaperLink}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('RouteMap')}
-            accessibilityRole="button"
-            accessibilityLabel="Voir l'itinéraire France Tunisie"
-          >
-            <Ionicons name="map-outline" size={18} color={DARK.colors.secondary} />
-            <Text style={styles.whitePaperLinkText}>
-              Voir l'itinéraire France → Tunisie
-            </Text>
-            <Ionicons name="chevron-forward" size={15} color={DARK.colors.textSecondary} />
-          </TouchableOpacity>
-
-          {/* Livre blanc */}
-          <TouchableOpacity
-            style={[styles.whitePaperLink, { marginTop: SPACING.md }]}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('WhitePaper')}
-            accessibilityRole="button"
-            accessibilityLabel="Découvrir le livre blanc THL"
-          >
-            <Ionicons name="book-outline" size={18} color={DARK.colors.secondary} />
-            <Text style={styles.whitePaperLinkText}>
-              Notre vision & feuille de route — Livre blanc THL
-            </Text>
-            <Ionicons name="chevron-forward" size={15} color={DARK.colors.textSecondary} />
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -391,19 +361,4 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
   },
   loginLinkAccent: { color: DARK.colors.secondary, fontWeight: '700' },
-
-  whitePaperLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    marginTop: SPACING.xxxl,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: DARK.colors.border,
-    backgroundColor: DARK.colors.surfaceGlass,
-  },
-  whitePaperLinkText: { color: DARK.colors.text, fontWeight: '600', fontSize: FONTS.sizes.sm },
 });
