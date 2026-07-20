@@ -24,8 +24,10 @@ import { Card, EmptyState, StatusBadge } from '../../components';
 import { IS_LIVE } from '../../services/supabase';
 import { listShipmentsAdmin, adminCancelShipment } from '../../services/api';
 import { AdminShipment } from '../../types';
+import { useAppNavigation } from '../../navigation/AppNavigator';
 
 function ShipmentCard({ item, onChanged }: { item: AdminShipment; onChanged: () => void }) {
+  const navigation = useAppNavigation();
   const [busy, setBusy] = useState(false);
   const canCancel = item.status !== 'delivered' && item.status !== 'cancelled';
 
@@ -51,23 +53,34 @@ function ShipmentCard({ item, onChanged }: { item: AdminShipment; onChanged: () 
 
   return (
     <Card style={styles.card}>
-      <View style={styles.headerRow}>
-        <Text style={styles.route}>
-          {item.pickupCity || '?'} → {item.deliveryCity || '?'}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('AdminShipmentDetail', { shipmentId: item.id })}
+        accessibilityRole="button"
+        accessibilityLabel="Voir les détails de l'envoi"
+      >
+        <View style={styles.headerRow}>
+          <Text style={styles.route}>
+            {item.pickupCity || '?'} → {item.deliveryCity || '?'}
+          </Text>
+          <StatusBadge status={item.status} />
+        </View>
+        <Text style={styles.parties}>
+          {item.senderName || '—'} → {item.transporterName || 'Non assigné'}
         </Text>
-        <StatusBadge status={item.status} />
-      </View>
-      <Text style={styles.parties}>
-        {item.senderName || '—'} → {item.transporterName || 'Non assigné'}
-      </Text>
-      <View style={styles.metaRow}>
-        <Text style={styles.meta}>{item.type === 'small' ? 'Colis' : 'Gros objet'}</Text>
-        {item.price != null ? <Text style={styles.price}>{item.price}€</Text> : null}
-        <View style={{ flex: 1 }} />
-        <Text style={styles.date}>
-          {new Date(item.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-        </Text>
-      </View>
+        <View style={styles.metaRow}>
+          <Text style={styles.meta}>{item.type === 'small' ? 'Colis' : 'Gros objet'}</Text>
+          {item.price != null ? <Text style={styles.price}>{item.price}€</Text> : null}
+          <View style={{ flex: 1 }} />
+          <Text style={styles.date}>
+            {new Date(item.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </Text>
+        </View>
+        <View style={styles.detailsHint}>
+          <Text style={styles.detailsHintText}>Voir les détails</Text>
+          <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
+        </View>
+      </TouchableOpacity>
 
       {canCancel ? (
         <TouchableOpacity style={styles.cancelBtn} disabled={busy} onPress={cancel}>
@@ -196,6 +209,8 @@ const styles = StyleSheet.create({
   meta: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary },
   price: { fontSize: FONTS.sizes.md, fontWeight: '800', color: COLORS.secondary },
   date: { fontSize: FONTS.sizes.xs, color: COLORS.textLight },
+  detailsHint: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: SPACING.sm },
+  detailsHintText: { fontSize: FONTS.sizes.xs, fontWeight: '700', color: COLORS.primary },
 
   cancelBtn: {
     flexDirection: 'row',

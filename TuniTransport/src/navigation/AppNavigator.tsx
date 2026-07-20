@@ -48,6 +48,7 @@ import AdminDashboardScreen from '../screens/shared/AdminDashboardScreen';
 import AdminPayoutsScreen from '../screens/shared/AdminPayoutsScreen';
 import AdminUsersScreen from '../screens/shared/AdminUsersScreen';
 import AdminShipmentsScreen from '../screens/shared/AdminShipmentsScreen';
+import AdminShipmentDetailScreen from '../screens/shared/AdminShipmentDetailScreen';
 import AdminReviewsScreen from '../screens/shared/AdminReviewsScreen';
 import AdminBroadcastScreen from '../screens/shared/AdminBroadcastScreen';
 import AdminDisputesScreen from '../screens/shared/AdminDisputesScreen';
@@ -96,6 +97,7 @@ export type RootStackParamList = {
   AdminPayouts: undefined;
   AdminUsers: undefined;
   AdminShipments: undefined;
+  AdminShipmentDetail: { shipmentId: string };
   AdminReviews: undefined;
   AdminBroadcast: undefined;
   AdminDisputes: undefined;
@@ -330,6 +332,11 @@ export default function AppNavigator() {
             name="AdminShipments"
             component={AdminShipmentsScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Envois' }}
+          />
+          <Stack.Screen
+            name="AdminShipmentDetail"
+            component={AdminShipmentDetailScreen}
+            options={{ ...SUBSCREEN_HEADER, title: "Détail de l'envoi" }}
           />
           <Stack.Screen
             name="AdminReviews"
