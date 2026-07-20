@@ -366,6 +366,35 @@ export interface ReferralSummary {
   referred: boolean;
 }
 
+// Détail complet d'un envoi côté admin.
+export interface AdminShipmentContact {
+  name: string;
+  email?: string;
+  phone?: string;
+}
+export interface AdminShipmentDetail {
+  id: string;
+  type: string;
+  status: ShipmentStatus;
+  weight?: number;
+  price?: number;
+  dimensions?: string;
+  description?: string;
+  items?: Item[];
+  photos?: string[];
+  paymentMethod?: 'card' | 'cash';
+  createdAt: string;
+  collectedAt?: string;
+  deliveredAt?: string;
+  paidAt?: string;
+  pickup?: Address;
+  delivery?: Address;
+  sender: AdminShipmentContact;
+  transporter?: AdminShipmentContact | null;
+  acceptedBid?: { price: number; estimatedDelivery: string; message?: string } | null;
+  bidsCount: number;
+}
+
 export type ReferralItemStatus = 'pending' | 'rewarded' | 'expired';
 
 export interface ReferralItem {

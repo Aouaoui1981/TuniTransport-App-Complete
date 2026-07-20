@@ -43,6 +43,7 @@ import {
   ReferralSummary,
   ReferralItem,
   ReferralItemStatus,
+  AdminShipmentDetail,
 } from '../types';
 
 function db() {
@@ -929,6 +930,13 @@ export async function listShipmentsAdmin(search = ''): Promise<AdminShipment[]> 
 export async function adminCancelShipment(shipmentId: string): Promise<void> {
   const { error } = await db().rpc('admin_cancel_shipment', { p_shipment_id: shipmentId });
   if (error) throw error;
+}
+
+export async function fetchAdminShipmentDetail(shipmentId: string): Promise<AdminShipmentDetail> {
+  const { data, error } = await db().rpc('admin_shipment_detail', { p_id: shipmentId });
+  if (error) throw error;
+  if (!data) throw new Error('Envoi introuvable.');
+  return data as AdminShipmentDetail;
 }
 
 // ── Admin : modération des avis ───────────────────────────────────────────
