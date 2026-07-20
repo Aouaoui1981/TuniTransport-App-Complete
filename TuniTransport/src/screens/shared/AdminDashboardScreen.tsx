@@ -36,6 +36,26 @@ const STAT_TILES: { key: keyof AdminStats; label: string; icon: keyof typeof Ion
   { key: 'delivered', label: 'Livrés', icon: 'checkmark-done-outline', color: COLORS.success },
 ];
 
+// Tuiles financières (montants en euros).
+const FINANCE_TILES: {
+  key: keyof AdminStats;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+}[] = [
+  { key: 'gmv', label: 'Volume total', icon: 'trending-up-outline', color: COLORS.primary },
+  { key: 'commission', label: 'Commissions', icon: 'wallet-outline', color: COLORS.success },
+  { key: 'escrow', label: 'Sous séquestre', icon: 'lock-closed-outline', color: COLORS.accent },
+  { key: 'paidOut', label: 'Versé', icon: 'card-outline', color: COLORS.secondary },
+  { key: 'transporterEarnings', label: 'Gains transporteurs', icon: 'car-outline', color: COLORS.info },
+  { key: 'referralCredits', label: 'Crédits parrainage', icon: 'gift-outline', color: COLORS.secondaryDark },
+];
+
+// Formatage monétaire compact (ex. 1 234,50 €).
+function fmtEur(n: number): string {
+  return `${Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
+}
+
 export default function AdminDashboardScreen() {
   const navigation = useAppNavigation();
   const { user, logout } = useAuth();
@@ -132,6 +152,19 @@ export default function AdminDashboardScreen() {
                   </View>
                   <Text style={styles.statValue}>{stats ? stats[tile.key] : 0}</Text>
                   <Text style={styles.statLabel}>{tile.label}</Text>
+                </View>
+              ))}
+            </View>
+
+            <Text style={styles.sectionTitle}>Finances</Text>
+            <View style={styles.financeGrid}>
+              {FINANCE_TILES.map((tile) => (
+                <View key={tile.key} style={styles.financeTile}>
+                  <View style={styles.financeHead}>
+                    <Ionicons name={tile.icon} size={16} color={tile.color} />
+                    <Text style={styles.financeLabel}>{tile.label}</Text>
+                  </View>
+                  <Text style={styles.financeValue}>{fmtEur(stats ? (stats[tile.key] as number) : 0)}</Text>
                 </View>
               ))}
             </View>
@@ -239,6 +272,11 @@ export default function AdminDashboardScreen() {
                   <Text style={styles.actionTitle}>Signalements</Text>
                   <Text style={styles.actionSub}>Traiter les litiges (perte, dommage, retard…)</Text>
                 </View>
+                {stats && stats.openDisputes > 0 ? (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{stats.openDisputes}</Text>
+                  </View>
+                ) : null}
                 <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
               </Card>
             </TouchableOpacity>
@@ -320,6 +358,20 @@ const styles = StyleSheet.create({
   },
   statValue: { fontSize: FONTS.sizes.xxl, fontWeight: '800', color: COLORS.text },
   statLabel: { fontSize: FONTS.sizes.xs, color: COLORS.textSecondary, marginTop: 2 },
+
+  financeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md },
+  financeTile: {
+    width: '47%',
+    flexGrow: 1,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+  },
+  financeHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: SPACING.xs },
+  financeLabel: { flex: 1, fontSize: FONTS.sizes.xs, color: COLORS.textSecondary },
+  financeValue: { fontSize: FONTS.sizes.lg, fontWeight: '800', color: COLORS.text },
 
   sectionTitle: {
     fontSize: FONTS.sizes.md,
