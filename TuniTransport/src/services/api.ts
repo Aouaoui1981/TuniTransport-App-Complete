@@ -845,6 +845,13 @@ export async function fetchAdminStats(): Promise<AdminStats> {
     pendingKyc: Number(d.pending_kyc ?? 0),
     pendingPayoutsCount: Number(d.pending_payouts_count ?? 0),
     pendingPayoutsAmount: Number(d.pending_payouts_amount ?? 0),
+    openDisputes: Number(d.open_disputes ?? 0),
+    gmv: Number(d.gmv ?? 0),
+    commission: Number(d.commission ?? 0),
+    transporterEarnings: Number(d.transporter_earnings ?? 0),
+    escrow: Number(d.escrow ?? 0),
+    paidOut: Number(d.paid_out ?? 0),
+    referralCredits: Number(d.referral_credits ?? 0),
   };
 }
 

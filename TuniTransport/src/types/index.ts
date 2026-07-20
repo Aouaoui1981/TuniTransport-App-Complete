@@ -281,6 +281,14 @@ export interface AdminStats {
   pendingKyc: number;
   pendingPayoutsCount: number;
   pendingPayoutsAmount: number;
+  openDisputes: number;
+  // Finances (en euros)
+  gmv: number;
+  commission: number;
+  transporterEarnings: number;
+  escrow: number;
+  paidOut: number;
+  referralCredits: number;
 }
 
 // Utilisateur vu par l'administrateur (gestion des comptes).
