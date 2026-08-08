@@ -1,0 +1,34 @@
+name: Supabase Keep-Alive
+
+# Empêche la mise en pause automatique du projet Supabase.
+# Sur l'offre gratuite, un projet sans activité est suspendu après ~7 jours ;
+# ce job envoie une requête légère à l'API REST chaque jour pour le garder actif.
+#
+# NB sécurité : la valeur par défaut ci-dessous est une clé « publishable »
+# (publique par conception — déjà embarquée dans l'app cliente et protégée par
+# les politiques RLS), donc sans risque à committer. Pour la surcharger, définir
+# les secrets de dépôt SUPABASE_URL et SUPABASE_ANON_KEY.
+
+on:
+  schedule:
+    - cron: '17 4 * * *' # tous les jours à 04h17 UTC
+  workflow_dispatch: # déclenchement manuel depuis l'onglet Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://leuntmiyxqvetksfrjfm.supabase.co' }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_jLRE6NoomvAG_0WtN3Tcgg_FlI1qcwr' }}
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "$SUPABASE_URL/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY")
+          echo "Supabase REST a répondu : HTTP $code"
+          # 2xx/4xx = le projet est bien réveillé et répond ; 5xx = incident réel.
+          if [ "$code" -ge 500 ] || [ "$code" -eq 000 ]; then
+            echo "::error::Ping Supabase en échec (HTTP $code)"
+            exit 1
+          fi
