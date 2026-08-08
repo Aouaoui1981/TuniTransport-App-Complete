@@ -5,6 +5,52 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 
 ---
 
+## 2026-08-08 — Tableau de bord admin + remise en ligne (Cloudflare)
+
+### Fait
+- [x] **Tableau de bord admin enrichi** : `admin_stats()` étendue avec
+      `open_disputes` et un résumé financier en euros (GMV, commissions, gains
+      transporteurs, séquestre, versé, crédits de parrainage). Nouvelle section
+      « Finances » (6 tuiles) + pastille de signalements ouverts. (PR #115)
+- [x] **Supabase restauré** : le projet était `INACTIVE` (mise en pause
+      automatique après ~7 jours d'inactivité sur l'offre gratuite), ce qui
+      faisait aussi apparaître l'app comme cassée. Restauré → `ACTIVE_HEALTHY`,
+      base vérifiée (8 comptes).
+- [x] **Keep-alive Supabase** : workflow GitHub Actions quotidien (04h17 UTC)
+      qui ping l'API REST pour empêcher la remise en pause. Premier run manuel
+      vérifié `success`. (PR #116)
+- [x] **Migration Vercel → Cloudflare** : le compte Vercel est suspendu pour
+      solde impayé (« This deployment is temporarily paused » → *Your team has
+      an overdue balance*). Bascule vers Cloudflare Workers :
+      `wrangler.jsonc` (Worker d'assets statiques, repli SPA via
+      `not_found_handling`) + `.env.production` versionné pour éviter toute
+      saisie de variables côté hébergeur. (PR #117, #118)
+- [x] **Correctif déploiement** : suppression de `public/_redirects` — Workers
+      rejette la règle `/* /index.html 200` (boucle infinie, code 100324) et le
+      déploiement échouait *après* un build réussi. (PR #119)
+- [x] **Déploiement réussi** sur `tunitransport-app-complete`.
+
+### Reste à faire
+- [ ] Tester l'app en ligne de bout en bout (connexion, section Finances admin).
+- [ ] Vérifier que les secrets Stripe côté Supabase sont toujours en place :
+      5 `webhook_events` de juillet (dont un `payment_intent.succeeded`)
+      prouvent que la config a fonctionné, mais la table `payments` est vide et
+      rien n'a été testé depuis. Seul un vrai paiement le confirmera.
+- [ ] Mettre à jour `CHECKOUT_SUCCESS_URL` / `CHECKOUT_CANCEL_URL` (secrets
+      Supabase) vers le nouveau domaine Cloudflare.
+- [ ] Domaine + Resend (e-mails de confirmation / réinitialisation) — non démarré.
+- [ ] Décider du sort de Vercel : payer le solde ou retirer `vercel.json`.
+
+### Fichiers touchés
+- `TuniTransport/supabase/migrations/20260719230000_admin_stats_finance_and_actions.sql`
+  (nouveau), `supabase/schema.sql`, `src/types/index.ts`, `src/services/api.ts`,
+  `src/screens/shared/AdminDashboardScreen.tsx`.
+- `.github/workflows/supabase-keepalive.yml` (nouveau).
+- `TuniTransport/wrangler.jsonc`, `TuniTransport/.env.production` (nouveaux),
+  `docs/deploiement-cloudflare.md` (nouveau).
+
+---
+
 ## 2026-07-17 (suite) — Refonte UI « Dark Premium » complète
 ### Fait
 - [x] Redesign de `WelcomeScreen` (landing) : badge ferry, bandeau stats en
