@@ -56,16 +56,17 @@ Chaque push sur `main` redéclenche automatiquement un déploiement.
 ## Notes
 
 ### Repli SPA
-Deux mécanismes le couvrent, volontairement redondants pour rester valide quel
-que soit l'hébergeur :
+Assuré par `wrangler.jsonc` → `assets.not_found_handling:
+"single-page-application"`. Sans ce repli, un rafraîchissement sur une route
+interne renverrait une 404.
 
-- `wrangler.jsonc` → `assets.not_found_handling: "single-page-application"`
-  (utilisé par Workers) ;
-- `TuniTransport/public/_redirects` → `/*  /index.html  200` (utilisé par Pages
-  et Netlify). Les fichiers de `public/` sont copiés à la racine de `dist/` par
-  `expo export`.
-
-Sans ce repli, un rafraîchissement sur une route interne renverrait une 404.
+> **Ne pas ajouter de fichier `_redirects`.** La règle `/*  /index.html  200`,
+> habituelle sur Pages et Netlify, est **rejetée** par Workers : l'API répond
+> `Invalid _redirects configuration — Infinite loop detected in this rule`
+> (code 100324), car `/index.html` correspond lui-même à `/*` et le traitement
+> des assets retire `.html` / `/index`, ce qui redéclenche la règle. Le
+> déploiement échoue alors *après* un build réussi. `not_found_handling` couvre
+> déjà le besoin.
 
 ### Cache Metro en local
 En local, un build précédent peut être resservi depuis le cache Metro et ignorer
