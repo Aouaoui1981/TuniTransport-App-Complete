@@ -1,0 +1,6 @@
+# Cloudflare Pages — repli SPA.
+# L'app est exportée en "single" (single-page app) : toutes les routes doivent
+# être servies par index.html, sinon un rafraîchissement sur /profil renvoie 404.
+# Les fichiers du dossier public/ sont copiés à la racine de dist/ par
+# `expo export`, donc ce fichier se retrouve bien dans la sortie du build.
+/*    /index.html   200
