@@ -41,3 +41,8 @@ yarn-error.*
 !.eas/workflows/
 
 
+
+# Dossiers natifs générés par `expo prebuild` (workflow managé : EAS Build les
+# régénère à chaque build, ils ne doivent jamais être versionnés).
+/android
+/ios
