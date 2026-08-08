@@ -1,0 +1,21 @@
+{
+  // Déploiement Cloudflare Workers (assets statiques).
+  //
+  // L'app est un export Expo web statique : ce Worker ne sert que des fichiers,
+  // il n'a pas de code serveur (`main` est volontairement absent).
+  //
+  // Réglages à renseigner côté tableau de bord Cloudflare :
+  //   Root directory  : TuniTransport
+  //   Build command   : npx expo export --platform web
+  //   Deploy command  : npx wrangler deploy
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tunitransport-app-complete",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    // Relatif à ce fichier, donc TuniTransport/dist — la sortie de `expo export`.
+    "directory": "./dist",
+    // L'app est exportée en mode "single" : toute route inconnue doit rendre
+    // index.html, sinon un rafraîchissement sur une route interne renvoie 404.
+    "not_found_handling": "single-page-application"
+  }
+}
