@@ -46,16 +46,44 @@ vides, avec un avertissement en console.
 
 ## Étape 1 — Construire l'AAB
 
+### Option A — depuis GitHub (sans machine de développement)
+
+Le workflow `.github/workflows/android-build.yml` déclenche le build EAS depuis
+l'onglet **Actions**, donc depuis n'importe quel navigateur, téléphone compris.
+
+Configuration, une seule fois :
+
+1. Créer un compte sur <https://expo.dev> (gratuit).
+2. **expo.dev → Account settings → Access tokens → Create token**, puis
+   enregistrer la valeur dans **GitHub → Settings → Secrets and variables →
+   Actions → New repository secret**, sous le nom `EXPO_TOKEN`.
+3. **expo.dev → le projet → Secrets → Create** : nom
+   `GOOGLE_MAPS_API_KEY_ANDROID`, valeur = la clé Maps. Elle est injectée par
+   `app.config.js` pendant le build, sans jamais transiter par GitHub.
+
+Puis : **Actions → Build Android (EAS) → Run workflow → profile `production`**.
+
+Le workflow se termine en quelques minutes ; le build, lui, se poursuit sur
+l'infrastructure d'Expo (`--no-wait`) et peut rester en file d'attente sur
+l'offre gratuite. Suivi et téléchargement de l'AAB sur **expo.dev → Builds**.
+
+### Option B — en local
+
 ```bash
 npm install -g eas-cli
 eas login
 cd TuniTransport
+eas secret:create --scope project \
+  --name GOOGLE_MAPS_API_KEY_ANDROID --value <votre-clé>
 eas build --platform android --profile production
 ```
 
-Le build tourne sur les serveurs d'Expo (~15–25 min). À la première exécution,
-EAS propose de générer le **keystore** de signature : accepter, et le laisser
-géré par EAS.
+### Keystore de signature
+
+À la première exécution, EAS génère le **keystore** automatiquement. En cas
+d'échec sur les identifiants en mode non interactif, le générer depuis
+l'interface : **expo.dev → le projet → Credentials → Android → Keystore →
+Generate new keystore**, puis relancer le build.
 
 > ⚠️ Ce keystore est définitif : une fois l'app publiée, il est impossible de
 > livrer une mise à jour signée avec un autre keystore. EAS le sauvegarde ;
