@@ -93,11 +93,24 @@ minutes, sans attendre l'examen complet.
 
 ### Politique de confidentialité (URL publique requise)
 
-Google exige une **URL accessible publiquement**. Le contenu existe déjà dans
-l'app (`src/content/legal.ts` → *Politique de confidentialité*) mais n'est pas
-encore exposé à une URL stable. À traiter avant soumission : publier la page,
-puis renseigner son URL dans **Contenu de l'application → Politique de
-confidentialité**.
+Google exige une **URL accessible publiquement**. Les pages légales sont
+générées en HTML statique depuis `src/content/legal.ts` (script
+`npm run legal:html`, sortie versionnée dans `public/legal/`) et déployées avec
+l'app. URL à renseigner dans **Contenu de l'application → Politique de
+confidentialité** :
+
+```
+https://tunitransport-app-complete.lasaadawewi2.workers.dev/legal/privacy.html
+```
+
+Les autres pages sont servies sur le même modèle (`terms.html`,
+`refund.html`, `prohibited.html`, `disclaimer.html`…), avec un sommaire sur
+`/legal/`. En cas de passage à un domaine personnalisé, l'URL se met à jour à
+tout moment dans la Play Console.
+
+> Après toute modification de `src/content/legal.ts`, relancer
+> `npm run legal:html` et commiter les pages régénérées — la commande de build
+> de l'hébergeur reste inchangée.
 
 ### Sécurité des données (*Data safety*)
 
@@ -167,9 +180,10 @@ leur transmettre.
 | `RECORD_AUDIO` bloqué — l'app ne capture que des images | ✅ |
 | `SYSTEM_ALERT_WINDOW` bloqué — hérité du menu dev React Native | ✅ |
 | `android/` et `ios/` ignorés par git | ✅ |
-| URL publique de politique de confidentialité | ❌ à faire |
+| URL publique de politique de confidentialité | ✅ `/legal/privacy.html` |
 | Clé Google Maps réelle | ❌ à fournir |
 | Vidéo de démo pour la localisation en arrière-plan | ❌ à produire |
+| Captures d'écran et visuels du Store | ❌ à produire |
 
 ### Vérification effectuée
 
