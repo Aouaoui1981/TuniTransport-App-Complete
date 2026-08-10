@@ -4,7 +4,7 @@
 // passe par Supabase OAuth (redirection sur le web). À activer plus tard.
 // ──────────────────────────────────────────────────────────────────────────
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS, SPACING, RADIUS, FONTS } from '../utils/theme';
@@ -23,6 +23,12 @@ const PROVIDERS: {
   { key: 'apple', label: 'Continuer avec Apple', icon: 'logo-apple', color: COLORS.text },
 ];
 
+// « Se connecter avec Apple » n'est proposé que sur iOS : le fournisseur Apple
+// suppose un compte Apple Developer, et un bouton qui échoue à coup sûr est pire
+// que pas de bouton du tout — sur Android il serait de surcroît inattendu.
+// Le jour où l'app sort sur iOS, le bouton réapparaît sans changement de code.
+const VISIBLE_PROVIDERS = PROVIDERS.filter((p) => p.key !== 'apple' || Platform.OS === 'ios');
+
 export default function SocialAuthButtons() {
   const { signInWithProvider } = useAuth();
   const [busy, setBusy] = useState<OAuthProvider | null>(null);
@@ -40,7 +46,7 @@ export default function SocialAuthButtons() {
 
   return (
     <View style={styles.wrap}>
-      {PROVIDERS.map((p) => (
+      {VISIBLE_PROVIDERS.map((p) => (
         <TouchableOpacity
           key={p.key}
           style={styles.button}

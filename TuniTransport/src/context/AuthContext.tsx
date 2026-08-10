@@ -17,6 +17,8 @@ import { fetchProfile, updateProfile, deleteOwnAccount, applyReferralCode } from
 import { MOCK_USERS } from '../services/mockData';
 import { User, LoginPayload, RegisterPayload, OAuthProvider } from '../types';
 import { Platform } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 
 const DEMO_SESSION_KEY = 'tt_demo_user';
 
@@ -224,16 +226,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!IS_LIVE || !supabase) {
       throw new Error('La connexion sociale est disponible sur l’application en ligne.');
     }
-    // Web: redirect flow. Supabase sends the user to the provider then back to
-    // the app origin, where detectSessionInUrl establishes the session and the
-    // onAuthStateChange listener picks it up.
-    const redirectTo =
-      Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : undefined;
-    const { error } = await supabase.auth.signInWithOAuth({
+
+    // ── Web : redirection classique ────────────────────────────────────────
+    // Supabase envoie l'utilisateur chez le fournisseur puis le ramène sur
+    // l'origine de l'app, où detectSessionInUrl établit la session ; le
+    // listener onAuthStateChange prend le relais.
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) throw new Error(error.message);
+      return;
+    }
+
+    // ── Natif : session d'authentification + lien profond ──────────────────
+    // Sans redirectTo, Supabase renverrait vers l'URL du site : le navigateur
+    // afficherait l'app web et l'app native ne recevrait jamais la session.
+    // On ouvre donc le fournisseur dans une session d'auth système et on
+    // récupère les jetons sur le lien profond de retour (schéma `tunitransport`).
+    const redirectTo = Linking.createURL('auth-callback');
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: redirectTo ? { redirectTo } : undefined,
+      options: { redirectTo, skipBrowserRedirect: true },
     });
     if (error) throw new Error(error.message);
+    if (!data?.url) {
+      throw new Error("Le fournisseur n'a pas renvoyé d'URL d'autorisation.");
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (result.type !== 'success') {
+      // 'cancel' / 'dismiss' : l'utilisateur a fermé la fenêtre — pas une erreur.
+      return;
+    }
+
+    // Supabase place les jetons dans le fragment (#) ; certains fournisseurs
+    // utilisent la query (?). On lit les deux.
+    const url = new URL(result.url);
+    const params = new URLSearchParams(
+      url.hash.startsWith('#') ? url.hash.slice(1) : url.search
+    );
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    if (!accessToken || !refreshToken) {
+      throw new Error(params.get('error_description') ?? 'Connexion sociale incomplète.');
+    }
+
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (sessionError) throw new Error(sessionError.message);
   }, []);
 
   // ── logout ─────────────────────────────────────────────────────────────
