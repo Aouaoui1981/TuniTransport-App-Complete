@@ -5,6 +5,53 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 
 ---
 
+## 2026-08-11 — Audit de sécurité + durcissement
+
+### Fait
+- [x] **Fuite de données personnelles corrigée (critique).** La policy de
+      lecture de `profiles` était `using (true)` : n'importe quel compte
+      authentifié — donc n'importe quel futur testeur de la bêta — pouvait
+      lire la table entière par un simple `GET /rest/v1/profiles` : e-mails,
+      téléphones, URL des pièces d'identité, `stripe_account_id`, `is_admin`.
+      Lecture désormais restreinte à son propre profil (ou administrateur).
+- [x] **Le seul besoin légitime préservé** : le téléphone du correspondant,
+      pour l'appeler pendant une livraison. Il passe par la fonction
+      `contact_phone(uuid)`, qui vérifie qu'une conversation est bien partagée
+      avec la personne appelée avant de renvoyer le numéro.
+- [x] **Stockage** : les buckets acceptaient n'importe quel fichier de
+      n'importe qui, sans contrainte de dossier — un compte pouvait déposer
+      des fichiers arbitraires servis publiquement sous notre domaine. Le
+      chemin `<user_id>/…` est maintenant imposé. Ajout d'une policy de
+      suppression de ses propres fichiers (droit à l'effacement), et
+      plafonnement à 8 Mo / images uniquement.
+- [x] **Surface `anon` réduite** : `accept_bid_transaction`, `is_admin`,
+      `is_identity_verified`, `is_conversation_participant` ne sont plus
+      exécutables que par un compte authentifié.
+- [x] **Bucket `id-documents`** (doublon inutilisé, 0 fichier) : policies
+      retirées. Le KYC écrit dans `identity-documents`.
+- [x] **Vérifié en conditions réelles** : un utilisateur normal voit 1 profil
+      (contre 8 avant), le téléphone d'un inconnu revient vide, celui d'un
+      vrai correspondant revient bien (testé via une conversation temporaire,
+      puis nettoyée).
+- [x] Fausse alerte levée en cours d'audit : `set_payout_status` et
+      `list_payout_requests_admin` semblaient sans garde, mais vérifient
+      `profiles.is_admin` en interne. Aucune faille sur les paiements.
+
+### Reste à faire
+- [ ] **Activer « Leaked password protection »** (Supabase → Authentication →
+      Passwords) : refuse les mots de passe connus des fuites publiques.
+      Toujours signalé par les advisors.
+- [ ] **Supprimer le bucket `id-documents`** depuis le tableau de bord :
+      Supabase interdit le `DELETE` SQL direct sur `storage.buckets`.
+- [ ] Tester l'appel téléphonique depuis une conversation réelle sur appareil.
+
+### Fichiers touchés
+- `TuniTransport/supabase/migrations/20260811100000_security_hardening_profiles_storage.sql` (nouveau)
+- `TuniTransport/supabase/schema.sql`
+- `TuniTransport/src/services/api.ts`, `src/screens/shared/ChatScreen.tsx`
+
+---
+
 ## 2026-08-09/11 — Publication Google Play + connexion Google
 
 ### Fait

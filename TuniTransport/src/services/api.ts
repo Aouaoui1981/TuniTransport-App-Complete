@@ -283,10 +283,22 @@ const SHIPMENT_SELECT = '*, tracking_events(*), bids(*)';
 
 // ── Profiles ─────────────────────────────────────────────────────────────
 
+// Depuis le durcissement RLS du 11/08/2026, `profiles` n'est lisible que pour
+// son propre compte (ou un administrateur). Cette fonction n'est donc à appeler
+// que sur l'utilisateur connecté ; pour un tiers elle renverra null.
 export async function fetchProfile(userId: string): Promise<User | null> {
   const { data, error } = await db().from('profiles').select('*').eq('id', userId).single();
   if (error) return null;
   return mapProfile(data);
+}
+
+// Seule donnée d'un tiers dont l'app a besoin : son téléphone, pour l'appeler
+// pendant une livraison. La fonction SQL `contact_phone` vérifie qu'une
+// conversation est bien partagée avec lui avant de le renvoyer.
+export async function fetchContactPhone(userId: string): Promise<string | null> {
+  const { data, error } = await db().rpc('contact_phone', { p_user_id: userId });
+  if (error) return null;
+  return (data as string | null) ?? null;
 }
 
 export async function updateProfile(userId: string, updates: Partial<User>): Promise<void> {

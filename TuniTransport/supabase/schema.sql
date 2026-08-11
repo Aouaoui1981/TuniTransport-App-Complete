@@ -405,9 +405,11 @@ alter table public.messages                  enable row level security;
 alter table public.ratings                   enable row level security;
 alter table public.push_tokens               enable row level security;
 
--- profiles: readable by any authenticated user; updatable only by owner
+-- profiles: readable only by its owner (or an admin); updatable only by owner.
+-- Cf. migration 20260811100000 : le téléphone d'un correspondant passe par la
+-- fonction `contact_phone`, pas par une lecture directe de la table.
 create policy "profiles_select" on public.profiles
-  for select to authenticated using (true);
+  for select to authenticated using (id = auth.uid() or public.is_admin());
 create policy "profiles_update_own" on public.profiles
   for update to authenticated using (id = auth.uid());
 
@@ -516,20 +518,19 @@ insert into storage.buckets (id, name, public)
 values ('shipment-photos', 'shipment-photos', true)
 on conflict (id) do nothing;
 
--- id-documents: each user reads/writes only their own folder
-create policy "id_docs_insert" on storage.objects
-  for insert to authenticated
-  with check (bucket_id = 'id-documents' and (storage.foldername(name))[1] = auth.uid()::text);
-create policy "id_docs_select" on storage.objects
-  for select to authenticated
-  using (bucket_id = 'id-documents' and (storage.foldername(name))[1] = auth.uid()::text);
+-- id-documents: bucket abandonné (doublon de `identity-documents`, 0 fichier).
+-- Ses policies ont été retirées par la migration 20260811100000 ; ne pas les
+-- recréer. Le KYC écrit dans `identity-documents` (voir plus bas).
 
 -- shipment-photos: public read, authenticated write
 create policy "shipment_photos_select" on storage.objects
   for select using (bucket_id = 'shipment-photos');
 create policy "shipment_photos_insert" on storage.objects
   for insert to authenticated
-  with check (bucket_id = 'shipment-photos');
+  with check (
+    bucket_id = 'shipment-photos'
+    and (storage.foldername(name))[1] = (auth.uid())::text
+  );
   
 -- ═══════════════════════════════════════════
 -- TuniTransport -- Identity Verification (KYC)
@@ -1118,7 +1119,19 @@ create policy "review_photos_read" on storage.objects
 drop policy if exists "review_photos_insert" on storage.objects;
 create policy "review_photos_insert" on storage.objects
   for insert to authenticated
-  with check (bucket_id = 'review-photos');
+  with check (
+    bucket_id = 'review-photos'
+    and (storage.foldername(name))[1] = (auth.uid())::text
+  );
+
+-- Chacun peut supprimer ses propres photos (droit à l'effacement).
+drop policy if exists "own_photos_delete" on storage.objects;
+create policy "own_photos_delete" on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id in ('shipment-photos', 'review-photos')
+    and (storage.foldername(name))[1] = (auth.uid())::text
+  );
 
 -- 3. Liste publique des avis d'un utilisateur (avec le prénom de l'auteur).
 -- Les avis sont déjà lisibles par tous (ratings_select), mais ce RPC joint le
@@ -1153,9 +1166,9 @@ grant execute on function public.list_user_reviews(uuid) to authenticated;
 -- Existing project: run this whole section once in the SQL Editor.
 --
 -- IMPORTANT (sécurité) : le RIB/IBAN est une donnée sensible. La table
--- `profiles` est lisible par TOUT utilisateur authentifié (profiles_select) ;
--- on ne stocke donc JAMAIS l'IBAN dans profiles. Il vit dans une table à part
--- `payout_accounts` accessible uniquement à son propriétaire.
+-- L'IBAN n'est JAMAIS stocké dans profiles : il vit dans une table à part
+-- `payout_accounts` accessible uniquement à son propriétaire, pour qu'un
+-- élargissement futur de la lecture de profiles ne puisse pas l'exposer.
 
 -- 1. Coordonnées bancaires du transporteur (privées, propriétaire uniquement).
 create table if not exists public.payout_accounts (
