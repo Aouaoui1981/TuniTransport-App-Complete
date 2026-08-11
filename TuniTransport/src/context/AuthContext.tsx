@@ -19,6 +19,7 @@ import { User, LoginPayload, RegisterPayload, OAuthProvider } from '../types';
 import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { showAlert } from '../utils/alert';
 
 const DEMO_SESSION_KEY = 'tt_demo_user';
 
@@ -86,8 +87,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (session?.user) {
               const profile = await fetchProfile(session.user.id);
               if (profile?.suspended) {
+                // Le chemin mot de passe explique la suspension (login()) ; ici
+                // — connexion Google/Apple — la déconnexion était silencieuse,
+                // et se lisait comme « la connexion Google ne marche pas ».
                 await supabase!.auth.signOut();
                 if (isMounted.current) setUser(null);
+                showAlert(
+                  'Compte suspendu',
+                  'Votre compte a été suspendu. Contactez le support.'
+                );
               } else if (profile && isMounted.current) {
                 setUser({ ...profile, email: session.user.email ?? profile.email });
               }
@@ -103,7 +111,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const sessionUser = data.session?.user;
           if (sessionUser) {
             const profile = await fetchProfile(sessionUser.id);
-            if (profile && isMounted.current) {
+            // Même garde que dans le listener : une session déjà stockée ne
+            // doit pas rouvrir l'app à un compte suspendu entre-temps.
+            if (profile?.suspended) {
+              await supabase.auth.signOut();
+              if (isMounted.current) setUser(null);
+            } else if (profile && isMounted.current) {
               setUser({ ...profile, email: sessionUser.email ?? profile.email });
             }
           }
