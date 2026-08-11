@@ -16,7 +16,8 @@ export type LegalPageKey =
   | 'disclaimer'
   | 'about'
   | 'contact'
-  | 'referral';
+  | 'referral'
+  | 'delete-account';
 
 export interface LegalSection {
   heading?: string;
@@ -350,6 +351,74 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
         heading: 'Modifications',
         body:
           "Il s'agit d'une offre de lancement à durée limitée. THL peut modifier, suspendre ou mettre fin au programme de parrainage à tout moment ; les récompenses déjà validées restent acquises.",
+      },
+    ],
+  },
+
+  // ── Suppression de compte ───────────────────────────────────────────────
+  // Page exigée par Google Play (Data safety → « Delete account URL ») : elle
+  // doit être atteignable publiquement, nommer l'application, décrire la
+  // marche à suivre, et préciser ce qui est effacé et ce qui est conservé.
+  'delete-account': {
+    title: 'Supprimer votre compte',
+    icon: 'trash-outline',
+    updatedAt: 'Août 2026',
+    intro:
+      "Vous pouvez supprimer votre compte THL — THL, Colis France Tunisie — à tout moment, directement depuis l'application et sans nous écrire. Cette page décrit la marche à suivre, ce qui est effacé et ce qui est conservé.",
+    sections: [
+      {
+        heading: 'Marche à suivre depuis l’application',
+        bullets: [
+          "Ouvrez l'application THL et connectez-vous.",
+          "Allez dans l'onglet « Profil ».",
+          "Faites défiler jusqu'en bas et appuyez sur « Supprimer mon compte ».",
+          "Confirmez : la suppression vous est demandée deux fois, car elle est définitive.",
+        ],
+      },
+      {
+        heading: 'Si vous ne pouvez plus accéder à l’application',
+        body:
+          'Écrivez à ' +
+          SUPPORT_EMAIL +
+          " depuis l'adresse e-mail de votre compte, avec pour objet « Suppression de compte ». Nous traitons la demande sous 30 jours.",
+      },
+      {
+        heading: 'Deux situations qui bloquent la suppression',
+        body:
+          "La suppression est refusée, avec un message explicite, tant que votre dossier n'est pas soldé. C'est une protection pour vous comme pour l'autre partie :",
+        bullets: [
+          "un envoi est en cours (ni livré, ni annulé) : terminez-le ou annulez-le d'abord ;",
+          "une demande de retrait de gains est en attente : attendez son traitement.",
+        ],
+      },
+      {
+        heading: 'Ce qui est supprimé',
+        body:
+          "La suppression est immédiate et définitive. Sont effacés, sans copie de sauvegarde exploitable :",
+        bullets: [
+          'votre compte et vos identifiants de connexion ;',
+          'votre profil : nom, prénom, e-mail, téléphone, photo ;',
+          "votre pièce d'identité et le résultat de sa vérification ;",
+          'vos envois, trajets, offres et adresses de collecte et de livraison ;',
+          'vos messages ;',
+          'vos évaluations et votre crédit de parrainage éventuel ;',
+          "vos jetons de notification, qui cessent de fonctionner.",
+        ],
+      },
+      {
+        heading: 'Ce qui est conservé, et pourquoi',
+        bullets: [
+          "Les factures et pièces comptables des envois déjà payés : la loi impose de les conserver dix ans. Elles ne sont plus rattachées à un compte actif et ne servent qu'à répondre à une obligation légale ou fiscale.",
+          "Les données de paiement détenues par notre prestataire Stripe, qui applique ses propres délais légaux. THL n'a jamais eu accès à vos coordonnées bancaires.",
+          "Les échanges liés à un litige encore ouvert, jusqu'à sa clôture.",
+        ],
+      },
+      {
+        heading: 'Autres droits',
+        body:
+          "Avant de supprimer votre compte, vous pouvez demander une copie de vos données ou leur rectification en écrivant à " +
+          SUPPORT_EMAIL +
+          ". Une fois le compte supprimé, ces demandes ne peuvent plus être satisfaites : les données n'existent plus.",
       },
     ],
   },
