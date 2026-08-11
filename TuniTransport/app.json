@@ -49,6 +49,7 @@
         "backgroundColor": "#0A1420"
       },
       "package": "com.tunitransport.app",
+      "softwareKeyboardLayoutMode": "pan",
       "config": {
         "googleMaps": {
           "apiKey": ""
