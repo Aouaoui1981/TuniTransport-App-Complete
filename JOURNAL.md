@@ -28,9 +28,28 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
       (`suspended = false`).
 
 ### Reste à faire
+- [ ] **AVANT D'OUVRIR LA BÊTA — faire tourner le secret OAuth Google.**
+      Reporté sciemment, pas oublié. Le secret a transité par une
+      conversation ; le risque réel est faible (il ne donne accès ni à la
+      base, ni aux comptes, ni au compte Google — et Google ne délivre les
+      jetons qu'à l'URL de rappel déjà enregistrée, que seul le titulaire du
+      projet peut modifier). Ce qui reste possible est l'usurpation du nom de
+      l'app dans un écran de consentement. Tant qu'il n'existe que les
+      comptes du propriétaire, l'enjeu est nul ; il change le jour où des
+      testeurs réels lient leur compte Google.
+      Procédure sans coupure : Google Cloud → Credentials → client Web →
+      `ADD SECRET` (Google accepte deux secrets simultanés) → coller dans
+      Supabase → Google → tester une connexion → **puis seulement** supprimer
+      l'ancien (`0WbH`).
 - [ ] **Comprendre l'origine de la suspension.** Si elle ne vient pas d'un
       essai du bouton « suspendre » dans l'écran admin, il faut chercher plus
       loin avant d'ouvrir la bêta.
+- [ ] **Détacher l'intégration Vercel du dépôt**
+      (github.com/settings/installations) : le compte est bloqué, elle pose un
+      statut « Account is blocked » en échec sur chaque PR. Sans danger, mais
+      un rouge permanent finit par masquer un vrai échec.
+- [ ] Bucket `id-documents` (0 fichier, 0 policy) : suppression depuis le
+      tableau de bord.
 - [ ] `tsc` n'a pas pu être exécuté en fin de session (refus de
       l'environnement) ; le build Cloudflare de la PR est passé.
 
