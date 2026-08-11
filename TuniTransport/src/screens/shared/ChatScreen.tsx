@@ -25,7 +25,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
-import { fetchProfile } from '../../services/api';
+import { fetchContactPhone } from '../../services/api';
 import { MOCK_USERS } from '../../services/mockData';
 import { Message } from '../../types';
 
@@ -80,7 +80,7 @@ export default function ChatScreen() {
       if (!otherId) {
         phone = undefined;
       } else if (IS_LIVE) {
-        phone = (await fetchProfile(otherId))?.phone;
+        phone = (await fetchContactPhone(otherId)) ?? undefined;
       } else {
         phone = MOCK_USERS.find((u) => u.id === otherId)?.phone;
       }
