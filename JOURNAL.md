@@ -72,9 +72,14 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
       `profiles.is_admin` en interne. Aucune faille sur les paiements.
 
 ### Reste à faire
-- [ ] **Activer « Leaked password protection »** (Supabase → Authentication →
-      Passwords) : refuse les mots de passe connus des fuites publiques.
-      Toujours signalé par les advisors.
+- [x] ~~Activer « Leaked password protection »~~ — **impossible sur le plan
+      gratuit** : le réglage (Authentication → Sign In / Providers → Email)
+      est réservé au plan Pro. L'advisor restera donc en WARN, ce n'est pas
+      un oubli. Compensé par les réglages gratuits de la même page :
+      longueur minimale portée de 6 à 10 caractères et exigence de lettres +
+      chiffres — ce qui rejette de fait les mots de passe des fuites
+      publiques, qui sont courts et simples. À reprendre le jour d'un passage
+      au plan Pro.
 - [ ] **Supprimer le bucket `id-documents`** depuis le tableau de bord :
       Supabase interdit le `DELETE` SQL direct sur `storage.buckets`.
 - [ ] Tester l'appel téléphonique depuis une conversation réelle sur appareil.
