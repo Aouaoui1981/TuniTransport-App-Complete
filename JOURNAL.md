@@ -5,6 +5,40 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 
 ---
 
+## 2026-08-11 (suite) — « La connexion Google ne marche pas » (elle marchait)
+
+### Fait
+- [x] **Diagnostic par les logs, pas par intuition.** Le symptôme disait
+      « Google est cassé » ; les logs d'auth Supabase disaient l'inverse —
+      `/authorize → /callback 302 → Login → /user 200`, cinq fois de suite en
+      trois minutes, chaque cycle suivi d'un `/logout` une seconde plus tard.
+      La couche OAuth était saine ; **c'est l'app qui se déconnectait
+      elle-même**. En base : `suspended = true` sur les deux profils.
+      Sans les logs on aurait cherché du côté du client secret ou du redirect
+      URI, c'est-à-dire pendant des heures au mauvais endroit.
+- [x] **Déconnexion muette corrigée.** `login()` (mot de passe) expliquait déjà
+      la suspension ; le listener `onAuthStateChange` — donc tout le chemin
+      Google/Apple — se contentait d'un `signOut()` sans un mot. Même message
+      affiché désormais. (PR #125)
+- [x] **Trou dans la restauration de session.** La branche `getSession()` au
+      démarrage ne vérifiait pas `suspended` du tout : une session déjà
+      stockée rouvrait l'app à un compte suspendu entre-temps, la suspension
+      ne prenant effet qu'au renouvellement du jeton. Même garde ajoutée.
+- [x] Les deux comptes de test du propriétaire réactivés
+      (`suspended = false`).
+
+### Reste à faire
+- [ ] **Comprendre l'origine de la suspension.** Si elle ne vient pas d'un
+      essai du bouton « suspendre » dans l'écran admin, il faut chercher plus
+      loin avant d'ouvrir la bêta.
+- [ ] `tsc` n'a pas pu être exécuté en fin de session (refus de
+      l'environnement) ; le build Cloudflare de la PR est passé.
+
+### Fichiers touchés
+- `TuniTransport/src/context/AuthContext.tsx`
+
+---
+
 ## 2026-08-11 — Audit de sécurité + durcissement
 
 ### Fait
