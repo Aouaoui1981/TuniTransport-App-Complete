@@ -5,6 +5,59 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 
 ---
 
+## 2026-08-11 (suite) — « La connexion Google ne marche pas » (elle marchait)
+
+### Fait
+- [x] **Diagnostic par les logs, pas par intuition.** Le symptôme disait
+      « Google est cassé » ; les logs d'auth Supabase disaient l'inverse —
+      `/authorize → /callback 302 → Login → /user 200`, cinq fois de suite en
+      trois minutes, chaque cycle suivi d'un `/logout` une seconde plus tard.
+      La couche OAuth était saine ; **c'est l'app qui se déconnectait
+      elle-même**. En base : `suspended = true` sur les deux profils.
+      Sans les logs on aurait cherché du côté du client secret ou du redirect
+      URI, c'est-à-dire pendant des heures au mauvais endroit.
+- [x] **Déconnexion muette corrigée.** `login()` (mot de passe) expliquait déjà
+      la suspension ; le listener `onAuthStateChange` — donc tout le chemin
+      Google/Apple — se contentait d'un `signOut()` sans un mot. Même message
+      affiché désormais. (PR #125)
+- [x] **Trou dans la restauration de session.** La branche `getSession()` au
+      démarrage ne vérifiait pas `suspended` du tout : une session déjà
+      stockée rouvrait l'app à un compte suspendu entre-temps, la suspension
+      ne prenant effet qu'au renouvellement du jeton. Même garde ajoutée.
+- [x] Les deux comptes de test du propriétaire réactivés
+      (`suspended = false`).
+
+### Reste à faire
+- [ ] **AVANT D'OUVRIR LA BÊTA — faire tourner le secret OAuth Google.**
+      Reporté sciemment, pas oublié. Le secret a transité par une
+      conversation ; le risque réel est faible (il ne donne accès ni à la
+      base, ni aux comptes, ni au compte Google — et Google ne délivre les
+      jetons qu'à l'URL de rappel déjà enregistrée, que seul le titulaire du
+      projet peut modifier). Ce qui reste possible est l'usurpation du nom de
+      l'app dans un écran de consentement. Tant qu'il n'existe que les
+      comptes du propriétaire, l'enjeu est nul ; il change le jour où des
+      testeurs réels lient leur compte Google.
+      Procédure sans coupure : Google Cloud → Credentials → client Web →
+      `ADD SECRET` (Google accepte deux secrets simultanés) → coller dans
+      Supabase → Google → tester une connexion → **puis seulement** supprimer
+      l'ancien (`0WbH`).
+- [ ] **Comprendre l'origine de la suspension.** Si elle ne vient pas d'un
+      essai du bouton « suspendre » dans l'écran admin, il faut chercher plus
+      loin avant d'ouvrir la bêta.
+- [ ] **Détacher l'intégration Vercel du dépôt**
+      (github.com/settings/installations) : le compte est bloqué, elle pose un
+      statut « Account is blocked » en échec sur chaque PR. Sans danger, mais
+      un rouge permanent finit par masquer un vrai échec.
+- [ ] Bucket `id-documents` (0 fichier, 0 policy) : suppression depuis le
+      tableau de bord.
+- [ ] `tsc` n'a pas pu être exécuté en fin de session (refus de
+      l'environnement) ; le build Cloudflare de la PR est passé.
+
+### Fichiers touchés
+- `TuniTransport/src/context/AuthContext.tsx`
+
+---
+
 ## 2026-08-11 — Audit de sécurité + durcissement
 
 ### Fait
@@ -38,9 +91,14 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
       `profiles.is_admin` en interne. Aucune faille sur les paiements.
 
 ### Reste à faire
-- [ ] **Activer « Leaked password protection »** (Supabase → Authentication →
-      Passwords) : refuse les mots de passe connus des fuites publiques.
-      Toujours signalé par les advisors.
+- [x] ~~Activer « Leaked password protection »~~ — **impossible sur le plan
+      gratuit** : le réglage (Authentication → Sign In / Providers → Email)
+      est réservé au plan Pro. L'advisor restera donc en WARN, ce n'est pas
+      un oubli. Compensé par les réglages gratuits de la même page :
+      longueur minimale portée de 6 à 10 caractères et exigence de lettres +
+      chiffres — ce qui rejette de fait les mots de passe des fuites
+      publiques, qui sont courts et simples. À reprendre le jour d'un passage
+      au plan Pro.
 - [ ] **Supprimer le bucket `id-documents`** depuis le tableau de bord :
       Supabase interdit le `DELETE` SQL direct sur `storage.buckets`.
 - [ ] Tester l'appel téléphonique depuis une conversation réelle sur appareil.
