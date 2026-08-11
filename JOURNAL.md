@@ -5,6 +5,59 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 
 ---
 
+## 2026-08-11 (soir) — Play Console : application créée, « App content » bouclé
+
+### Fait
+- [x] **Application créée** dans la Play Console — `THL — Colis France
+      Tunisie`, gratuite (choix irréversible), package `com.tunitransport.app`.
+- [x] **Les dix déclarations « App content » passées à zéro** : politique de
+      confidentialité, accès à l'app, publicité, classification du contenu,
+      ID publicitaire, sécurité des données, public cible, fonctionnalités
+      financières, santé, applications gouvernementales.
+- [x] **Page publique de suppression de compte** créée — elle manquait et
+      bloquait le formulaire *Data safety*. (PR #127)
+- [x] **Compte de démonstration pour le relecteur Google** :
+      `google.review@tunitransport.app`, rôle transporteur, identité forcée à
+      `verified` en base. Sans lui, le relecteur bute sur l'écran de
+      vérification d'identité et rejette — c'est une cause de refus courante.
+      Rôle transporteur choisi à dessein : le partage de position en
+      arrière-plan, point le plus sensible du dossier, n'est visible que là.
+- [x] **Deux erreurs interceptées avant envoi.** Le questionnaire IARC avait
+      été rempli avec « oui » à *partage public de nudité* **et** « oui » à
+      *est-ce l'objet principal de l'app* — soit la déclaration d'une
+      plateforme pornographique. Corrigé avant soumission.
+
+### Constat qui engage la suite
+- L'app déclare (à juste titre) que le contenu généré par les utilisateurs
+  est sa source principale de contenu. La politique UGC de Google attend
+  alors trois choses : contenu interdit défini ✅, **signalement** ✅
+  (`ReportProblemScreen`, six catégories), **blocage** ❌ — absent.
+  Ce n'est plus un confort mais une **condition de conformité**, et c'est
+  aussi une vraie lacune produit : la messagerie met en relation de parfaits
+  inconnus, et la seule réponse offerte à un utilisateur harcelé est
+  aujourd'hui de signaler puis d'attendre.
+
+### Reste à faire
+- [ ] **Bouton « bloquer cet utilisateur »** — à implémenter avant l'envoi en
+      revue (masque les messages, empêche toute nouvelle conversation).
+- [ ] **Vidéo de démonstration de la localisation en arrière-plan.** La
+      déclaration `Sensitive permissions` n'apparaîtra qu'**après** le premier
+      envoi d'AAB, Google lisant les autorisations dans le fichier. Ne pas
+      croire le compteur à zéro : il remontera.
+- [ ] **Captures d'écran, icône 512, bannière 1024×500** pour la fiche Store.
+- [ ] **Réunir 12 testeurs** — les 14 jours courent à partir du lancement du
+      test fermé, en parallèle du reste. C'est le chemin critique.
+- [ ] `support@tunitransport.app` est cité dans les pages légales alors que le
+      domaine n'est pas détenu : le courrier d'un utilisateur se perd. À
+      remplacer par une adresse réelle, ou à faire suivre.
+- [ ] Détacher l'intégration Vercel (statut rouge permanent sur chaque PR).
+
+### Fichiers touchés
+- `TuniTransport/src/content/legal.ts`, `public/legal/delete-account.html`
+  (+ régénération des huit autres pages)
+
+---
+
 ## 2026-08-11 (suite) — « La connexion Google ne marche pas » (elle marchait)
 
 ### Fait
