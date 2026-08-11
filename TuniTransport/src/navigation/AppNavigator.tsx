@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation, NavigatorScreenParams } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../context/AuthContext';
 import { registerForPushNotifications } from '../services/notifications';
@@ -135,6 +136,12 @@ function MainTabs() {
   const { user } = useAuth();
   const isSender = user?.role === 'sender';
   const tint = isSender ? COLORS.primary : COLORS.secondary;
+  // Une `height` fixe désactive l'ajout automatique de l'inset bas par React
+  // Navigation : sur un Android à barre de navigation système, la barre
+  // d'onglets passait dessous et devenait invisible — donc Carte, Messages et
+  // Profil (qui contient la déconnexion) inatteignables. Invisible en web et
+  // sur simulateur, d'où la découverte tardive sur appareil réel.
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -145,9 +152,9 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: COLORS.surface,
           borderTopWidth: 0,
-          height: 62,
+          height: 62 + insets.bottom,
           paddingTop: 6,
-          paddingBottom: 8,
+          paddingBottom: 8 + insets.bottom,
           shadowColor: '#0F172A',
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.06,
