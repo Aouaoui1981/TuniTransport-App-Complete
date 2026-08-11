@@ -5,6 +5,72 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 
 ---
 
+## 2026-08-09/11 — Publication Google Play + connexion Google
+
+### Fait
+- [x] **Préparation Android** : l'inspection du manifeste généré par
+      `expo prebuild` a révélé trois problèmes — la clé Maps était restée sur
+      le littéral `YOUR_GOOGLE_MAPS_API_KEY` (cartes grises), et deux
+      permissions sensibles inutiles étaient demandées (`RECORD_AUDIO`, ajoutée
+      par expo-image-picker alors que l'app ne capture que des images, et
+      `SYSTEM_ALERT_WINDOW`, héritée du menu dev React Native). Clé sortie du
+      dépôt via `app.config.js`, permissions bloquées. (PR #120)
+- [x] **Build depuis GitHub** : workflow `android-build.yml` déclenchable
+      depuis l'onglet Actions, donc sans machine de développement — tout le
+      travail de cette session s'est fait depuis un téléphone. (PR #121)
+- [x] **Premier AAB produit** — keystore généré automatiquement par EAS.
+- [x] **Pages légales publiques** générées depuis `src/content/legal.ts`
+      (`npm run legal:html`) : Google Play exige une URL de politique de
+      confidentialité atteignable sans connexion ni JavaScript, ce qu'une route
+      interne de la SPA ne garantit pas. (PR #120)
+- [x] **Textes de la fiche Store** rédigés, longueurs vérifiées contre les
+      limites du Store. (PR #122)
+- [x] **Compte développeur Play Console** créé (personnel, 25 $).
+- [x] **Clé Google Maps** créée et restreinte (Maps SDK for Android + package
+      `com.tunitransport.app` + SHA-1 du keystore de upload).
+- [x] **Connexion Google réparée et fonctionnelle.** Les boutons étaient câblés,
+      mais `signInWithOAuth` ne définissait `redirectTo` que sur le web : sur
+      natif, Supabase renvoyait vers l'URL du site et l'app ne recevait jamais
+      la session. Ajout du flux natif (expo-web-browser + lien profond
+      `tunitransport://auth-callback`). Apple masqué hors iOS — le fournisseur
+      suppose un compte Apple Developer payant, et un bouton qui échoue à coup
+      sûr est pire que pas de bouton. (PR #122)
+      Côté configuration, trois causes successives ont dû être levées, chacune
+      identifiée dans les logs d'auth Supabase : provider non activé, puis
+      `invalid_client` (secret non enregistré), puis Site URL pointant encore
+      vers le Vercel hors service. **Vérifié : première identité `google` en
+      base.**
+
+### Reste à faire
+- [ ] **Faire tourner le secret OAuth Google** — il a transité par une
+      conversation. Le remplacer depuis un poste fixe et supprimer l'ancien
+      (`0WbH`), l'interface Google Cloud étant difficilement utilisable sur
+      mobile.
+- [ ] **Après le premier envoi sur le Play Store** : Google re-signe l'app avec
+      sa propre clé. Récupérer le SHA-1 dans *Play Console → Intégrité de
+      l'application* et l'ajouter **à côté** de celui du keystore d'upload dans
+      la clé Maps — sinon les cartes cesseront de fonctionner dans la version
+      distribuée par le Store.
+- [ ] **`Confirm email`** est actif alors qu'aucun service d'envoi n'est
+      configuré : les rate limits de l'envoi intégré Supabase sont très bas et
+      les messages partent souvent en spam. À désactiver pour la bêta, ou à
+      faire précéder de la mise en place de Resend.
+- [ ] Tester le flux OAuth natif sur un appareil (non exerçable depuis
+      l'environnement de développement).
+- [ ] Visuels du Store (captures, bannière 1024×500) et vidéo de démonstration
+      pour la déclaration de localisation en arrière-plan.
+- [ ] Vérifier les secrets Stripe avant tout paiement réel.
+
+### Fichiers touchés
+- `TuniTransport/app.config.js`, `app.json`, `.gitignore` (natifs générés),
+  `src/context/AuthContext.tsx`, `src/components/SocialAuthButtons.tsx`,
+  `scripts/generate-legal-pages.mjs` + `public/legal/*` (nouveaux),
+  `package.json`.
+- `.github/workflows/android-build.yml` (nouveau).
+- `docs/publication-google-play.md`, `docs/fiche-store-google-play.md` (nouveaux).
+
+---
+
 ## 2026-08-08 — Tableau de bord admin + remise en ligne (Cloudflare)
 
 ### Fait
