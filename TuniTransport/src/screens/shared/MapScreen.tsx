@@ -2,7 +2,7 @@
 // TuniTransport — Carte des itinéraires
 // Markers: départ (bleu, France) → arrivée (vert, Tunisie), dashed polylines.
 // ──────────────────────────────────────────────────────────────────────────
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -47,6 +47,23 @@ export default function MapScreen() {
     [routes]
   );
 
+  // Cadrer la carte sur les trajets reellement affiches. Sans cela, le cadrage
+  // fixe (INITIAL_REGION) montrait toute l'Europe et l'Afrique du Nord, France
+  // et Tunisie reduites a deux points au centre — l'ecran ne racontait plus ce
+  // que fait l'application.
+  const mapRef = useRef<MapView | null>(null);
+  useEffect(() => {
+    if (drawable.length === 0) return;
+    const points = drawable.flatMap(({ from, to }) => [from, to]);
+    const timer = setTimeout(() => {
+      mapRef.current?.fitToCoordinates?.(points, {
+        edgePadding: { top: 60, right: 50, bottom: 60, left: 50 },
+        animated: false,
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [drawable]);
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
@@ -66,7 +83,7 @@ export default function MapScreen() {
       </View>
 
       <View style={styles.mapWrap}>
-        <MapView style={styles.map} initialRegion={INITIAL_REGION}>
+        <MapView ref={mapRef} style={styles.map} initialRegion={INITIAL_REGION}>
           {drawable.map(({ route, from, to }) => {
             const active = selectedId === null || selectedId === route.id;
             return (
