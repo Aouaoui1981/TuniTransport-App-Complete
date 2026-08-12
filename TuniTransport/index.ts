@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler';
-import { enableScreens } from 'react-native-screens';
+import { Platform } from 'react-native';
 import { registerRootComponent } from 'expo';
 import App from './App';
 import './src/services/locationTask';
@@ -22,7 +22,14 @@ import './src/services/locationTask';
 //
 // Contrepartie assumee le temps du test : les transitions de navigation
 // repassent en JS, donc un peu moins fluides. Aucune fonctionnalite perdue.
+//
+// L'appel est requis dynamiquement et reserve au natif : sur le web la
+// bibliotheque n'a pas lieu d'etre, et l'importer en statique casse l'export
+// web (build Cloudflare en echec sur le premier essai).
 // ──────────────────────────────────────────────────────────────────────────
-enableScreens(false);
+if (Platform.OS !== 'web') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require('react-native-screens').enableScreens(false);
+}
 
 registerRootComponent(App);
