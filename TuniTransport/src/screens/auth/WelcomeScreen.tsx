@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SPACING, RADIUS, FONTS, DARK } from '../../utils/theme';
 import { useAppNavigation } from '../../navigation/AppNavigator';
@@ -49,7 +48,11 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <OnboardingOverlay />
-      <StatusBar style="light" />
+      {/* Pas de <StatusBar> ici : App.tsx en monte deja un, et cet ecran reste
+          monte sous Connexion et Inscription. Deux entrees expo-status-bar
+          simultanees font reappliquer les proprietes de la barre systeme, ce
+          qui recalcule les insets de fenetre en mode edge-to-edge et referme
+          le clavier — d'ou un defaut limite a ces deux ecrans. */}
 
       {/* Fond dégradé aux couleurs de la marque (fixe) — pas d'image */}
       <LinearGradient
