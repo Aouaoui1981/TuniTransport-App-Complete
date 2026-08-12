@@ -600,8 +600,11 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     height: 52,
   },
+  // Voir LoginScreen : faire varier `elevation` (porte par SHADOWS) au focus
+  // fait recreer la couche de rendu par Android, le champ perd le focus et le
+  // clavier se referme. Le focus reste marque par la bordure.
   inputWrapFocused: {
-    ...SHADOWS.sm,
+    borderColor: COLORS.secondary,
   },
   inputWrapError: {
     borderColor: COLORS.danger,

@@ -241,7 +241,8 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     height: 52,
   },
-  inputWrapFocused: { borderColor: COLORS.primary, ...SHADOWS.sm },
+    // Voir LoginScreen : pas d'elevation au focus (clavier qui se referme).
+  inputWrapFocused: { borderColor: COLORS.primary },
   inputWrapError: { borderColor: COLORS.danger, backgroundColor: COLORS.dangerLight },
   input: { flex: 1, fontSize: FONTS.sizes.lg, color: COLORS.text },
 

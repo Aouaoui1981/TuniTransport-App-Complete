@@ -331,9 +331,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     height: 52,
   },
+  // Pas d'ombre ici : `SHADOWS` porte `elevation`, et faire varier
+  // l'elevation du conteneur d'un champ au moment où il prend le focus fait
+  // recréer sa couche de rendu par Android — l'EditText perd le focus et le
+  // clavier se referme aussitôt. La bordure colorée suffit à marquer le focus.
   inputWrapFocused: {
     borderColor: COLORS.secondary,
-    ...SHADOWS.sm,
   },
   inputWrapError: {
     borderColor: COLORS.danger,
