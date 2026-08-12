@@ -20,6 +20,7 @@ import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { showAlert } from '../utils/alert';
+import { COLORS } from '../utils/theme';
 
 const DEMO_SESSION_KEY = 'tt_demo_user';
 
@@ -262,7 +263,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Le fournisseur n'a pas renvoyé d'URL d'autorisation.");
     }
 
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    // Le navigateur s'ouvrait avec son habillage par defaut : barre claire au
+    // dessus d'une page vide, le temps que Supabase redirige vers Google. Sur
+    // un fond sombre, cette page d'attente ressemblait a un ecran casse. On
+    // l'habille aux couleurs de l'app pour qu'elle se lise comme une etape du
+    // parcours. `createTask: false` garde la fenetre dans la tache de
+    // l'application : le retour arriere ramene a l'ecran de connexion au lieu
+    // de sortir vers le navigateur.
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo, {
+      toolbarColor: COLORS.background,
+      controlsColor: COLORS.secondary,
+      showTitle: false,
+      enableBarCollapsing: false,
+      createTask: false,
+      preferEphemeralSession: true,
+    });
     if (result.type !== 'success') {
       // 'cancel' / 'dismiss' : l'utilisateur a fermé la fenêtre — pas une erreur.
       return;
