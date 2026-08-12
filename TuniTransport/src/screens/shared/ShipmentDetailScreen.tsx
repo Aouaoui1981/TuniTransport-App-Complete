@@ -382,9 +382,14 @@ export default function ShipmentDetailScreen() {
             </View>
           ) : null}
 
-          {shipment.transporterId && shipment.status !== 'cancelled' ? (
+          {/* L'etiquette se colle sur le colis avant la remise : elle ne
+              concerne que l'expediteur, et seulement entre l'acceptation par
+              un transporteur et la collecte. Auparavant elle s'affichait pour
+              les deux parties et jusqu'apres la livraison, ou elle n'a plus
+              d'objet. */}
+          {isSender && shipment.transporterId && shipment.status === 'accepted' ? (
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: COLORS.text }]}
+              style={[styles.actionBtn, styles.labelBtn]}
               onPress={async () => {
                 try {
                   await printShippingLabel(shipment);
@@ -393,8 +398,10 @@ export default function ShipmentDetailScreen() {
                 }
               }}
             >
-              <Ionicons name="print" size={18} color={COLORS.white} />
-              <Text style={styles.actionText}>Imprimer l'étiquette d'expédition</Text>
+              <Ionicons name="print" size={18} color={COLORS.text} />
+              <Text style={[styles.actionText, { color: COLORS.text }]}>
+                Imprimer l'étiquette d'expédition
+              </Text>
             </TouchableOpacity>
           ) : null}
 
@@ -582,6 +589,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionText: { color: COLORS.white, fontWeight: '700', fontSize: FONTS.sizes.lg },
+  // Action secondaire : `COLORS.text` servait de fond, or c'est un blanc casse
+  // dans le theme sombre — texte et icone blancs devenaient illisibles dessus.
+  labelBtn: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+  },
   reportBtn: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
