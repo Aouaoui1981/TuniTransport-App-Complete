@@ -235,10 +235,6 @@ export interface RegisterPayload {
   lastName: string;
   phone: string;
   role: UserRole;
-  // Transporteur : coordonnées bancaires facultatives fournies à l'inscription
-  // pour recevoir ses gains (stockées à part, jamais dans le profil public).
-  payoutHolder?: string;
-  payoutIban?: string;
   /** Code de parrainage saisi à l'inscription (facultatif). */
   referralCode?: string;
 }

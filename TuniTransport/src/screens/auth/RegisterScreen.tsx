@@ -47,8 +47,6 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [bankHolder, setBankHolder] = useState('');
-  const [bankIban, setBankIban] = useState('');
   const [referralCode, setReferralCode] = useState(route.params?.referralCode ?? '');
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -120,7 +118,6 @@ export default function RegisterScreen() {
     }
     setSubmitting(true);
     try {
-      const cleanIban = bankIban.replace(/\s+/g, '').toUpperCase();
       const result = await register({
         email: email.trim(),
         password,
@@ -128,9 +125,6 @@ export default function RegisterScreen() {
         lastName: lastName.trim(),
         phone: phone.trim(),
         role,
-        ...(role === 'transporter' && cleanIban
-          ? { payoutIban: cleanIban, payoutHolder: bankHolder.trim() }
-          : {}),
         ...(referralCode.trim() ? { referralCode: referralCode.trim() } : {}),
       });
       if (result.emailConfirmationRequired) {
@@ -383,49 +377,6 @@ export default function RegisterScreen() {
             <Text style={styles.helperText}>Au moins 6 caractères.</Text>
           )}
 
-          {role === 'transporter' && (
-            <View style={styles.bankSection}>
-              <View style={styles.bankHeaderRow}>
-                <Ionicons name="card-outline" size={18} color={COLORS.secondary} />
-                <Text style={styles.bankHeader}>Coordonnées bancaires</Text>
-                <Text style={styles.bankOptional}>facultatif</Text>
-              </View>
-              <Text style={styles.bankHint}>
-                Pour recevoir vos gains. Vous pourrez aussi les ajouter plus tard depuis
-                « Mes livraisons ». Ces informations restent privées.
-              </Text>
-
-              <Text style={styles.inputLabel}>Titulaire du compte</Text>
-              <View style={styles.inputWrap}>
-                <Ionicons name="person-outline" size={20} color={COLORS.textLight} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nom du titulaire"
-                  placeholderTextColor={COLORS.textLight}
-                  autoCapitalize="words"
-                  value={bankHolder}
-                  onChangeText={setBankHolder}
-                  accessibilityLabel="Titulaire du compte bancaire"
-                />
-              </View>
-
-              <Text style={styles.inputLabel}>IBAN / RIB</Text>
-              <View style={styles.inputWrap}>
-                <Ionicons name="card-outline" size={20} color={COLORS.textLight} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="FR76 / TN59 …"
-                  placeholderTextColor={COLORS.textLight}
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                  value={bankIban}
-                  onChangeText={setBankIban}
-                  accessibilityLabel="IBAN ou RIB"
-                />
-              </View>
-            </View>
-          )}
-
           {/* Code de parrainage (facultatif) */}
           <Text style={styles.inputLabel}>Code de parrainage (facultatif)</Text>
           <View style={styles.inputWrap}>
@@ -627,25 +578,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
 
-  bankSection: {
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.xs,
-    padding: SPACING.lg,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.secondaryLight,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-  },
-  bankHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
-  bankHeader: { fontSize: FONTS.sizes.md, fontWeight: '700', color: COLORS.secondaryDark, flex: 1 },
-  bankOptional: { fontSize: FONTS.sizes.xs, color: COLORS.textSecondary, fontStyle: 'italic' },
-  bankHint: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-    marginBottom: SPACING.md,
-    lineHeight: 18,
-  },
 
   consentRow: {
     flexDirection: 'row',
