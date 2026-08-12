@@ -1,9 +1,11 @@
 // ──────────────────────────────────────────────────────────────────────────
-// THL — cross-platform alert
-// React Native's Alert.alert is a silent no-op on react-native-web. On web,
-// alerts are routed to the in-app AppAlertHost (THL-styled dialog); the raw
-// window.alert/confirm only remain as a last-resort fallback if the host is
-// not mounted. Native keeps the platform Alert.
+// THL — boîtes de dialogue de l'application
+// Toutes les alertes passent par AppAlertHost, la boîte aux couleurs de THL,
+// sur toutes les plateformes. La boîte système d'Android — grise, à angles
+// vifs — jurait au milieu d'une interface sombre soignée, et l'application
+// disposait déjà de sa propre boîte, jusqu'ici réservée au web.
+// Replis, seulement si l'hôte n'est pas monté : Alert.alert en natif (où il
+// fonctionne), window.alert/confirm sur le web (où Alert.alert est inerte).
 // ──────────────────────────────────────────────────────────────────────────
 import { Alert, AlertButton, Platform } from 'react-native';
 
@@ -15,28 +17,28 @@ export interface PendingAlert {
 
 type AlertHandler = (alert: PendingAlert) => void;
 
-let webHandler: AlertHandler | null = null;
+let host: AlertHandler | null = null;
 
-/** Mounted by AppAlertHost — returns the cleanup for its useEffect. */
+/** Monté par AppAlertHost — renvoie le nettoyage pour son useEffect. */
 export function registerAlertHandler(handler: AlertHandler): () => void {
-  webHandler = handler;
+  host = handler;
   return () => {
-    if (webHandler === handler) webHandler = null;
+    if (host === handler) host = null;
   };
 }
 
 export function showAlert(title: string, message?: string, buttons?: AlertButton[]): void {
+  if (host) {
+    host({ title, message, buttons });
+    return;
+  }
+
   if (Platform.OS !== 'web') {
     Alert.alert(title, message, buttons);
     return;
   }
 
-  if (webHandler) {
-    webHandler({ title, message, buttons });
-    return;
-  }
-
-  // Fallback (host not mounted): keep the old browser dialogs.
+  // Repli web (hôte non monté) : boîtes du navigateur.
   const text = message ? `${title}\n\n${message}` : title;
   if (!buttons || buttons.length <= 1) {
     window.alert(text);

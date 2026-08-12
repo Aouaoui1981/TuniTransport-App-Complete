@@ -269,10 +269,19 @@ export default function PaymentScreen() {
             </Text>
           </View>
         ) : (
-          <View style={styles.stripeBadge}>
-            <Ionicons name="lock-closed" size={14} color={COLORS.secondary} />
-            <Text style={styles.stripeBadgeText}>Paiement sécurisé par Stripe</Text>
-          </View>
+          <>
+            <View style={styles.stripeBadge}>
+              <Ionicons name="lock-closed" size={14} color={COLORS.secondary} />
+              <Text style={styles.stripeBadgeText}>Paiement sécurisé par Stripe</Text>
+            </View>
+            {/* Rassurance affichee la ou elle sert : au moment de payer.
+                Elle vivait auparavant dans une alerte du profil, sous une
+                entree « Moyens de paiement » qui laissait attendre un ecran
+                de gestion alors qu'aucune carte n'est conservee. */}
+            <Text style={styles.cardNotice}>
+              Aucune donnée de votre carte n'est conservée dans l'application.
+            </Text>
+          </>
         )}
 
         {method === 'cash' ? null : IS_STRIPE_LIVE ? (
@@ -413,6 +422,12 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full,
   },
   stripeBadgeText: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.secondaryDark },
+  cardNotice: {
+    marginTop: SPACING.sm,
+    textAlign: 'center',
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+  },
   liveHint: {
     marginTop: SPACING.xl,
     textAlign: 'center',

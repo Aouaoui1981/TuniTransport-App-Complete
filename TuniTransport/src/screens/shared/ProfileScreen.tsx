@@ -30,12 +30,11 @@ import { LEGAL_PAGES, LegalPageKey } from '../../content/legal';
 const MENU: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  action?: 'editProfile' | 'notifications' | 'payment' | 'security' | 'disputes' | 'support' | 'referral';
+  action?: 'editProfile' | 'notifications' | 'security' | 'disputes' | 'support' | 'referral';
   legalPage?: LegalPageKey;
 }[] = [
   { icon: 'person-outline', label: 'Modifier le profil', action: 'editProfile' },
   { icon: 'gift-outline', label: 'Parrainage — gagnez 10 €', action: 'referral' },
-  { icon: 'card-outline', label: 'Moyens de paiement', action: 'payment' },
   { icon: 'notifications-outline', label: 'Notifications', action: 'notifications' },
   { icon: 'flag-outline', label: 'Mes signalements', action: 'disputes' },
   { icon: 'lock-closed-outline', label: 'Sécurité', action: 'security' },
@@ -100,13 +99,6 @@ export default function ProfileScreen() {
   const [savingPass, setSavingPass] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const showPaymentInfo = () => {
-    const message = isSender
-      ? "Vous réglez par carte bancaire de façon sécurisée (Stripe) au moment de payer un envoi. Aucune donnée de carte n'est conservée dans l'application."
-      : "Vous recevez vos gains par virement sur les coordonnées bancaires que vous renseignez dans l'onglet « Livraisons » (bouton « Demander un retrait »).";
-    showAlert('Moyens de paiement', message);
-  };
-
   const openSecurity = () => {
     if (!IS_LIVE || !supabase) {
       showAlert('Sécurité', "La modification du mot de passe est disponible sur l'application en ligne.");
@@ -146,8 +138,6 @@ export default function ProfileScreen() {
       navigation.navigate('EditProfile');
     } else if (item.action === 'notifications') {
       navigation.navigate('Notifications');
-    } else if (item.action === 'payment') {
-      showPaymentInfo();
     } else if (item.action === 'security') {
       openSecurity();
     } else if (item.action === 'disputes') {
