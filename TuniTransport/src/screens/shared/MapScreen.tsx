@@ -99,6 +99,7 @@ export default function MapScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.cardsScroll}
         contentContainerStyle={styles.cards}
       >
         {routes.map((r) => {
@@ -160,10 +161,16 @@ const styles = StyleSheet.create({
     ...SHADOWS.md,
   },
   map: { flex: 1 },
+  // `flexGrow: 0` : sans lui, la liste horizontale absorbe toute la hauteur
+  // restante sous la carte et etire les cartes de trajet en grands rectangles
+  // vides. `alignItems: 'flex-start'` les fait tenir a leur contenu au lieu de
+  // s'aligner sur la plus haute.
+  cardsScroll: { flexGrow: 0 },
   cards: {
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.lg,
     gap: SPACING.md,
+    alignItems: 'flex-start',
   },
   routeCard: {
     width: 220,
