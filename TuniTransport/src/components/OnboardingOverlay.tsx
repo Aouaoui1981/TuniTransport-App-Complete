@@ -87,8 +87,16 @@ export default function OnboardingOverlay() {
 
   const isLast = index === SLIDES.length - 1;
 
+  // Ne rien monter tant que l'overlay n'a pas lieu d'etre. Sur Android, un
+  // <Modal> cree une fenetre systeme distincte meme masquee : la presence de
+  // cette seconde fenetre fait circuler le focus entre elle et celle de
+  // l'application, et Android ferme le clavier a chaque changement. Cet
+  // overlay vit dans WelcomeScreen, qui reste monte sous Connexion et
+  // Inscription — les deux seuls ecrans ou la saisie etait impossible.
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} animationType="fade" onRequestClose={finish}>
+    <Modal visible animationType="fade" onRequestClose={finish}>
       <View style={styles.root}>
         <LinearGradient
           colors={['#0F3B3A', '#0E2233', '#0A1420', '#050B12']}
