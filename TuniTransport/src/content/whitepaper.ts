@@ -104,9 +104,14 @@ export const WHITEPAPER = {
       detail: "Le QR contient poids, contenu, expéditeur, destinataire et transporteur.",
     },
     {
-      label: 'Applications iOS / Android natives',
+      label: 'Application Android native',
+      status: 'done',
+      detail: "Publiée sur Google Play, d'abord en bêta fermée avant l'ouverture au public.",
+    },
+    {
+      label: 'Application iOS native',
       status: 'plan',
-      detail: "Le code est déjà multiplateforme ; la publication sur les stores est planifiée.",
+      detail: "Le code est déjà multiplateforme ; la publication sur l'App Store est planifiée.",
     },
     {
       label: 'Versement des gains aux transporteurs',
@@ -171,6 +176,7 @@ export const WHITEPAPER = {
       when: 'T3 2026',
       status: 'now',
       items: [
+        "Application mobile Android publiée sur Google Play (bêta fermée, puis ouverte).",
         "Paiements réels activés (Stripe en mode production) — première transaction réussie.",
         "Nom de domaine propre et adresse e-mail professionnelle.",
         "Premiers utilisateurs réels sur les communautés de la diaspora, avec accompagnement rapproché.",
@@ -178,11 +184,11 @@ export const WHITEPAPER = {
       ],
     },
     {
-      name: 'Phase 2 — Mobile & automatisation',
+      name: 'Phase 2 — Automatisation & iOS',
       when: 'T4 2026 → T1 2027',
       status: 'plan',
       items: [
-        "Publication sur Google Play puis l'App Store.",
+        "Publication sur l'App Store (iOS).",
         "Notifications push (nouvel envoi, colis accepté, paiement reçu).",
         "Stripe Connect : reversement automatique de la part du transporteur.",
         "Assurance colis optionnelle (partenariat assureur).",

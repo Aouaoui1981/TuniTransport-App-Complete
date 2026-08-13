@@ -473,3 +473,42 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - src/services/api.ts, src/context/AuthContext.tsx
 - src/screens/shared/ProfileScreen.tsx, AdminVerificationsScreen.tsx,
   IdentityVerificationScreen.tsx, src/components/VerificationRequired.tsx
+
+---
+
+## 2026-08-13 — Publication Play Store : preparation de la beta fermee
+### Fait
+- [x] Durcissement securite livre (RLS `profiles` restreinte a son propre
+      profil + admin, RPC `contact_phone`, policies storage par dossier
+      `auth.uid()`, bucket `id-documents` retire du schema).
+- [x] Sept correctifs UI/UX remontes par l'utilisateur sur appareil :
+      clavier qui disparait sur Login/Register (OnboardingOverlay montait un
+      `Modal` meme invisible), barre d'onglets collee au bord (safe area),
+      alertes systeme grises -> AppAlertHost sur toutes les plateformes,
+      fenetre Google habillee aux couleurs de l'app, cartes de la carte,
+      bouton « Imprimer l'etiquette » (expediteur + statut `accepted`),
+      double `StatusBar` sur WelcomeScreen.
+- [x] Retrait des coordonnees bancaires du formulaire d'inscription
+      transporteur (demandees au moment du retrait des gains uniquement).
+- [x] Page publique « suppression de compte » + 10 declarations
+      « App content » completees dans la Play Console.
+- [x] Assets store generes : icone 512x512 et feature graphic 1024x500.
+- [x] Build production AAB `1.0.0 (21)` depuis `936a291` — termine.
+- [x] Livre blanc remis a jour : la publication Android passe en Phase 1
+      (en cours) au lieu de Phase 2 (prevu) ; Phase 2 renommee
+      « Automatisation & iOS » ; ligne capacites scindee Android (fait) /
+      iOS (prevu).
+### Reste a faire
+- [ ] Tester l'APK `preview` sur appareil avant d'ouvrir la beta.
+- [ ] Supprimer les donnees de demonstration (tous les id commencent par
+      `5eed`) avant l'ouverture de la beta.
+- [ ] Faire tourner le secret client Google OAuth (depuis un ordinateur).
+- [ ] Supprimer le bucket `id-documents` cote dashboard Supabase.
+- [ ] Main store listing : icone, feature graphic, 5 captures, descriptions.
+- [ ] Collecter les 12 adresses Gmail des testeurs (compte a rebours 14 j).
+- [ ] Acheter le domaine + boite `support@tunitransport.app` (cite dans les
+      pages legales, le courrier se perd aujourd'hui).
+- [ ] Fonction « bloquer un utilisateur » (condition de conformite UGC).
+- [ ] Detacher les integrations GitHub Vercel et Expo (echecs permanents).
+### Fichiers touches
+- src/content/whitepaper.ts
