@@ -813,3 +813,23 @@ Ce qui, lui, reste libre :
   beaucoup d'etiquettes — le papier deja colle ne se met pas a jour.
 - Les pages legales citent `support@tunitransport.app`, ce qui suppose ce
   domaine ; a trancher si la marque doit plutot vivre sur un `thl.*`.
+
+### Bloqueur beta trouve et leve : OAuth Google etait en « Testing »
+Google Auth Platform > Audience affichait `Publishing status: Testing`.
+Consequences si la beta avait ete ouverte ainsi :
+- seuls les comptes ajoutes a la main comme « test users » auraient pu se
+  connecter avec Google — les 12 testeurs auraient ete refuses ;
+- les sessions expirent au bout de 7 JOURS en mode Testing : les testeurs
+  auraient ete deconnectes au milieu de la fenetre de 14 jours, ce qui
+  aurait ressemble a un bug de l'application et non a un reglage Google.
+Corrige : `Publish app` -> `In production`, sans demande de verification
+(un seul domaine, et seulement les scopes de base email/profile/openid ;
+la verification n'est exigee qu'au-dela de 10 domaines, avec un logo, ou
+pour des scopes sensibles). C'etait aussi l'origine du triangle
+d'avertissement sur le client OAuth `THL Supabase`.
+Le plafond de 100 utilisateurs affiche sur cette page ne s'applique qu'aux
+scopes sensibles non approuves : sans objet ici.
+
+Note pour plus tard : la cle API Google (Maps) est restreinte a « Android
+apps, 35 APIs ». C'est large pour une cle qui ne sert qu'aux cartes ; la
+restreindre aux seuls SDK Maps limiterait les degats en cas de fuite.
