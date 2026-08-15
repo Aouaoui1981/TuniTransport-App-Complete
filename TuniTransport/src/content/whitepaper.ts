@@ -60,7 +60,7 @@ export const WHITEPAPER = {
       "Publication d'un envoi en quelques minutes : poids, contenu, adresses.",
       "Tarif transparent : 4 €/kg pour les effets personnels ; prix librement convenu pour les objets hors gabarit.",
       "Paiement par carte bancaire ou en espèces à la remise du colis.",
-      "Étiquette imprimable avec QR code contenant toutes les informations de l'envoi.",
+      "Étiquette imprimable avec QR code protégé : le papier ne divulgue aucune donnée personnelle.",
       "Suivi étape par étape et messagerie intégrée avec le transporteur.",
     ],
     forTransporter: [
@@ -101,7 +101,8 @@ export const WHITEPAPER = {
     {
       label: "Étiquette d'expédition + QR code",
       status: 'done',
-      detail: "Le QR contient poids, contenu, expéditeur, destinataire et transporteur.",
+      detail:
+        "L'étiquette ne porte que le nom de l'expéditeur, la destination, le destinataire et une référence. Le QR ne contient qu'un lien protégé : les détails ne s'ouvrent que pour l'expéditeur, le transporteur attitré ou un administrateur.",
     },
     {
       label: 'Application Android native',

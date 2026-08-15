@@ -44,7 +44,7 @@ import { coordsFor } from '../../services/mockData';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
 import { uploadShipmentPhoto } from '../../services/api';
-import { ShipmentType, HandoverMode } from '../../types';
+import { ShipmentType, HandoverMode, Item } from '../../types';
 import { getErrorMessage } from '../../utils/errors';
 
 const MAX_PHOTOS = 5;
@@ -76,6 +76,19 @@ export default function CreateShipmentScreen() {
   const [deliveryStreet, setDeliveryStreet] = useState(editing?.deliveryAddress.street ?? '');
   const [deliveryContact, setDeliveryContact] = useState(editing?.deliveryAddress.contactName ?? '');
   const [deliveryPhone, setDeliveryPhone] = useState(editing?.deliveryAddress.contactPhone ?? '');
+  // Contenu déclaré. Le champ existait en base et s'affichait partout —
+  // détail de l'envoi, étiquette scannée — mais AUCUN écran ne le
+  // remplissait : le transporteur emportait un colis dont il ne savait
+  // rien, alors que c'est lui qui répond à la douane.
+  const [items, setItems] = useState<{ name: string; quantity: string; weight: string }[]>(
+    editing?.items?.length
+      ? editing.items.map((it) => ({
+          name: it.name,
+          quantity: String(it.quantity),
+          weight: String(it.weight),
+        }))
+      : [{ name: '', quantity: '1', weight: '' }]
+  );
   // Remise du colis : le transporteur vient (frais) ou l'expéditeur dépose.
   const [handoverMode, setHandoverMode] = useState<HandoverMode>(
     editing?.handoverMode ?? 'point'
@@ -90,7 +103,21 @@ export default function CreateShipmentScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const isSmall = type === 'small';
-  const weightNum = parseFloat(weight.replace(',', '.')) || 0;
+  const declaredItems: Item[] = items
+    .filter((it) => it.name.trim())
+    .map((it) => ({
+      name: it.name.trim(),
+      category: '',
+      quantity: Math.max(1, parseInt(it.quantity, 10) || 1),
+      weight: parseFloat(it.weight.replace(',', '.')) || 0,
+    }));
+  const itemsWeight = declaredItems.reduce((sum, it) => sum + it.weight, 0);
+  // Le poids facturé vient des lignes déclarées quand il y en a : deux
+  // chiffres différents à l'écran (total saisi et somme des lignes) auraient
+  // été une invitation à la contestation.
+  const weightNum = isSmall
+    ? Math.round(itemsWeight * 100) / 100
+    : parseFloat(weight.replace(',', '.')) || 0;
   const basePrice = useMemo(() => computeWeightPrice(weightNum), [weightNum]);
   const pickupFee = handoverMode === 'home' ? HOME_PICKUP_FEE : 0;
   const livePrice = useMemo(
@@ -171,8 +198,12 @@ export default function CreateShipmentScreen() {
       showAlert('Champs requis', 'Indiquez la ville de collecte et la ville de livraison.');
       return;
     }
+    if (isSmall && declaredItems.length === 0) {
+      showAlert('Contenu requis', 'Détaillez ce que contient le colis, ligne par ligne.');
+      return;
+    }
     if (isSmall && weightNum <= 0) {
-      showAlert('Poids requis', 'Indiquez le poids total de votre colis en kg.');
+      showAlert('Poids requis', 'Indiquez le poids de chaque ligne, en kg.');
       return;
     }
     if (!isSmall && !description.trim()) {
@@ -241,6 +272,7 @@ export default function CreateShipmentScreen() {
         await updateShipment(editing.id, {
           type,
           weight: isSmall ? weightNum : undefined,
+          items: isSmall ? declaredItems : undefined,
           price: isSmall ? livePrice : undefined,
           description: !isSmall ? description.trim() : undefined,
           dimensions: !isSmall && dimensions.trim() ? dimensions.trim() : undefined,
@@ -276,6 +308,7 @@ export default function CreateShipmentScreen() {
         senderName: user ? `${user.firstName} ${user.lastName}` : '',
         type,
         weight: isSmall ? weightNum : undefined,
+        items: isSmall ? declaredItems : undefined,
         price: isSmall ? livePrice : undefined,
         description: !isSmall ? description.trim() : undefined,
         dimensions: !isSmall && dimensions.trim() ? dimensions.trim() : undefined,
@@ -385,14 +418,70 @@ export default function CreateShipmentScreen() {
           {/* Small: weight + live price */}
           {isSmall ? (
             <Card style={styles.section}>
-              <Text style={styles.sectionTitle}>Poids du colis</Text>
-              <Field
-                icon="scale"
-                placeholder="Poids total (kg)"
-                keyboardType="decimal-pad"
-                value={weight}
-                onChangeText={setWeight}
-              />
+              <Text style={styles.sectionTitle}>Contenu du colis</Text>
+              <Text style={styles.handoverIntro}>
+                Détaillez ce que contient le colis. Le transporteur doit savoir ce qu'il emporte —
+                c'est lui qui répond à la douane.
+              </Text>
+              {items.map((it, idx) => (
+                <View key={idx} style={styles.itemRow}>
+                  <View style={[styles.inputWrap, { flex: 3 }]}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Désignation (ex : vêtements)"
+                      placeholderTextColor={COLORS.textLight}
+                      value={it.name}
+                      onChangeText={(v) =>
+                        setItems((prev) => prev.map((x, i) => (i === idx ? { ...x, name: v } : x)))
+                      }
+                    />
+                  </View>
+                  <View style={[styles.inputWrap, { flex: 1 }]}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Qté"
+                      placeholderTextColor={COLORS.textLight}
+                      keyboardType="number-pad"
+                      value={it.quantity}
+                      onChangeText={(v) =>
+                        setItems((prev) =>
+                          prev.map((x, i) => (i === idx ? { ...x, quantity: v } : x))
+                        )
+                      }
+                    />
+                  </View>
+                  <View style={[styles.inputWrap, { flex: 1.3 }]}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="kg"
+                      placeholderTextColor={COLORS.textLight}
+                      keyboardType="decimal-pad"
+                      value={it.weight}
+                      onChangeText={(v) =>
+                        setItems((prev) => prev.map((x, i) => (i === idx ? { ...x, weight: v } : x)))
+                      }
+                    />
+                  </View>
+                  {items.length > 1 ? (
+                    <TouchableOpacity
+                      onPress={() => setItems((prev) => prev.filter((_, i) => i !== idx))}
+                      accessibilityLabel="Supprimer cette ligne"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons name="close-circle" size={22} color={COLORS.textLight} />
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.addItem}
+                onPress={() =>
+                  setItems((prev) => [...prev, { name: '', quantity: '1', weight: '' }])
+                }
+              >
+                <Ionicons name="add-circle-outline" size={18} color={COLORS.primary} />
+                <Text style={styles.addItemText}>Ajouter une ligne</Text>
+              </TouchableOpacity>
               <View style={styles.priceBox}>
                 <View>
                   <Text style={styles.priceLabel}>Prix calculé</Text>
@@ -680,6 +769,9 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     padding: SPACING.lg,
   },
+  itemRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.sm },
+  addItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, paddingVertical: SPACING.xs },
+  addItemText: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.primary },
   handoverIntro: {
     fontSize: FONTS.sizes.sm,
     color: COLORS.textSecondary,
