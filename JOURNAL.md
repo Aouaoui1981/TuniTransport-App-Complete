@@ -791,3 +791,25 @@ Les builds (21) a (25) sont perimes : ne rien televerser d'autre que (26).
 - IA : filtrage des contenus interdits a la creation, puis traduction dans
   la messagerie. Rien avant la beta — et toute IA oblige a refaire les
   declarations App content / Data safety.
+
+### Decision figee : identifiant de l'application
+`com.tunitransport.app` est CONSERVE. Choix pris en connaissance de cause
+avant le premier deploiement, seul moment ou il etait encore modifiable :
+apres publication, l'identifiant de paquet Android est definitif, et en
+changer reviendrait a publier une autre application (installations, notes
+et avis perdus).
+
+Le projet est ne « TuniTransport » puis a ete renomme THL ; l'interface a
+suivi, les identifiants techniques non. Sans consequence visible : ce que
+l'utilisateur voit s'appelle THL partout (nom sur le telephone, fiche du
+store, logo). L'identifiant n'apparait que dans l'URL du store et dans
+Parametres > Applications > details.
+
+Ce qui, lui, reste libre :
+- `slug` et `scheme` (internes, invisibles).
+- Le nom de domaine. Il se change sans toucher au code : definir
+  `EXPO_PUBLIC_APP_URL` au build suffit, et l'URL du QR des etiquettes
+  suit automatiquement (cf. src/config/app.ts). A decider avant d'imprimer
+  beaucoup d'etiquettes — le papier deja colle ne se met pas a jour.
+- Les pages legales citent `support@tunitransport.app`, ce qui suppose ce
+  domaine ; a trancher si la marque doit plutot vivre sur un `thl.*`.
