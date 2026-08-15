@@ -709,3 +709,32 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - src/screens/shared/LabelViewScreen.tsx (nouveau)
 - src/components/LabelDetails.tsx (nouveau)
 - src/screens/shared/ScanLabelScreen.tsx, src/navigation/AppNavigator.tsx
+
+---
+
+## 2026-08-16 (suite) — Le contenu du colis n'etait JAMAIS demande
+### Le defaut, trouve en scannant une vraie etiquette
+- `items` existait dans le type, dans la table, s'affichait dans le detail
+  de l'envoi ET dans l'etiquette scannee — mais AUCUN ecran ne le
+  remplissait. Verifie en base : les deux envois reels ont `items = null`
+  et `description = null`. Le scan ne montrait donc que le poids.
+- Consequence reelle : le transporteur emporte un colis dont il ignore le
+  contenu, alors que c'est lui qui repond a la douane. C'est exactement le
+  risque discute a propos des objets interdits.
+### Fait
+- [x] Liste de contenu obligatoire a la creation d'un colis au poids :
+      designation + quantite + poids par ligne, lignes ajoutables.
+- [x] Le poids factures vient desormais de la SOMME des lignes. Afficher
+      deux chiffres (total saisi vs somme declaree) aurait ete une
+      invitation a la contestation.
+- [x] Le contenu suit aussi a l'edition d'une annonce.
+- [x] Livre blanc corrige : il affirmait « Le QR contient poids, contenu,
+      expediteur, destinataire et transporteur » — faux deux fois depuis
+      que le QR ne porte qu'un jeton, et faux de toute facon puisque le
+      contenu n'etait jamais saisi.
+### Reste a discuter
+- [ ] « Signature de l'expediteur » demandee : voir la reponse — une
+      signature au doigt a peu de valeur probante, et surtout elle est
+      impossible dans le cas `point` ou l'expediteur depose et repart.
+### Fichiers touches
+- src/screens/sender/CreateShipmentScreen.tsx, src/content/whitepaper.ts
