@@ -56,6 +56,7 @@ import AdminDisputesScreen from '../screens/shared/AdminDisputesScreen';
 import ReportProblemScreen from '../screens/shared/ReportProblemScreen';
 import MyDisputesScreen from '../screens/shared/MyDisputesScreen';
 import BlockedUsersScreen from '../screens/shared/BlockedUsersScreen';
+import ScanLabelScreen from '../screens/shared/ScanLabelScreen';
 import SupportScreen from '../screens/shared/SupportScreen';
 import ReferralScreen from '../screens/shared/ReferralScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
@@ -106,6 +107,7 @@ export type RootStackParamList = {
   ReportProblem: { shipmentId: string };
   MyDisputes: undefined;
   BlockedUsers: undefined;
+  ScanLabel: undefined;
   Support: undefined;
   Referral: undefined;
   Notifications: undefined;
@@ -371,6 +373,11 @@ export default function AppNavigator() {
             name="MyDisputes"
             component={MyDisputesScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Mes signalements' }}
+          />
+          <Stack.Screen
+            name="ScanLabel"
+            component={ScanLabelScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Scanner une étiquette' }}
           />
           <Stack.Screen
             name="BlockedUsers"

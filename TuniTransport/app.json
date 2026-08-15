@@ -34,13 +34,22 @@
           "cameraPermission": "TuniTransport a besoin d'accéder à votre caméra pour photographier vos colis et votre pièce d'identité.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "THL utilise l'appareil photo pour lire le QR code d'une étiquette d'expédition."
+        }
       ]
     ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tunitransport.app",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification", "location"]
+        "UIBackgroundModes": [
+          "remote-notification",
+          "location"
+        ]
       }
     },
     "android": {

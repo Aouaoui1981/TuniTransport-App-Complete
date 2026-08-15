@@ -1,17 +1,26 @@
 // ──────────────────────────────────────────────────────────────────────────
 // TuniTransport — étiquette d'expédition imprimable
 //
-// Génère une étiquette HTML (format A5) avec expéditeur, destinataire,
-// poids, référence et QR code de suivi, puis ouvre la boîte de dialogue
+// Génère une étiquette HTML (format A5) puis ouvre la boîte de dialogue
 // d'impression du système (navigateur sur le web, AirPrint/PDF sur mobile).
 // Le QR code est produit en SVG pur (aucun canvas requis) pour fonctionner
 // sur toutes les plateformes.
+//
+// Le papier ne porte que ce qu'il faut pour acheminer le colis : expéditeur,
+// ville de destination, destinataire, référence. Ni adresses complètes, ni
+// contenu, ni poids, ni prix — l'étiquette voyage à découvert, dans un sac
+// qui passe de main en main et traverse un port.
+//
+// Le QR ne contient qu'un lien opaque (identifiant + jeton). Un QR en clair
+// ne cacherait rien : la moindre application appareil photo en afficherait
+// le contenu. Les détails sont rendus par `resolve_label`, qui vérifie
+// d'abord qui demande — cf. migration 20260816090000.
 // ──────────────────────────────────────────────────────────────────────────
 import { Platform } from 'react-native';
 import * as Print from 'expo-print';
 import QRCode from 'qrcode';
-import { Shipment, Address } from '../types';
-import { APP_DOMAIN, trackingUrl } from '../config/app';
+import { Shipment } from '../types';
+import { APP_DOMAIN, labelUrl } from '../config/app';
 
 function escapeHtml(value: string | undefined | null): string {
   return String(value ?? '')
@@ -21,44 +30,23 @@ function escapeHtml(value: string | undefined | null): string {
     .replace(/"/g, '&quot;');
 }
 
-function addressBlock(title: string, name: string, address: Address): string {
+/** Nom seul : ni rue, ni code postal, ni téléphone. */
+function partyBlock(title: string, name: string): string {
   return `
     <div class="party">
       <div class="party-title">${title}</div>
       <div class="party-name">${escapeHtml(name)}</div>
-      <div>${escapeHtml(address.street)}</div>
-      <div>${escapeHtml(address.postalCode)} ${escapeHtml(address.city)}, ${escapeHtml(address.country)}</div>
-      <div>Contact : ${escapeHtml(address.contactName)} · ${escapeHtml(address.contactPhone)}</div>
     </div>`;
 }
 
-/** Short human-readable summary of what the parcel contains. */
-function contentSummary(shipment: Shipment): string {
-  if (shipment.items && shipment.items.length > 0) {
-    return shipment.items
-      .map((item) => `${item.quantity}× ${item.name}`)
-      .join(', ')
-      .slice(0, 60);
-  }
-  return (shipment.description ?? 'Effets personnels').slice(0, 60);
-}
-
 /**
- * Plain-text payload encoded in the QR code: any phone camera or scanner
- * app shows the shipment details directly, and the last line is the
- * tracking link into the app.
+ * Contenu du QR : uniquement le lien de scan (identifiant + jeton). Rien
+ * de personnel. Scanné par l'appareil photo du téléphone, il ouvre
+ * l'application ; scanné depuis l'écran « Scanner », il affiche les
+ * détails aux seules personnes autorisées.
  */
 function buildQrPayload(shipment: Shipment): string {
-  const lines = [
-    `THL — Envoi ${shipment.id.slice(-8).toUpperCase()}`,
-    `Poids: ${shipment.weight ?? '—'} kg`,
-    `Contenu: ${contentSummary(shipment)}`,
-    `Expéditeur: ${shipment.senderName} — ${shipment.pickupAddress.street}, ${shipment.pickupAddress.postalCode} ${shipment.pickupAddress.city}, ${shipment.pickupAddress.country}`,
-    `Destinataire: ${shipment.deliveryAddress.contactName} — ${shipment.deliveryAddress.street}, ${shipment.deliveryAddress.postalCode} ${shipment.deliveryAddress.city}, ${shipment.deliveryAddress.country}`,
-    `Transporteur: ${shipment.transporterName ?? '—'}`,
-    `Suivi: ${trackingUrl(shipment.id)}`,
-  ];
-  return lines.join('\n');
+  return labelUrl(shipment.id, shipment.labelToken);
 }
 
 export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
@@ -118,33 +106,18 @@ export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
       <div>${escapeHtml(shipment.deliveryAddress.city)}, ${escapeHtml(shipment.deliveryAddress.country)}</div>
     </div>
     <div class="parties">
-      ${addressBlock('Expéditeur', shipment.senderName, shipment.pickupAddress)}
-      ${addressBlock('Destinataire', shipment.deliveryAddress.contactName, shipment.deliveryAddress)}
-    </div>
-    <div class="meta">
-      <div class="meta-cell">
-        <div class="meta-label">Poids</div>
-        <div class="meta-value">${escapeHtml(String(shipment.weight ?? '—'))} kg</div>
-      </div>
-      <div class="meta-cell">
-        <div class="meta-label">Colis</div>
-        <div class="meta-value">1 / 1</div>
-      </div>
-      <div class="meta-cell">
-        <div class="meta-label">Transporteur</div>
-        <div class="meta-value">${escapeHtml(shipment.transporterName || '—')}</div>
-      </div>
-      <div class="meta-cell">
-        <div class="meta-label">Contenu</div>
-        <div class="meta-value">${escapeHtml(contentSummary(shipment))}</div>
-      </div>
+      ${partyBlock('Expéditeur', shipment.senderName)}
+      ${partyBlock('Destinataire', shipment.deliveryAddress.contactName)}
     </div>
     <div class="track">
       <div class="qr">${qrSvg}</div>
       <div class="track-info">
         <div class="ref">${escapeHtml(reference)}</div>
-        <div class="ref-full">${escapeHtml(shipment.id)}</div>
-        <div class="track-hint">Scannez le QR code pour afficher les détails et le suivi de cet envoi.</div>
+        <div class="track-hint">
+          Détails, adresses et confirmation de prise en charge : scannez ce code
+          depuis l'application THL. Aucune donnée personnelle n'est inscrite sur
+          cette étiquette.
+        </div>
       </div>
     </div>
     <div class="foot">
