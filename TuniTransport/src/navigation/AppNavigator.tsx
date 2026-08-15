@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../context/AuthContext';
 import { registerForPushNotifications } from '../services/notifications';
+import { usePendingLabelLink } from '../hooks/usePendingLabelLink';
 import { COLORS } from '../utils/theme';
 import { ShipmentType, UserRole } from '../types';
 
@@ -57,6 +58,7 @@ import ReportProblemScreen from '../screens/shared/ReportProblemScreen';
 import MyDisputesScreen from '../screens/shared/MyDisputesScreen';
 import BlockedUsersScreen from '../screens/shared/BlockedUsersScreen';
 import ScanLabelScreen from '../screens/shared/ScanLabelScreen';
+import LabelViewScreen from '../screens/shared/LabelViewScreen';
 import SupportScreen from '../screens/shared/SupportScreen';
 import ReferralScreen from '../screens/shared/ReferralScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
@@ -108,6 +110,7 @@ export type RootStackParamList = {
   MyDisputes: undefined;
   BlockedUsers: undefined;
   ScanLabel: undefined;
+  LabelView: { shipmentId: string; token: string };
   Support: undefined;
   Referral: undefined;
   Notifications: undefined;
@@ -207,6 +210,17 @@ const SUBSCREEN_HEADER = {
 
 export default function AppNavigator() {
   const { isAuthenticated, isLoading, user, passwordRecovery } = useAuth();
+  // QR visé avec l'appareil photo du téléphone : le lien est retenu, même
+  // s'il arrive avant la connexion, et l'étiquette s'ouvre ensuite.
+  const { pending, clear } = usePendingLabelLink();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  useEffect(() => {
+    if (!pending || !isAuthenticated || isLoading) return;
+    if (user && user.onboarded === false) return;
+    navigation.navigate('LabelView', pending);
+    clear();
+  }, [pending, isAuthenticated, isLoading, user, navigation, clear]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -373,6 +387,11 @@ export default function AppNavigator() {
             name="MyDisputes"
             component={MyDisputesScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Mes signalements' }}
+          />
+          <Stack.Screen
+            name="LabelView"
+            component={LabelViewScreen}
+            options={{ ...SUBSCREEN_HEADER, title: "Étiquette" }}
           />
           <Stack.Screen
             name="ScanLabel"

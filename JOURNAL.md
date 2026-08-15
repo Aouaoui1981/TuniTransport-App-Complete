@@ -676,3 +676,36 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - src/screens/shared/ShipmentDetailScreen.tsx, ScanLabelScreen.tsx,
   EditProfileScreen.tsx, ReportProblemScreen.tsx, TrackingScreen.tsx
 - src/components/index.tsx, src/content/disputes.ts
+
+---
+
+## 2026-08-16 (suite) — Le QR vise a la camera ne menait nulle part
+### Le defaut
+- Le QR imprime contient une URL `/l/<id>?k=<jeton>`. Concu pour le scanner
+  integre — mais le premier reflexe de tout le monde est de viser avec
+  l'appareil photo du telephone, qui ouvre le navigateur. Or aucune route
+  `/l/` n'existait : on atterrissait sur la page d'accueil, sans rapport
+  visible avec le colis. Impression d'un lien casse.
+- Manque de conception de ma part, pas une erreur d'utilisation.
+### Fait
+- [x] `usePendingLabelLink` : retient le lien d'etiquette (URL initiale ou
+      recue a chaud), y compris quand il arrive AVANT la connexion. Le
+      navigateur passe par Welcome, l'utilisateur se connecte, et
+      l'etiquette s'ouvre ensuite d'elle-meme.
+- [x] Nouvel ecran `LabelViewScreen` (route `LabelView`) : meme contenu que
+      le scanner, sans camera. Pas de bouton de prise en charge : confirmer
+      exige le scanner de l'application, donc le colis sous les yeux.
+- [x] Rendu extrait dans `components/LabelDetails.tsx`, partage par les deux
+      chemins — le scanner ne duplique plus 80 lignes.
+### Verifie
+- Export web servi localement : `/l/<id>?k=<jeton>` repond 200 ; deconnecte
+  -> page d'accueil ; apres connexion -> ecran « Etiquette » s'ouvre tout
+  seul (« Lecture impossible » attendu ici, le build local est en mode demo).
+### Attention
+- Les builds `1.0.0 (24)` ont ete lances AVANT ce correctif : ils ne le
+  contiennent pas. Un nouveau build est necessaire.
+### Fichiers touches
+- src/hooks/usePendingLabelLink.ts (nouveau)
+- src/screens/shared/LabelViewScreen.tsx (nouveau)
+- src/components/LabelDetails.tsx (nouveau)
+- src/screens/shared/ScanLabelScreen.tsx, src/navigation/AppNavigator.tsx
