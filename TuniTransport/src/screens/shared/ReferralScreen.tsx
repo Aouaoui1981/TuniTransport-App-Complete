@@ -23,8 +23,7 @@ import { Card } from '../../components';
 import { IS_LIVE } from '../../services/supabase';
 import { fetchReferralSummary, listMyReferrals } from '../../services/api';
 import { ReferralSummary, ReferralItem, ReferralItemStatus } from '../../types';
-
-const APP_URL = 'https://thl-colis-app-complete.vercel.app';
+import { APP_URL } from '../../config/app';
 
 const STATUS_META: Record<ReferralItemStatus, { label: string; color: string }> = {
   pending: { label: 'En attente', color: COLORS.accent },

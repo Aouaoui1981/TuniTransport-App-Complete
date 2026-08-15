@@ -11,8 +11,7 @@ import { Platform } from 'react-native';
 import * as Print from 'expo-print';
 import QRCode from 'qrcode';
 import { Shipment, Address } from '../types';
-
-const APP_URL = 'https://thl-colis-app-complete.vercel.app';
+import { APP_DOMAIN, trackingUrl } from '../config/app';
 
 function escapeHtml(value: string | undefined | null): string {
   return String(value ?? '')
@@ -57,7 +56,7 @@ function buildQrPayload(shipment: Shipment): string {
     `Expéditeur: ${shipment.senderName} — ${shipment.pickupAddress.street}, ${shipment.pickupAddress.postalCode} ${shipment.pickupAddress.city}, ${shipment.pickupAddress.country}`,
     `Destinataire: ${shipment.deliveryAddress.contactName} — ${shipment.deliveryAddress.street}, ${shipment.deliveryAddress.postalCode} ${shipment.deliveryAddress.city}, ${shipment.deliveryAddress.country}`,
     `Transporteur: ${shipment.transporterName ?? '—'}`,
-    `Suivi: ${APP_URL}/?shipment=${shipment.id}`,
+    `Suivi: ${trackingUrl(shipment.id)}`,
   ];
   return lines.join('\n');
 }
@@ -110,7 +109,7 @@ export function buildLabelHtml(shipment: Shipment, qrSvg: string): string {
       <div class="brand">THL<span>.</span></div>
       <div class="service">
         Transport de colis France ⇄ Tunisie<br/>
-        ${APP_URL.replace('https://', '')}
+        ${APP_DOMAIN}
       </div>
     </div>
     <div class="route">
