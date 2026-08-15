@@ -9,6 +9,7 @@ export const DISPUTE_CATEGORY_LABEL: Record<DisputeCategory, string> = {
   delay: 'Retard important',
   not_as_described: 'Non conforme à l’annonce',
   no_show: 'Rendez-vous manqué',
+  handover_disputed: 'Prise en charge contestée',
   other: 'Autre',
 };
 

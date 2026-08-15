@@ -18,6 +18,7 @@ import { ShipmentStatus } from '../../types';
 const STATUS_ICONS: Record<ShipmentStatus, keyof typeof Ionicons.glyphMap> = {
   pending: 'time',
   accepted: 'checkmark-circle',
+  dropped_off: 'archive',
   collected: 'cube',
   in_transit: 'boat',
   arrived: 'flag',

@@ -44,6 +44,8 @@ import {
   ReferralItem,
   ReferralItemStatus,
   AdminShipmentDetail,
+  HandoverMode,
+  CollectionPoint,
 } from '../types';
 
 function db() {
@@ -65,6 +67,7 @@ interface ProfileRow {
   total_ratings?: number;
   created_at: string;
   truck_details?: TruckDetails;
+  collection_point?: CollectionPoint;
   identity_status?: string;
   identity_document_type?: string;
   identity_rejection_reason?: string;
@@ -118,6 +121,12 @@ interface ShipmentRow {
   payment_method?: 'card' | 'cash';
   selected_bid_id?: string;
   label_token?: string;
+  handover_mode?: HandoverMode;
+  handover_fee?: number;
+  handover_point?: CollectionPoint;
+  dropped_off_at?: string;
+  dropped_off_photo?: string;
+  collected_photo?: string;
   tracking_events?: TrackingEventRow[];
   bids?: BidRow[];
   terms_accepted_at?: string;
@@ -188,6 +197,7 @@ export function mapProfile(row: ProfileRow): User {
     totalRatings: row.total_ratings ?? 0,
     createdAt: row.created_at,
     truckDetails: row.truck_details ?? undefined,
+    collectionPoint: row.collection_point ?? undefined,
     identityStatus: (row.identity_status as IdentityStatus) ?? 'unsubmitted',
     identityDocumentType: row.identity_document_type ?? undefined,
     identityRejectionReason: row.identity_rejection_reason ?? undefined,
@@ -247,6 +257,12 @@ function mapShipment(row: ShipmentRow): Shipment {
     paymentMethod: row.payment_method ?? undefined,
     selectedBidId: row.selected_bid_id ?? undefined,
     labelToken: row.label_token ?? undefined,
+    handoverMode: row.handover_mode ?? 'point',
+    handoverFee: row.handover_fee != null ? Number(row.handover_fee) : 0,
+    handoverPoint: row.handover_point ?? undefined,
+    droppedOffAt: row.dropped_off_at ?? undefined,
+    droppedOffPhoto: row.dropped_off_photo ?? undefined,
+    collectedPhoto: row.collected_photo ?? undefined,
     trackingHistory: (row.tracking_events ?? []).map(mapTrackingEvent),
     bids: (row.bids ?? []).map(mapBid),
     termsAcceptedAt: row.terms_accepted_at ?? undefined,
@@ -310,6 +326,7 @@ export async function updateProfile(userId: string, updates: Partial<User>): Pro
   if (updates.phone !== undefined) payload.phone = updates.phone;
   if (updates.avatar !== undefined) payload.avatar_url = updates.avatar;
   if (updates.truckDetails !== undefined) payload.truck_details = updates.truckDetails;
+  if (updates.collectionPoint !== undefined) payload.collection_point = updates.collectionPoint;
   if (updates.role !== undefined) payload.role = updates.role;
   if (updates.onboarded !== undefined) payload.onboarded = updates.onboarded;
   const { error } = await db().from('profiles').update(payload).eq('id', userId);
@@ -350,6 +367,8 @@ export async function createShipment(
       delivery_address: shipment.deliveryAddress,
       terms_accepted_at: shipment.termsAcceptedAt ?? null,
       non_commercial_declared_at: shipment.nonCommercialDeclaredAt ?? null,
+      handover_mode: shipment.handoverMode ?? 'point',
+      handover_fee: shipment.handoverFee ?? 0,
     })
     .select(SHIPMENT_SELECT)
     .single();
@@ -673,6 +692,38 @@ export async function resolveLabel(shipmentId: string, token: string): Promise<S
     weight: raw.weight != null ? Number(raw.weight) : undefined,
     price: raw.price != null ? Number(raw.price) : undefined,
   };
+}
+
+// ── Remise du colis ──────────────────────────────────────────────────────
+
+/** L'expéditeur déclare avoir déposé le colis au point de collecte. */
+export async function declareDropoff(shipmentId: string, photoUrl: string): Promise<void> {
+  const { error } = await db().rpc('declare_dropoff', {
+    p_shipment_id: shipmentId,
+    p_photo: photoUrl,
+  });
+  if (error) throw error;
+}
+
+/**
+ * Le transporteur attitré confirme la prise en charge. Le jeton de
+ * l'étiquette est exigé — sans le colis sous les yeux, pas de confirmation
+ * — et la photo aussi : c'est elle que verra l'expéditeur.
+ */
+export async function confirmCollection(
+  shipmentId: string,
+  token: string,
+  photoUrl: string
+): Promise<void> {
+  const { error } = await db().rpc('confirm_collection', {
+    p_shipment_id: shipmentId,
+    p_token: token,
+    p_photo: photoUrl,
+  });
+  if (error) {
+    const found = LABEL_CODES.find((c) => error.message.includes(c));
+    throw new LabelError(found ?? 'UNKNOWN');
+  }
 }
 
 // ── Blocage d'utilisateurs ───────────────────────────────────────────────

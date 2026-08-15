@@ -30,6 +30,7 @@ const CATEGORIES: { key: DisputeCategory; label: string; icon: keyof typeof Ioni
   { key: 'delay', label: 'Retard important', icon: 'time-outline' },
   { key: 'not_as_described', label: 'Non conforme', icon: 'documents-outline' },
   { key: 'no_show', label: 'Rendez-vous manqué', icon: 'person-remove-outline' },
+  { key: 'handover_disputed', label: 'Prise en charge contestée', icon: 'qr-code-outline' },
   { key: 'other', label: 'Autre', icon: 'ellipsis-horizontal' },
 ];
 

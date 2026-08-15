@@ -31,6 +31,11 @@ export default function EditProfileScreen() {
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [avatarUri, setAvatarUri] = useState<string | undefined>(user?.avatar);
+  // Point de collecte habituel — transporteurs seulement, facultatif :
+  // beaucoup n'en ont pas et conviennent d'un lieu au cas par cas.
+  const [pointLabel, setPointLabel] = useState(user?.collectionPoint?.label ?? '');
+  const [pointAddress, setPointAddress] = useState(user?.collectionPoint?.address ?? '');
+  const [pointNotes, setPointNotes] = useState(user?.collectionPoint?.notes ?? '');
   const [saving, setSaving] = useState(false);
 
   if (!user) return null;
@@ -66,11 +71,23 @@ export default function EditProfileScreen() {
       if (avatarUri && avatarUri !== user.avatar && IS_LIVE) {
         avatar = await uploadAvatar(user.id, avatarUri);
       }
+      const label = pointLabel.trim();
       await updateUser({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         phone: phone.trim(),
         avatar,
+        ...(user.role === 'transporter'
+          ? {
+              collectionPoint: label
+                ? {
+                    label,
+                    address: pointAddress.trim() || undefined,
+                    notes: pointNotes.trim() || undefined,
+                  }
+                : undefined,
+            }
+          : {}),
       });
       showAlert('Profil mis à jour', 'Vos informations ont été enregistrées.', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -135,6 +152,46 @@ export default function EditProfileScreen() {
             keyboardType="phone-pad"
           />
         </View>
+
+        {user.role === 'transporter' ? (
+          <>
+            <Text style={styles.label}>Point de collecte habituel</Text>
+            <Text style={styles.hint}>
+              Facultatif. S'il est renseigné, il est proposé automatiquement aux expéditeurs qui
+              choisissent de déposer leur colis. Sinon, vous conviendrez d'un lieu par message.
+            </Text>
+            <View style={styles.inputRow}>
+              <Ionicons name="location-outline" size={18} color={COLORS.textSecondary} />
+              <TextInput
+                style={styles.input}
+                value={pointLabel}
+                onChangeText={setPointLabel}
+                placeholder="Nom du lieu (ex : Café El Manar)"
+                placeholderTextColor={COLORS.textLight}
+              />
+            </View>
+            <View style={styles.inputRow}>
+              <Ionicons name="map-outline" size={18} color={COLORS.textSecondary} />
+              <TextInput
+                style={styles.input}
+                value={pointAddress}
+                onChangeText={setPointAddress}
+                placeholder="Adresse"
+                placeholderTextColor={COLORS.textLight}
+              />
+            </View>
+            <View style={styles.inputRow}>
+              <Ionicons name="time-outline" size={18} color={COLORS.textSecondary} />
+              <TextInput
+                style={styles.input}
+                value={pointNotes}
+                onChangeText={setPointNotes}
+                placeholder="Horaires ou consigne (ex : 9h–18h, sauf dimanche)"
+                placeholderTextColor={COLORS.textLight}
+              />
+            </View>
+          </>
+        ) : null}
 
         <Text style={styles.label}>E-mail</Text>
         <View style={[styles.inputRow, styles.inputRowDisabled]}>

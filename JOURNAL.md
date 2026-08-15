@@ -623,3 +623,56 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - src/types/index.ts, src/screens/shared/ScanLabelScreen.tsx (nouveau)
 - src/screens/shared/ProfileScreen.tsx, src/navigation/AppNavigator.tsx
 - app.json, package.json
+
+---
+
+## 2026-08-16 (suite) — Remise du colis : mode, point de collecte, preuve
+### Fait
+- [x] Deux modes de remise choisis a la creation : `point` (l'expediteur
+      depose, sans frais) et `home` (le transporteur se deplace,
+      +8 € fixes — HOME_PICKUP_FEE). Montant FIXE et non proportionnel au
+      poids : le trajet coute pareil au transporteur quel que soit le colis.
+- [x] Statut `dropped_off` ajoute a l'enum. Comblait un vrai trou : le
+      statut `collected` existait mais RIEN ne le posait, une expedition
+      passait de `accepted` a `delivered` sans que la prise en charge ne
+      soit jamais constatee.
+- [x] `declare_dropoff(id, photo)` — l'expediteur declare son depot avec
+      photo. `confirm_collection(id, jeton, photo)` — le transporteur
+      ATTITRE confirme, jeton de l'etiquette et photo obligatoires.
+      Les deux ecrivent un evenement de suivi : l'IN-APP notification en
+      decoule automatiquement (NotificationsScreen derive de
+      trackingHistory), donc rien a batir de ce cote.
+- [x] Point de collecte habituel, facultatif, dans le profil transporteur.
+- [x] Carte « Preuve de remise » dans le detail : photo du depot + photo de
+      la prise en charge.
+- [x] Categorie de litige `handover_disputed` (« Prise en charge
+      contestee ») : c'est le recours de l'expediteur, contrepartie du
+      choix de NE PAS suspendre le statut a sa confirmation.
+### Decisions assumees
+- Pas d'attente de confirmation de l'expediteur (j'avais propose l'inverse
+      puis me suis ravise) : suspendre le statut a la reponse d'un
+      expediteur endormi bloquerait un transporteur deja au port. Le scan
+      + la photo FONT la preuve ; le recours est le signalement.
+- Limite connue : un transporteur qui aurait photographie l'etiquette a
+      l'avance peut confirmer sans tenir le colis. La photo obligatoire
+      releve le cout sans supprimer le risque. Pas de solution complete
+      sans presence des deux parties — ce qui contredirait le cas d'usage.
+### Verifie en base
+- confirm_collection : expediteur -> REFUS, autre transporteur -> REFUS,
+      jeton faux -> REFUS, sans photo -> PHOTO_REQUIRED, transporteur
+      attitre -> statut `collected` + evenement de suivi (essai joue puis
+      annule par sous-transaction, aucune donnee reelle modifiee).
+### Reste a faire
+- [ ] Notification push hors application (aucune edge function d'envoi).
+- [ ] Transfert d'un colis a un autre transporteur avec accord du premier.
+- [ ] Reprendre automatiquement le point de collecte du transporteur dans
+      `handover_point` a l'acceptation (aujourd'hui le champ existe mais
+      n'est rempli par aucun flux).
+### Fichiers touches
+- supabase/migrations/20260816110000_status_dropped_off.sql (nouveau)
+- supabase/migrations/20260816120000_handover.sql (nouveau), schema.sql
+- src/types/index.ts, src/utils/pricing.ts, src/services/api.ts
+- src/screens/sender/CreateShipmentScreen.tsx
+- src/screens/shared/ShipmentDetailScreen.tsx, ScanLabelScreen.tsx,
+  EditProfileScreen.tsx, ReportProblemScreen.tsx, TrackingScreen.tsx
+- src/components/index.tsx, src/content/disputes.ts

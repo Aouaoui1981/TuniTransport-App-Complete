@@ -31,14 +31,20 @@ import { showAlert } from '../../utils/alert';
 import { Card } from '../../components';
 import VerificationRequired from '../../components/VerificationRequired';
 import { LegalConsent, ConsentCheckbox } from '../../components/LegalConsent';
-import { PRICE_PER_KG, computeWeightPrice, OVERSIZED_EXAMPLES } from '../../utils/pricing';
+import {
+  PRICE_PER_KG,
+  HOME_PICKUP_FEE,
+  computeWeightPrice,
+  computeTotalPrice,
+  OVERSIZED_EXAMPLES,
+} from '../../utils/pricing';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { coordsFor } from '../../services/mockData';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
 import { uploadShipmentPhoto } from '../../services/api';
-import { ShipmentType } from '../../types';
+import { ShipmentType, HandoverMode } from '../../types';
 import { getErrorMessage } from '../../utils/errors';
 
 const MAX_PHOTOS = 5;
@@ -70,6 +76,10 @@ export default function CreateShipmentScreen() {
   const [deliveryStreet, setDeliveryStreet] = useState(editing?.deliveryAddress.street ?? '');
   const [deliveryContact, setDeliveryContact] = useState(editing?.deliveryAddress.contactName ?? '');
   const [deliveryPhone, setDeliveryPhone] = useState(editing?.deliveryAddress.contactPhone ?? '');
+  // Remise du colis : le transporteur vient (frais) ou l'expéditeur dépose.
+  const [handoverMode, setHandoverMode] = useState<HandoverMode>(
+    editing?.handoverMode ?? 'point'
+  );
   // Photos (large items)
   const [photoUris, setPhotoUris] = useState<string[]>(editing?.photos ?? []);
 
@@ -81,7 +91,12 @@ export default function CreateShipmentScreen() {
 
   const isSmall = type === 'small';
   const weightNum = parseFloat(weight.replace(',', '.')) || 0;
-  const livePrice = useMemo(() => computeWeightPrice(weightNum), [weightNum]);
+  const basePrice = useMemo(() => computeWeightPrice(weightNum), [weightNum]);
+  const pickupFee = handoverMode === 'home' ? HOME_PICKUP_FEE : 0;
+  const livePrice = useMemo(
+    () => computeTotalPrice(weightNum, handoverMode),
+    [weightNum, handoverMode]
+  );
 
   const captureFrom = async (source: 'camera' | 'library') => {
     const perm =
@@ -267,6 +282,8 @@ export default function CreateShipmentScreen() {
         photos: photoUrls.length > 0 ? photoUrls : undefined,
         pickupAddress,
         deliveryAddress,
+        handoverMode,
+        handoverFee: pickupFee,
       });
       showAlert(
         'Envoi publié !',
@@ -381,6 +398,7 @@ export default function CreateShipmentScreen() {
                   <Text style={styles.priceLabel}>Prix calculé</Text>
                   <Text style={styles.priceFormula}>
                     {weightNum > 0 ? `${weightNum} kg × ${PRICE_PER_KG}€` : `${PRICE_PER_KG}€ par kg`}
+                    {pickupFee > 0 ? ` + ${pickupFee}€ de déplacement` : ''}
                   </Text>
                 </View>
                 <Text style={styles.priceValue}>{livePrice > 0 ? `${livePrice}€` : '—'}</Text>
@@ -455,6 +473,58 @@ export default function CreateShipmentScreen() {
                 </TouchableOpacity>
               )}
             </View>
+          </Card>
+
+          {/* Remise du colis */}
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>Remise du colis</Text>
+            <Text style={styles.handoverIntro}>
+              Comment le transporteur récupère-t-il votre colis ?
+            </Text>
+            {(
+              [
+                {
+                  mode: 'point' as HandoverMode,
+                  icon: 'location-outline' as const,
+                  title: 'Je dépose au point de collecte',
+                  detail:
+                    'Vous convenez du lieu avec le transporteur. Vous pouvez déposer et repartir : vous serez prévenu dès la prise en charge.',
+                  extra: 'Sans frais',
+                },
+                {
+                  mode: 'home' as HandoverMode,
+                  icon: 'home-outline' as const,
+                  title: 'Le transporteur vient chez moi',
+                  detail: "Il se déplace jusqu'à l'adresse de collecte ci-dessous.",
+                  extra: `+ ${HOME_PICKUP_FEE}€ de déplacement`,
+                },
+              ]
+            ).map((opt) => {
+              const active = handoverMode === opt.mode;
+              return (
+                <TouchableOpacity
+                  key={opt.mode}
+                  activeOpacity={0.85}
+                  onPress={() => setHandoverMode(opt.mode)}
+                  style={[styles.handoverCard, active && styles.handoverCardActive]}
+                >
+                  <Ionicons
+                    name={opt.icon}
+                    size={22}
+                    color={active ? COLORS.primary : COLORS.textLight}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.handoverTitle, active && { color: COLORS.primary }]}>
+                      {opt.title}
+                    </Text>
+                    <Text style={styles.handoverDetail}>{opt.detail}</Text>
+                    <Text style={[styles.handoverExtra, active && { color: COLORS.primary }]}>
+                      {opt.extra}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </Card>
 
           {/* Pickup address */}
@@ -609,6 +679,35 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryLight,
     borderRadius: RADIUS.md,
     padding: SPACING.lg,
+  },
+  handoverIntro: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.sm,
+  },
+  handoverCard: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    marginBottom: SPACING.sm,
+  },
+  handoverCardActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
+  handoverTitle: { fontSize: FONTS.sizes.md, fontWeight: '700', color: COLORS.text },
+  handoverDetail: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    lineHeight: 19,
+    marginTop: 2,
+  },
+  handoverExtra: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '700',
+    color: COLORS.textSecondary,
+    marginTop: 4,
   },
   priceLabel: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.primaryDark },
   declarationBox: { marginTop: SPACING.md, gap: SPACING.sm },

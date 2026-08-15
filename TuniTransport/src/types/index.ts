@@ -9,11 +9,27 @@ export type ShipmentType = 'small' | 'large';
 export type ShipmentStatus =
   | 'pending'
   | 'accepted'
+  | 'dropped_off'
   | 'collected'
   | 'in_transit'
   | 'arrived'
   | 'delivered'
   | 'cancelled';
+
+/**
+ * Comment le colis passe de l'expéditeur au transporteur.
+ *  - 'home'  : le transporteur se déplace jusqu'à l'expéditeur (frais).
+ *  - 'point' : l'expéditeur dépose au point de collecte convenu.
+ */
+export type HandoverMode = 'home' | 'point';
+
+/** Point de collecte : lieu habituel d'un transporteur, ou lieu convenu. */
+export interface CollectionPoint {
+  label: string;
+  address?: string;
+  /** Horaires ou consigne libre (« du lundi au samedi, 9h–18h »). */
+  notes?: string;
+}
 
 export type BidStatus = 'pending' | 'accepted' | 'rejected';
 
@@ -38,6 +54,8 @@ export interface User {
   totalRatings: number;
   createdAt: string;
   truckDetails?: TruckDetails;
+  /** Point de collecte habituel — transporteurs uniquement, facultatif. */
+  collectionPoint?: CollectionPoint;
   identityStatus: IdentityStatus;
   identityDocumentType?: string;
   identityRejectionReason?: string;
@@ -151,6 +169,17 @@ export interface Shipment {
    * transporteur attitré ou à un administrateur.
    */
   labelToken?: string;
+  /** Mode de remise choisi par l'expéditeur à la création. */
+  handoverMode?: HandoverMode;
+  /** Frais de déplacement facturés quand le transporteur vient sur place. */
+  handoverFee?: number;
+  /** Lieu de remise convenu (repris du profil du transporteur ou négocié). */
+  handoverPoint?: CollectionPoint;
+  /** Dépôt déclaré par l'expéditeur, avec sa photo. */
+  droppedOffAt?: string;
+  droppedOffPhoto?: string;
+  /** Photo prise par le transporteur au moment de la prise en charge. */
+  collectedPhoto?: string;
   trackingHistory: TrackingEvent[];
   bids?: Bid[];
   // Horodatages des consentements légaux (traçabilité juridique) :
@@ -349,6 +378,7 @@ export type DisputeCategory =
   | 'delay'
   | 'not_as_described'
   | 'no_show'
+  | 'handover_disputed'
   | 'other';
 
 export interface Dispute {
