@@ -125,6 +125,18 @@ create table public.ratings (
   unique (shipment_id, rater_id)
 );
 
+-- Blocage d'un membre par un autre. Cf. migration 20260813200000.
+create table public.blocked_users (
+  blocker_id uuid not null references public.profiles(id) on delete cascade,
+  blocked_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (blocker_id, blocked_id),
+  constraint blocked_users_not_self check (blocker_id <> blocked_id)
+);
+
+create index if not exists blocked_users_blocked_idx
+  on public.blocked_users (blocked_id);
+
 create table public.push_tokens (
   user_id    uuid not null references public.profiles(id) on delete cascade,
   token      text not null,
@@ -393,6 +405,37 @@ as $$
   );
 $$;
 
+-- Vrai si l'un des deux membres a bloqué l'autre, dans un sens ou dans
+-- l'autre. SECURITY DEFINER : doit lire les lignes que la RLS masque.
+create or replace function public.is_blocked_between(a uuid, b uuid)
+returns boolean
+language sql
+security definer set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from public.blocked_users
+    where (blocker_id = a and blocked_id = b)
+       or (blocker_id = b and blocked_id = a)
+  );
+$$;
+
+-- Vrai si un blocage existe entre l'appelant et un autre participant.
+create or replace function public.conversation_is_blocked(conv_id uuid)
+returns boolean
+language sql
+security definer set search_path = public
+stable
+as $$
+  select exists (
+    select 1
+    from public.conversation_participants cp
+    where cp.conversation_id = conv_id
+      and cp.user_id <> auth.uid()
+      and public.is_blocked_between(auth.uid(), cp.user_id)
+  );
+$$;
+
 -- ── Row Level Security ───────────────────────────────────────────────────
 alter table public.profiles                  enable row level security;
 alter table public.routes                    enable row level security;
@@ -403,6 +446,7 @@ alter table public.conversations             enable row level security;
 alter table public.conversation_participants enable row level security;
 alter table public.messages                  enable row level security;
 alter table public.ratings                   enable row level security;
+alter table public.blocked_users              enable row level security;
 alter table public.push_tokens               enable row level security;
 
 -- profiles: readable only by its owner (or an admin); updatable only by owner.
@@ -490,9 +534,14 @@ create policy "participants_insert" on public.conversation_participants
 create policy "messages_select" on public.messages
   for select to authenticated
   using (public.is_conversation_participant(conversation_id));
+-- Un blocage entre les deux participants coupe l'envoi, dans les deux sens.
 create policy "messages_insert" on public.messages
   for insert to authenticated
-  with check (sender_id = auth.uid() and public.is_conversation_participant(conversation_id));
+  with check (
+    sender_id = auth.uid()
+    and public.is_conversation_participant(conversation_id)
+    and not public.conversation_is_blocked(conversation_id)
+  );
 create policy "messages_update" on public.messages
   for update to authenticated
   using (public.is_conversation_participant(conversation_id));
@@ -502,6 +551,15 @@ create policy "ratings_select" on public.ratings
   for select to authenticated using (true);
 create policy "ratings_insert" on public.ratings
   for insert to authenticated with check (rater_id = auth.uid());
+
+-- blocked_users : chacun ne voit et ne gère que sa propre liste. Personne ne
+-- peut savoir qui l'a bloqué — c'est ce qui rend le blocage sûr.
+create policy "blocked_users_select" on public.blocked_users
+  for select to authenticated using (blocker_id = auth.uid());
+create policy "blocked_users_insert" on public.blocked_users
+  for insert to authenticated with check (blocker_id = auth.uid());
+create policy "blocked_users_delete" on public.blocked_users
+  for delete to authenticated using (blocker_id = auth.uid());
 
 -- push_tokens: owner only
 create policy "push_tokens_all" on public.push_tokens

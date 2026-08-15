@@ -25,11 +25,16 @@ function formatTime(iso: string): string {
 export default function MessagesScreen() {
   const navigation = useAppNavigation();
   const { user } = useAuth();
-  const { conversations } = useData();
+  const { conversations, blockedUserIds } = useData();
 
+  // Les conversations avec un membre bloqué disparaissent de la liste ; elles
+  // reviennent telles quelles après déblocage.
   const sorted = useMemo(
-    () => [...conversations].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
-    [conversations]
+    () =>
+      conversations
+        .filter((c) => !c.participants.some((p) => p !== user?.id && blockedUserIds.includes(p)))
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    [conversations, blockedUserIds, user?.id]
   );
 
   const otherName = (c: Conversation): string => {

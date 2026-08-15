@@ -44,7 +44,14 @@ export default function ChatScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Chat'>>();
   const { user } = useAuth();
-  const { getConversationById, getMessagesByConversation, addMessage } = useData();
+  const {
+    getConversationById,
+    getMessagesByConversation,
+    addMessage,
+    isBlocked,
+    blockUser,
+    unblockUser,
+  } = useData();
 
   const conversation = getConversationById(route.params.conversationId);
   const messages = getMessagesByConversation(route.params.conversationId);
@@ -59,6 +66,7 @@ export default function ChatScreen() {
     [conversation, user?.id]
   );
   const otherName = (otherId && conversation?.participantNames[otherId]) || 'Contact';
+  const blocked = !!otherId && isBlocked(otherId);
 
   useEffect(() => {
     isMounted.current = true;
@@ -94,9 +102,46 @@ export default function ChatScreen() {
     }
   };
 
+  // Bloquer coupe les messages dans les deux sens : la personne bloquée ne
+  // peut plus écrire, et l'on ne peut plus lui écrire non plus. Le refus
+  // définitif vient du serveur (RLS) ; l'écran ne fait que l'anticiper.
+  const toggleBlock = () => {
+    if (!otherId) return;
+    if (blocked) {
+      showAlert('Débloquer', `Autoriser à nouveau les messages avec ${otherName} ?`, [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Débloquer',
+          onPress: () => {
+            unblockUser(otherId).catch(() =>
+              showAlert('Déblocage', 'Opération impossible pour le moment. Réessayez.')
+            );
+          },
+        },
+      ]);
+      return;
+    }
+    showAlert(
+      `Bloquer ${otherName} ?`,
+      'Vous ne recevrez plus ses messages et il ne pourra plus vous écrire. Vous pourrez le débloquer depuis votre profil.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Bloquer',
+          style: 'destructive',
+          onPress: () => {
+            blockUser(otherId).catch(() =>
+              showAlert('Blocage', 'Opération impossible pour le moment. Réessayez.')
+            );
+          },
+        },
+      ]
+    );
+  };
+
   const send = async () => {
     const trimmed = text.trim();
-    if (!trimmed || !user || !conversation) return;
+    if (!trimmed || !user || !conversation || blocked) return;
     setText('');
     await addMessage({
       conversationId: conversation.id,
@@ -143,13 +188,30 @@ export default function ChatScreen() {
           <Text style={styles.headerName} numberOfLines={1}>
             {otherName}
           </Text>
-          <View style={styles.onlineRow}>
-            <View style={styles.onlineDot} />
-            <Text style={styles.onlineText}>En ligne</Text>
-          </View>
+          {blocked ? (
+            <Text style={styles.blockedLabel}>Bloqué</Text>
+          ) : (
+            <View style={styles.onlineRow}>
+              <View style={styles.onlineDot} />
+              <Text style={styles.onlineText}>En ligne</Text>
+            </View>
+          )}
         </View>
-        <TouchableOpacity onPress={callOther} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="call-outline" size={22} color={COLORS.primary} />
+        {!blocked && (
+          <TouchableOpacity onPress={callOther} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="call-outline" size={22} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          onPress={toggleBlock}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={blocked ? 'Débloquer ce contact' : 'Bloquer ce contact'}
+        >
+          <Ionicons
+            name={blocked ? 'lock-open-outline' : 'ban-outline'}
+            size={22}
+            color={blocked ? COLORS.secondary : COLORS.textSecondary}
+          />
         </TouchableOpacity>
       </View>
 
@@ -167,32 +229,44 @@ export default function ChatScreen() {
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
         />
 
-        {/* Input bar */}
-        <View style={styles.inputBar}>
-          <TouchableOpacity
-            onPress={() =>
-              showAlert('Pièces jointes', 'L’envoi de pièces jointes sera bientôt disponible.')
-            }
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="add-circle-outline" size={26} color={COLORS.textSecondary} />
-          </TouchableOpacity>
-          <TextInput
-            style={styles.input}
-            value={text}
-            onChangeText={setText}
-            placeholder="Écrivez votre message…"
-            placeholderTextColor={COLORS.textLight}
-            multiline
-          />
-          <TouchableOpacity
-            style={[styles.sendBtn, !text.trim() && { opacity: 0.4 }]}
-            onPress={send}
-            disabled={!text.trim()}
-          >
-            <Ionicons name="send" size={18} color={COLORS.white} />
-          </TouchableOpacity>
-        </View>
+        {/* Barre de saisie — remplacée par un bandeau si le contact est bloqué */}
+        {blocked ? (
+          <View style={styles.blockedBar}>
+            <Ionicons name="ban-outline" size={18} color={COLORS.textSecondary} />
+            <Text style={styles.blockedBarText}>
+              Vous avez bloqué {otherName}. Aucun message ne peut être échangé.
+            </Text>
+            <TouchableOpacity onPress={toggleBlock}>
+              <Text style={styles.blockedBarAction}>Débloquer</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.inputBar}>
+            <TouchableOpacity
+              onPress={() =>
+                showAlert('Pièces jointes', 'L’envoi de pièces jointes sera bientôt disponible.')
+              }
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="add-circle-outline" size={26} color={COLORS.textSecondary} />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              value={text}
+              onChangeText={setText}
+              placeholder="Écrivez votre message…"
+              placeholderTextColor={COLORS.textLight}
+              multiline
+            />
+            <TouchableOpacity
+              style={[styles.sendBtn, !text.trim() && { opacity: 0.4 }]}
+              onPress={send}
+              disabled={!text.trim()}
+            >
+              <Ionicons name="send" size={18} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -214,6 +288,19 @@ const styles = StyleSheet.create({
   onlineRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 },
   onlineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: COLORS.success },
   onlineText: { fontSize: FONTS.sizes.xs, color: COLORS.textSecondary },
+  blockedLabel: { fontSize: FONTS.sizes.xs, color: COLORS.textSecondary, fontWeight: '700' },
+  blockedBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+  },
+  blockedBarText: { flex: 1, fontSize: FONTS.sizes.sm, color: COLORS.textSecondary },
+  blockedBarAction: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.primary },
   list: { padding: SPACING.lg, gap: SPACING.sm, flexGrow: 1 },
   bubbleRow: { flexDirection: 'row' },
   bubbleRowMine: { justifyContent: 'flex-end' },

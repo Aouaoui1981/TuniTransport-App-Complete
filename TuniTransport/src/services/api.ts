@@ -603,6 +603,33 @@ export function subscribeToShipmentLocation(
   };
 }
 
+// ── Blocage d'utilisateurs ───────────────────────────────────────────────
+// La liste n'est lisible que par son propriétaire (RLS) : impossible de
+// savoir qui vous a bloqué. Côté serveur, un blocage dans un sens ou dans
+// l'autre coupe l'envoi de messages entre les deux membres.
+
+export async function fetchBlockedUserIds(): Promise<string[]> {
+  const { data, error } = await db().from('blocked_users').select('blocked_id');
+  if (error) throw error;
+  return ((data as { blocked_id: string }[]) ?? []).map((r) => r.blocked_id);
+}
+
+export async function blockUser(blockerId: string, blockedId: string): Promise<void> {
+  const { error } = await db()
+    .from('blocked_users')
+    .upsert({ blocker_id: blockerId, blocked_id: blockedId }, { onConflict: 'blocker_id,blocked_id' });
+  if (error) throw error;
+}
+
+export async function unblockUser(blockerId: string, blockedId: string): Promise<void> {
+  const { error } = await db()
+    .from('blocked_users')
+    .delete()
+    .eq('blocker_id', blockerId)
+    .eq('blocked_id', blockedId);
+  if (error) throw error;
+}
+
 // ── Conversations & messages ─────────────────────────────────────────────
 
 export async function fetchConversations(
