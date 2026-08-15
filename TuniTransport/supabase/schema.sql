@@ -8,7 +8,8 @@
 create type user_role as enum ('sender', 'transporter');
 create type shipment_type as enum ('small', 'large');
 create type shipment_status as enum
-  ('pending', 'accepted', 'collected', 'in_transit', 'arrived', 'delivered', 'cancelled');
+  ('pending', 'accepted', 'dropped_off', 'collected', 'in_transit', 'arrived',
+   'delivered', 'cancelled');
 create type bid_status as enum ('pending', 'accepted', 'rejected');
 
 -- ── Tables ───────────────────────────────────────────────────────────────
@@ -1795,7 +1796,8 @@ do $$ begin
     create type dispute_status as enum ('open', 'in_review', 'resolved', 'rejected');
   end if;
   if not exists (select 1 from pg_type where typname = 'dispute_category') then
-    create type dispute_category as enum ('lost', 'damaged', 'delay', 'not_as_described', 'no_show', 'other');
+    create type dispute_category as enum ('lost', 'damaged', 'delay', 'not_as_described',
+                                        'no_show', 'handover_disputed', 'other');
   end if;
 end $$;
 

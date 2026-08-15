@@ -13,6 +13,12 @@
 
 export const PRICE_PER_KG = 4; // € par kg — bagages personnels uniquement
 
+// Frais de déplacement quand le transporteur vient chercher le colis chez
+// l'expéditeur. Montant FIXE, et non proportionnel au poids : un trajet dans
+// la ville coûte au transporteur la même chose qu'il emporte 3 kg ou 15.
+// Déposer soi-même au point de collecte reste gratuit.
+export const HOME_PICKUP_FEE = 8; // €
+
 export function computeWeightPrice(weightKg: number): number {
   if (!Number.isFinite(weightKg) || weightKg <= 0) return 0;
   return Math.round(weightKg * PRICE_PER_KG * 100) / 100;
@@ -28,3 +34,9 @@ export const OVERSIZED_EXAMPLES = [
   'Pièces automobiles',
   'Meubles et bagages volumineux',
 ] as const;
+
+/** Prix total d'un colis au poids, frais de déplacement compris. */
+export function computeTotalPrice(weightKg: number, handoverMode: 'home' | 'point'): number {
+  const base = computeWeightPrice(weightKg);
+  return Math.round((base + (handoverMode === 'home' ? HOME_PICKUP_FEE : 0)) * 100) / 100;
+}

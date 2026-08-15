@@ -13,13 +13,24 @@ import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
 import { Card } from '../../components';
 import { parseLabelUrl } from '../../config/app';
 import { IS_LIVE } from '../../services/supabase';
-import { resolveLabel, LabelError, ScannedLabel, LabelScanError } from '../../services/api';
+import {
+  resolveLabel,
+  confirmCollection,
+  uploadShipmentPhoto,
+  LabelError,
+  ScannedLabel,
+  LabelScanError,
+} from '../../services/api';
+import { showAlert } from '../../utils/alert';
+import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
 
 const MESSAGES: Record<LabelScanError, { title: string; detail: string }> = {
   NOT_AUTHENTICATED: {
@@ -60,7 +71,11 @@ function Line({ label, value }: { label: string; value?: string | number | null 
 }
 
 export default function ScanLabelScreen() {
+  const { user } = useAuth();
+  const { refresh } = useData();
   const [permission, requestPermission] = useCameraPermissions();
+  const [confirming, setConfirming] = useState(false);
+  const [scanned, setScanned] = useState<{ shipmentId: string; token: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [label, setLabel] = useState<ScannedLabel | null>(null);
   const [error, setError] = useState<LabelScanError | null>(null);
@@ -72,6 +87,36 @@ export default function ScanLabelScreen() {
     locked.current = false;
     setLabel(null);
     setError(null);
+    setScanned(null);
+  };
+
+  // La photo est obligatoire côté serveur aussi : c'est elle que verra
+  // l'expéditeur, resté chez lui, et c'est elle qui tranchera un litige.
+  const confirm = async () => {
+    if (!label || !scanned || !user) return;
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      showAlert('Permission requise', "Autorisez l'appareil photo pour photographier le colis.");
+      return;
+    }
+    const shot = await ImagePicker.launchCameraAsync({ quality: 0.6 });
+    if (shot.canceled || !shot.assets?.[0]) return;
+    setConfirming(true);
+    try {
+      const url = await uploadShipmentPhoto(user.id, shot.assets[0].uri);
+      await confirmCollection(scanned.shipmentId, scanned.token, url);
+      await refresh();
+      showAlert(
+        'Prise en charge enregistrée',
+        "L'expéditeur a été prévenu et voit votre photo dans le suivi."
+      );
+      reset();
+    } catch (e) {
+      const code = e instanceof LabelError ? e.code : 'UNKNOWN';
+      showAlert(MESSAGES[code].title, MESSAGES[code].detail);
+    } finally {
+      setConfirming(false);
+    }
   };
 
   const onScan = useCallback(async ({ data }: { data: string }) => {
@@ -80,6 +125,7 @@ export default function ScanLabelScreen() {
     if (!parsed) return; // QR étranger à THL : on continue de viser.
     locked.current = true;
     setBusy(true);
+    setScanned(parsed);
     try {
       if (!IS_LIVE) throw new LabelError('UNKNOWN');
       setLabel(await resolveLabel(parsed.shipmentId, parsed.token));
@@ -171,6 +217,20 @@ export default function ScanLabelScreen() {
                 <Line label="Transporteur" value={label.transporterName} />
               </Card>
             </>
+          ) : null}
+
+          {label &&
+          label.viewerRole === 'transporter' &&
+          (label.status === 'accepted' || label.status === 'dropped_off') ? (
+            <TouchableOpacity
+              style={[styles.primaryBtn, { backgroundColor: COLORS.secondary }]}
+              onPress={confirm}
+              disabled={confirming}
+            >
+              <Text style={styles.primaryBtnText}>
+                {confirming ? 'Enregistrement…' : 'Photographier et prendre en charge'}
+              </Text>
+            </TouchableOpacity>
           ) : null}
 
           <TouchableOpacity style={styles.primaryBtn} onPress={reset}>

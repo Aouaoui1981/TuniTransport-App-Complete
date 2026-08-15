@@ -13,6 +13,7 @@ import PressableScale from './PressableScale';
 const STATUS_META: Record<ShipmentStatus, { label: string; color: string; bg: string }> = {
   pending: { label: 'En attente', color: COLORS.accent, bg: COLORS.accentLight },
   accepted: { label: 'Accepté', color: COLORS.info, bg: COLORS.primaryLight },
+  dropped_off: { label: 'Déposé', color: COLORS.accent, bg: COLORS.accentLight },
   collected: { label: 'Récupéré', color: COLORS.primary, bg: COLORS.primaryLight },
   in_transit: { label: 'En transit', color: COLORS.secondary, bg: COLORS.secondaryLight },
   arrived: { label: 'Arrivé', color: COLORS.primaryDark, bg: COLORS.primaryLight },

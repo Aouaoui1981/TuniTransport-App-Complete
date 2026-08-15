@@ -2,7 +2,7 @@
 // TuniTransport — Détails de l'envoi — STEP 10, card order per spec:
 // Status → Route → Items/Description → Bids → Tracking → Transporter → Actions
 // ──────────────────────────────────────────────────────────────────────────
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +18,8 @@ import { IS_LIVE } from '../../services/supabase';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
 import { Bid } from '../../types';
 import { printShippingLabel } from '../../services/shippingLabel';
+import * as ImagePicker from 'expo-image-picker';
+import { declareDropoff, uploadShipmentPhoto } from '../../services/api';
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-FR', {
@@ -33,6 +35,7 @@ export default function ShipmentDetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'ShipmentDetail'>>();
   const { user } = useAuth();
   const { getShipmentById, ensureConversation, confirmDelivery, refresh } = useData();
+  const [droppingOff, setDroppingOff] = useState(false);
 
   // Re-fetch whenever the screen regains focus (e.g. returning from the Stripe
   // payment page) so the paid state and tracking reflect the webhook update.
@@ -88,6 +91,44 @@ export default function ShipmentDetailScreen() {
               await confirmDelivery(shipment.id);
             } catch (e) {
               showAlert('Erreur', getErrorMessage(e, 'Impossible de confirmer la réception.'));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+
+  // Dépôt au point de collecte : l'expéditeur peut déposer et repartir. La
+  // photo n'est pas décorative — c'est la seule trace de ce qu'il a laissé,
+  // et elle tranchera si le colis n'arrive jamais.
+  const handleDeclareDropoff = () => {
+    if (!shipment) return;
+    showAlert(
+      'Déclarer le dépôt',
+      "Prenez une photo du colis à l'endroit où vous le laissez. Le transporteur sera prévenu, et vous recevrez une notification dès qu'il le prendra en charge.",
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Prendre la photo',
+          onPress: async () => {
+            const perm = await ImagePicker.requestCameraPermissionsAsync();
+            if (!perm.granted) {
+              showAlert('Permission requise', "Autorisez l'appareil photo pour déclarer le dépôt.");
+              return;
+            }
+            const shot = await ImagePicker.launchCameraAsync({ quality: 0.6 });
+            if (shot.canceled || !shot.assets?.[0]) return;
+            setDroppingOff(true);
+            try {
+              const url = await uploadShipmentPhoto(user!.id, shot.assets[0].uri);
+              await declareDropoff(shipment.id, url);
+              await refresh();
+              showAlert('Dépôt enregistré', 'Le transporteur a été prévenu.');
+            } catch (e) {
+              showAlert('Erreur', getErrorMessage(e, "Impossible d'enregistrer le dépôt."));
+            } finally {
+              setDroppingOff(false);
             }
           },
         },
@@ -336,6 +377,28 @@ export default function ShipmentDetailScreen() {
         ) : null}
 
         {/* 7 — Actions */}
+        {shipment.droppedOffPhoto || shipment.collectedPhoto ? (
+          <Card style={styles.card}>
+            <Text style={styles.cardHeading}>Preuve de remise</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photosRow}>
+              {shipment.droppedOffPhoto ? (
+                <View>
+                  <Image source={{ uri: shipment.droppedOffPhoto }} style={styles.photo} />
+                  <Text style={styles.proofCaption}>Déposé par l'expéditeur</Text>
+                </View>
+              ) : null}
+              {shipment.collectedPhoto ? (
+                <View>
+                  <Image source={{ uri: shipment.collectedPhoto }} style={styles.photo} />
+                  <Text style={styles.proofCaption}>
+                    Pris en charge par {shipment.transporterName ?? 'le transporteur'}
+                  </Text>
+                </View>
+              ) : null}
+            </ScrollView>
+          </Card>
+        ) : null}
+
         <View style={styles.actions}>
           {isSender && shipment.senderId === user?.id && shipment.status === 'pending' ? (
             <TouchableOpacity
@@ -417,6 +480,34 @@ export default function ShipmentDetailScreen() {
             >
               <Ionicons name="checkmark-done" size={18} color={COLORS.white} />
               <Text style={styles.actionText}>Confirmer la réception du colis</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {isSender &&
+          shipment.senderId === user?.id &&
+          shipment.handoverMode === 'point' &&
+          shipment.status === 'accepted' ? (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: COLORS.accent }]}
+              onPress={handleDeclareDropoff}
+              disabled={droppingOff}
+            >
+              <Ionicons name="archive" size={18} color={COLORS.white} />
+              <Text style={styles.actionText}>
+                {droppingOff ? 'Enregistrement…' : "J'ai déposé le colis"}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {isTransporter &&
+          shipment.transporterId === user?.id &&
+          (shipment.status === 'accepted' || shipment.status === 'dropped_off') ? (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: COLORS.secondary }]}
+              onPress={() => navigation.navigate('ScanLabel')}
+            >
+              <Ionicons name="qr-code" size={18} color={COLORS.white} />
+              <Text style={styles.actionText}>Scanner et prendre en charge</Text>
             </TouchableOpacity>
           ) : null}
 
@@ -508,6 +599,13 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.xs,
   },
   description: { fontSize: FONTS.sizes.md, color: COLORS.text, lineHeight: 21 },
+  proofCaption: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginTop: 4,
+    maxWidth: 96,
+  },
   photosRow: { gap: SPACING.sm, marginTop: SPACING.md },
   photo: {
     width: 110,
