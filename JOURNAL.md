@@ -512,3 +512,38 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - [ ] Detacher les integrations GitHub Vercel et Expo (echecs permanents).
 ### Fichiers touches
 - src/content/whitepaper.ts
+
+---
+
+## 2026-08-13 (suite) — Blocage d'un membre (conformite UGC Google Play)
+### Fait
+- [x] Table `blocked_users` (blocker_id, blocked_id) + RLS : chacun ne voit et
+      ne gere que sa propre liste, personne ne peut savoir qui l'a bloque.
+- [x] Fonctions `is_blocked_between(a,b)` et `conversation_is_blocked(conv)`
+      en SECURITY DEFINER (elles doivent lire des lignes masquees par la RLS).
+- [x] Policy `messages_insert` renforcee : un blocage dans un sens ou dans
+      l'autre coupe l'envoi. Verrou serveur, pas seulement visuel.
+      L'historique deja echange reste lisible ; seul l'envoi est coupe.
+- [x] api.ts : fetchBlockedUserIds / blockUser / unblockUser.
+- [x] DataContext : blockedUserIds, isBlocked, blockUser, unblockUser
+      (mise a jour optimiste, rollback si le serveur refuse).
+- [x] ChatScreen : bouton bloquer/debloquer dans l'en-tete, double
+      confirmation, bandeau a la place de la barre de saisie quand bloque.
+- [x] MessagesScreen : les conversations avec un membre bloque disparaissent
+      de la liste et reviennent apres deblocage.
+- [x] Nouvel ecran BlockedUsersScreen + entree « Membres bloques » dans le
+      profil. Le nom vient de conversation_participants, la RLS interdisant
+      depuis le durcissement de lire le profil d'un autre membre.
+### Reste a faire
+- [ ] APPLIQUER la migration 20260813200000_block_users.sql en production
+      (MCP Supabase injoignable au moment du commit : trois tentatives en
+      timeout). Sans elle, fetchBlockedUserIds echoue et retombe sur une
+      liste vide : l'application ne casse pas, mais le blocage n'agit pas.
+- [ ] Hors perimetre assume : un membre bloque peut encore enchérir sur un
+      envoi. Le blocage ne couvre aujourd'hui que la messagerie.
+### Fichiers touches
+- supabase/migrations/20260813200000_block_users.sql, supabase/schema.sql
+- src/services/api.ts, src/context/DataContext.tsx
+- src/screens/shared/ChatScreen.tsx, MessagesScreen.tsx, ProfileScreen.tsx
+- src/screens/shared/BlockedUsersScreen.tsx (nouveau)
+- src/navigation/AppNavigator.tsx

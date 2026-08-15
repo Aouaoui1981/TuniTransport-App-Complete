@@ -55,6 +55,7 @@ import AdminBroadcastScreen from '../screens/shared/AdminBroadcastScreen';
 import AdminDisputesScreen from '../screens/shared/AdminDisputesScreen';
 import ReportProblemScreen from '../screens/shared/ReportProblemScreen';
 import MyDisputesScreen from '../screens/shared/MyDisputesScreen';
+import BlockedUsersScreen from '../screens/shared/BlockedUsersScreen';
 import SupportScreen from '../screens/shared/SupportScreen';
 import ReferralScreen from '../screens/shared/ReferralScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
@@ -104,6 +105,7 @@ export type RootStackParamList = {
   AdminDisputes: undefined;
   ReportProblem: { shipmentId: string };
   MyDisputes: undefined;
+  BlockedUsers: undefined;
   Support: undefined;
   Referral: undefined;
   Notifications: undefined;
@@ -369,6 +371,11 @@ export default function AppNavigator() {
             name="MyDisputes"
             component={MyDisputesScreen}
             options={{ ...SUBSCREEN_HEADER, title: 'Mes signalements' }}
+          />
+          <Stack.Screen
+            name="BlockedUsers"
+            component={BlockedUsersScreen}
+            options={{ ...SUBSCREEN_HEADER, title: 'Membres bloqués' }}
           />
           <Stack.Screen
             name="Support"

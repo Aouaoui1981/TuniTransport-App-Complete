@@ -30,13 +30,21 @@ import { LEGAL_PAGES, LegalPageKey } from '../../content/legal';
 const MENU: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  action?: 'editProfile' | 'notifications' | 'security' | 'disputes' | 'support' | 'referral';
+  action?:
+    | 'editProfile'
+    | 'notifications'
+    | 'security'
+    | 'disputes'
+    | 'blocked'
+    | 'support'
+    | 'referral';
   legalPage?: LegalPageKey;
 }[] = [
   { icon: 'person-outline', label: 'Modifier le profil', action: 'editProfile' },
   { icon: 'gift-outline', label: 'Parrainage — gagnez 10 €', action: 'referral' },
   { icon: 'notifications-outline', label: 'Notifications', action: 'notifications' },
   { icon: 'flag-outline', label: 'Mes signalements', action: 'disputes' },
+  { icon: 'ban-outline', label: 'Membres bloqués', action: 'blocked' },
   { icon: 'lock-closed-outline', label: 'Sécurité', action: 'security' },
   { icon: 'help-circle-outline', label: 'Aide & Support', action: 'support' },
   { icon: LEGAL_PAGES.terms.icon, label: LEGAL_PAGES.terms.title, legalPage: 'terms' },
@@ -142,6 +150,8 @@ export default function ProfileScreen() {
       openSecurity();
     } else if (item.action === 'disputes') {
       navigation.navigate('MyDisputes');
+    } else if (item.action === 'blocked') {
+      navigation.navigate('BlockedUsers');
     } else if (item.action === 'support') {
       navigation.navigate('Support');
     } else if (item.action === 'referral') {

@@ -71,6 +71,11 @@ interface DataContextValue {
     photos?: string[];
   }) => Promise<void>;
   getUserReviews: (userId: string) => Promise<Review[]>;
+  /** Membres que l'utilisateur courant a bloqués. */
+  blockedUserIds: string[];
+  isBlocked: (userId: string) => boolean;
+  blockUser: (userId: string) => Promise<void>;
+  unblockUser: (userId: string) => Promise<void>;
   getShipmentById: (id: string) => Shipment | undefined;
   getConversationById: (id: string) => Conversation | undefined;
   getMessagesByConversation: (conversationId: string) => Message[];
@@ -87,6 +92,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [routes, setRoutes] = useState<Route[]>([]);
   // Demo-only local store of reviews (live mode fetches from Supabase).
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
   const isMounted = useRef(true);
   const [isReady, setIsReady] = useState(false);
 
@@ -99,6 +105,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setConversations([]);
         setMessages([]);
         setRoutes([]);
+        setBlockedUserIds([]);
         await Promise.all([
           AsyncStorage.removeItem(CACHE_KEY_SHIPMENTS),
           AsyncStorage.removeItem(CACHE_KEY_CONVERSATIONS),
@@ -108,10 +115,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       try {
-        const [sh, rt, convData] = await Promise.all([
+        const [sh, rt, convData, blocked] = await Promise.all([
           api.fetchShipments(user.id, user.role).catch(() => [] as Shipment[]),
           api.fetchRoutes().catch(() => [] as Route[]),
           api.fetchConversations(user.id).catch(() => ({ conversations: [], messages: [] })),
+          api.fetchBlockedUserIds().catch(() => [] as string[]),
         ]);
         if (!isMounted.current) return;
 
@@ -123,6 +131,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setRoutes(rt);
         setConversations(cv);
         setMessages(ms);
+        setBlockedUserIds(blocked);
       } catch (e) {
         console.error('loadAll error:', e);
       }
@@ -132,6 +141,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       setMessages(MOCK_MESSAGES.map((m) => ({ ...m })));
       setRoutes(MOCK_ROUTES.map((r) => ({ ...r })));
       setReviews(MOCK_REVIEWS.map((r) => ({ ...r })));
+      setBlockedUserIds([]);
     }
   }, [user]);
 
@@ -635,6 +645,47 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [reviews]
   );
 
+  // ── Blocage ─────────────────────────────────────────────────────────────
+  // L'état local est mis à jour tout de suite : le serveur reste l'autorité
+  // (la RLS refuse l'envoi), l'application ne fait qu'en tirer les
+  // conséquences visuelles sans attendre l'aller-retour.
+
+  const isBlocked = useCallback(
+    (userId: string) => blockedUserIds.includes(userId),
+    [blockedUserIds]
+  );
+
+  const blockUser = useCallback(
+    async (userId: string) => {
+      if (!userId || userId === user?.id) return;
+      setBlockedUserIds((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
+      if (IS_LIVE && user) {
+        try {
+          await api.blockUser(user.id, userId);
+        } catch (e) {
+          setBlockedUserIds((prev) => prev.filter((id) => id !== userId));
+          throw e;
+        }
+      }
+    },
+    [user]
+  );
+
+  const unblockUser = useCallback(
+    async (userId: string) => {
+      setBlockedUserIds((prev) => prev.filter((id) => id !== userId));
+      if (IS_LIVE && user) {
+        try {
+          await api.unblockUser(user.id, userId);
+        } catch (e) {
+          setBlockedUserIds((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
+          throw e;
+        }
+      }
+    },
+    [user]
+  );
+
   // ── Getters ─────────────────────────────────────────────────────────────
 
   const getShipmentById = useCallback(
@@ -673,6 +724,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       addRoute,
       submitRating,
       getUserReviews,
+      blockedUserIds,
+      isBlocked,
+      blockUser,
+      unblockUser,
       getShipmentById,
       getConversationById,
       getMessagesByConversation,
@@ -695,6 +750,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       addRoute,
       submitRating,
       getUserReviews,
+      blockedUserIds,
+      isBlocked,
+      blockUser,
+      unblockUser,
       getShipmentById,
       getConversationById,
       getMessagesByConversation,
