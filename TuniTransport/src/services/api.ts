@@ -117,6 +117,7 @@ interface ShipmentRow {
   paid_at?: string;
   payment_method?: 'card' | 'cash';
   selected_bid_id?: string;
+  label_token?: string;
   tracking_events?: TrackingEventRow[];
   bids?: BidRow[];
   terms_accepted_at?: string;
@@ -245,6 +246,7 @@ function mapShipment(row: ShipmentRow): Shipment {
     paidAt: row.paid_at ?? undefined,
     paymentMethod: row.payment_method ?? undefined,
     selectedBidId: row.selected_bid_id ?? undefined,
+    labelToken: row.label_token ?? undefined,
     trackingHistory: (row.tracking_events ?? []).map(mapTrackingEvent),
     bids: (row.bids ?? []).map(mapBid),
     termsAcceptedAt: row.terms_accepted_at ?? undefined,
@@ -600,6 +602,76 @@ export function subscribeToShipmentLocation(
     .subscribe((status) => onStatusChange?.(status === 'SUBSCRIBED'));
   return () => {
     supabase?.removeChannel(channel);
+  };
+}
+
+// ── Étiquette scannée ────────────────────────────────────────────────────
+// Le QR ne contient qu'un identifiant et un jeton : aucune donnée
+// personnelle ne circule sur le papier. Les détails sont rendus par le
+// serveur, et seulement à l'expéditeur, au transporteur attitré ou à un
+// administrateur.
+
+export type LabelScanError =
+  | 'NOT_AUTHENTICATED'
+  | 'LABEL_UNKNOWN'
+  | 'LABEL_TOKEN_INVALID'
+  | 'LABEL_ASSIGNED_TO_OTHER'
+  | 'LABEL_FORBIDDEN'
+  | 'UNKNOWN';
+
+export interface ScannedLabel {
+  id: string;
+  reference: string;
+  status: ShipmentStatus;
+  viewerRole: 'sender' | 'transporter' | 'admin';
+  senderId: string;
+  senderName: string;
+  transporterId?: string;
+  transporterName?: string;
+  type: ShipmentType;
+  weight?: number;
+  price?: number;
+  items?: Item[];
+  description?: string;
+  pickupAddress: Address;
+  deliveryAddress: Address;
+  collectedAt?: string;
+  deliveredAt?: string;
+  createdAt: string;
+}
+
+/** Erreur portant le code renvoyé par `resolve_label`, pour un message juste. */
+export class LabelError extends Error {
+  code: LabelScanError;
+  constructor(code: LabelScanError) {
+    super(code);
+    this.name = 'LabelError';
+    this.code = code;
+  }
+}
+
+const LABEL_CODES: LabelScanError[] = [
+  'NOT_AUTHENTICATED',
+  'LABEL_UNKNOWN',
+  'LABEL_TOKEN_INVALID',
+  'LABEL_ASSIGNED_TO_OTHER',
+  'LABEL_FORBIDDEN',
+];
+
+export async function resolveLabel(shipmentId: string, token: string): Promise<ScannedLabel> {
+  const { data, error } = await db().rpc('resolve_label', {
+    p_shipment_id: shipmentId,
+    p_token: token,
+  });
+  if (error) {
+    const found = LABEL_CODES.find((c) => error.message.includes(c));
+    throw new LabelError(found ?? 'UNKNOWN');
+  }
+  const raw = data as Record<string, unknown>;
+  return {
+    ...(raw as unknown as ScannedLabel),
+    weight: raw.weight != null ? Number(raw.weight) : undefined,
+    price: raw.price != null ? Number(raw.price) : undefined,
   };
 }
 

@@ -144,6 +144,13 @@ export interface Shipment {
   /** 'card' (Stripe) or 'cash' (paid in person at handover). Null = card. */
   paymentMethod?: 'card' | 'cash';
   selectedBidId?: string;
+  /**
+   * Jeton imprimé dans le QR de l'étiquette. L'étiquette elle-même ne
+   * porte aucune donnée personnelle : ce jeton est la seule clé qui, via
+   * `resolveLabel`, ouvre les détails — et uniquement à l'expéditeur, au
+   * transporteur attitré ou à un administrateur.
+   */
+  labelToken?: string;
   trackingHistory: TrackingEvent[];
   bids?: Bid[];
   // Horodatages des consentements légaux (traçabilité juridique) :

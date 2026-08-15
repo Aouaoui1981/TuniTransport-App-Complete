@@ -35,6 +35,7 @@ const MENU: {
     | 'notifications'
     | 'security'
     | 'disputes'
+    | 'scan'
     | 'blocked'
     | 'support'
     | 'referral';
@@ -44,6 +45,7 @@ const MENU: {
   { icon: 'gift-outline', label: 'Parrainage — gagnez 10 €', action: 'referral' },
   { icon: 'notifications-outline', label: 'Notifications', action: 'notifications' },
   { icon: 'flag-outline', label: 'Mes signalements', action: 'disputes' },
+  { icon: 'qr-code-outline', label: "Scanner une étiquette", action: 'scan' },
   { icon: 'ban-outline', label: 'Membres bloqués', action: 'blocked' },
   { icon: 'lock-closed-outline', label: 'Sécurité', action: 'security' },
   { icon: 'help-circle-outline', label: 'Aide & Support', action: 'support' },
@@ -150,6 +152,8 @@ export default function ProfileScreen() {
       openSecurity();
     } else if (item.action === 'disputes') {
       navigation.navigate('MyDisputes');
+    } else if (item.action === 'scan') {
+      navigation.navigate('ScanLabel');
     } else if (item.action === 'blocked') {
       navigation.navigate('BlockedUsers');
     } else if (item.action === 'support') {

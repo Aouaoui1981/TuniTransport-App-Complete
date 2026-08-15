@@ -582,3 +582,44 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - [ ] Rotation du secret Google OAuth ; suppression du bucket id-documents.
 - [ ] Groupe Google des testeurs, puis Start rollout.
 - [ ] Capture de la carte + video de la localisation en arriere-plan.
+
+---
+
+## 2026-08-16 — Etiquette : jeton de scan, papier minimal, scanner integre
+### Fait
+- [x] `shipments.label_token` (16 octets aleatoires, unique, defaut en base)
+      + RPC `resolve_label(id, token)` SECURITY DEFINER. Rend les details
+      complets a l'expediteur, au transporteur ATTITRE ou a un admin ;
+      refuse les autres avec un code distinct (`LABEL_ASSIGNED_TO_OTHER`,
+      `LABEL_TOKEN_INVALID`, `LABEL_FORBIDDEN`) pour un message juste.
+- [x] Etiquette imprimee reduite : expediteur, ville de destination,
+      destinataire, reference. Plus d'adresses completes, ni contenu, ni
+      poids, ni prix, ni nom du transporteur.
+- [x] QR = lien opaque `/l/<id>?k=<jeton>`. Un QR en clair ne cachait rien :
+      toute application appareil photo en affichait le contenu.
+- [x] `expo-camera` 57.0.3 + ecran ScanLabelScreen (scan sans ouvrir
+      l'appareil photo du telephone), entree « Scanner une etiquette » dans
+      le profil, permission declaree dans app.json.
+- [x] Migration appliquee et VERIFIEE sur `leuntmiyxqvetksfrjfm` :
+      expediteur -> sender, transporteur attitre -> transporter,
+      autre membre -> REFUS LABEL_ASSIGNED_TO_OTHER,
+      jeton errone -> REFUS LABEL_TOKEN_INVALID.
+### Defaut trouve par le test
+- `hmac()` est dans le schema `extensions` sur Supabase. La fonction fixant
+      `search_path = public`, hmac etait introuvable et TOUT scan echouait.
+      Corrige par une qualification explicite `extensions.hmac`. Le defaut
+      n'aurait pas ete vu sans essai reel : tsc et l'export web passaient.
+### Reste a faire / a discuter
+- [ ] Confirmation de prise en charge par scan (le transporteur scanne,
+      l'envoi passe en `collected`, l'expediteur est notifie). Statut
+      `collected` deja dans le type mais RIEN ne le pose aujourd'hui : il
+      n'existe aucune transition accepted -> collected dans l'application.
+- [ ] Notification a l'expediteur : expo-notifications est installe mais il
+      n'existe aucun envoi push serveur (aucune edge function). A batir.
+- [ ] Accord du transporteur attitre pour qu'un autre prenne le colis.
+### Fichiers touches
+- supabase/migrations/20260816090000_label_token_and_scan.sql
+- src/config/app.ts, src/services/shippingLabel.ts, src/services/api.ts
+- src/types/index.ts, src/screens/shared/ScanLabelScreen.tsx (nouveau)
+- src/screens/shared/ProfileScreen.tsx, src/navigation/AppNavigator.tsx
+- app.json, package.json
