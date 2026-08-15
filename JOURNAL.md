@@ -554,3 +554,31 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - src/screens/shared/ChatScreen.tsx, MessagesScreen.tsx, ProfileScreen.tsx
 - src/screens/shared/BlockedUsersScreen.tsx (nouveau)
 - src/navigation/AppNavigator.tsx
+
+---
+
+## 2026-08-15 — Beta : build (23), nettoyage des donnees de demo
+### Fait
+- [x] Build production `1.0.0 (23)` depuis 8653e7d (merge #141) : contient le
+      blocage, la correction du livre blanc et les sept correctifs UI.
+      Build `preview` (APK) lance ensuite — teste sur appareil par
+      l'utilisateur : « tout fonctionne ».
+- [x] Donnees de demo supprimees en production (choix de l'utilisateur :
+      lignes `5eed` uniquement). 3 envois, 1 conversation, 4 messages,
+      1 avis, 1 offre, 2 trajets, 7 evenements de suivi. Verifie : 0 reste,
+      10 comptes intacts, 2 envois et 2 trajets conserves.
+### Erreur corrigee
+- Les captures du store ne venaient PAS des lignes `5eed` : le bundle web
+      exporte localement n'embarque aucune URL Supabase (pas de `.env`, donc
+      IS_LIVE=false) et affiche les donnees fictives du code. J'avais donc
+      differe le nettoyage pour une mauvaise raison. Corollaire : les gros
+      aplats de couleur de l'ecran « Avis » viennent de MOCK_REVIEWS, pas de
+      la base — les vider en base n'aurait rien change.
+### Reste a faire
+- [ ] Deux envois d'essai restent visibles : `9dc2` (Paris → « Sossa »,
+      faute de frappe, 200 EUR) et `ae4c` (Paris → Sfax, 112 EUR). L'utilisateur
+      a choisi de les garder.
+- [ ] Main store listing + televersement de l'AAB (23).
+- [ ] Rotation du secret Google OAuth ; suppression du bucket id-documents.
+- [ ] Groupe Google des testeurs, puis Start rollout.
+- [ ] Capture de la carte + video de la localisation en arriere-plan.
