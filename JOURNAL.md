@@ -738,3 +738,56 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
       impossible dans le cas `point` ou l'expediteur depose et repart.
 ### Fichiers touches
 - src/screens/sender/CreateShipmentScreen.tsx, src/content/whitepaper.ts
+
+---
+
+## 2026-08-16 — CLOTURE de la phase « developpement avant beta »
+Derniere modification fonctionnelle avant la collecte des testeurs.
+Build final : **1.0.0 (26)**, profils `production` (AAB) et `preview` (APK),
+lances depuis `2b9f95f` (merge #146) — le HEAD exact de `main`.
+Les builds (21) a (25) sont perimes : ne rien televerser d'autre que (26).
+
+### Ce que contient (26) et que ne contenait pas (21)
+- Durcissement securite : RLS `profiles`, storage par dossier, RPC
+  `contact_phone`, bucket `id-documents` retire du schema.
+- Sept correctifs UI releves sur appareil (clavier Login/Register, barre
+  d'onglets, alertes aux couleurs de l'app, fenetre Google, etc.).
+- Coordonnees bancaires retirees de l'inscription transporteur.
+- Blocage d'un membre (conformite UGC Google Play).
+- Etiquette : papier minimal + QR a jeton opaque + scanner integre.
+- Lien d'etiquette ouvert a la camera -> ecran Etiquette (au lieu de la
+  page d'accueil).
+- Remise du colis : deux modes, `dropped_off`, preuve photo des deux cotes,
+  point de collecte au profil, litige `handover_disputed`.
+- Contenu du colis declare ligne par ligne ; poids = somme des lignes.
+- Livre blanc remis en accord avec la realite (publication Android en
+  phase 1, description exacte de l'etiquette).
+
+### CHEMIN CRITIQUE — rien de tout cela n'a bouge
+- [ ] Collecter 12 adresses Gmail (le compte a rebours de 14 jours ne
+      demarre qu'une fois les 12 inscrits, PAS a la publication).
+- [ ] Main store listing : icone, feature graphic, captures, textes.
+      Assets deja produits et livres.
+- [ ] Televerser l'AAB (26) dans Closed testing, SANS Start rollout.
+- [ ] Creer le groupe Google `THL Beta` et le brancher comme liste de
+      testeurs (evite d'ajouter les adresses une par une).
+- [ ] Faire tourner le secret client Google OAuth (depuis un ordinateur) —
+      l'ancien a transite par une conversation.
+- [ ] Supprimer le bucket `id-documents` cote dashboard Supabase.
+- [ ] Capture de la carte + video du suivi en arriere-plan (impossibles
+      depuis le web : react-native-maps ne rend pas, la camera non plus).
+- [ ] Domaine + `support@tunitransport.app` : cite dans les pages legales,
+      le courrier se perd aujourd'hui.
+
+### Idees mises en attente explicite
+- Bon de remise (propose en remplacement d'une signature au doigt, dont la
+  valeur probante est faible et qui est de toute facon impossible dans le
+  mode `point`).
+- Reprise automatique du point de collecte du transporteur dans
+  `handover_point` a l'acceptation (le champ existe, aucun flux ne le
+  remplit).
+- Transfert d'un colis a un autre transporteur avec accord du premier.
+- Notification push hors application (aucune edge function d'envoi).
+- IA : filtrage des contenus interdits a la creation, puis traduction dans
+  la messagerie. Rien avant la beta — et toute IA oblige a refaire les
+  declarations App content / Data safety.
