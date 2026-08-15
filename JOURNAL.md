@@ -534,11 +534,18 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
 - [x] Nouvel ecran BlockedUsersScreen + entree « Membres bloques » dans le
       profil. Le nom vient de conversation_participants, la RLS interdisant
       depuis le durcissement de lire le profil d'un autre membre.
+- [x] Migration appliquee en production sur `leuntmiyxqvetksfrjfm`.
+      Verifie : table presente, 3 policies, 2 fonctions, `messages_insert`
+      contient bien `conversation_is_blocked`. Un couple de participants
+      reel renvoie `is_blocked_between = false`, donc la messagerie
+      ordinaire n'est pas affectee.
+### Piege a retenir
+- Le compte Supabase contient DEUX projets. Celui de l'application est
+      `leuntmiyxqvetksfrjfm` (« TronsporTN »). Les « timeouts » rencontres
+      pendant cette session venaient d'un mauvais ref
+      (`wocxvszzdfpbqlanpbgj`, projet vide), pas du reseau. Note ajoutee
+      dans CLAUDE.md.
 ### Reste a faire
-- [ ] APPLIQUER la migration 20260813200000_block_users.sql en production
-      (MCP Supabase injoignable au moment du commit : trois tentatives en
-      timeout). Sans elle, fetchBlockedUserIds echoue et retombe sur une
-      liste vide : l'application ne casse pas, mais le blocage n'agit pas.
 - [ ] Hors perimetre assume : un membre bloque peut encore enchérir sur un
       envoi. Le blocage ne couvre aujourd'hui que la messagerie.
 ### Fichiers touches
