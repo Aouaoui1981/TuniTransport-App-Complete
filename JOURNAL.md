@@ -1042,3 +1042,26 @@ THL est desormais reellement present sur Google Play, en test ferme.
   14 jours qui ouvre l'acces a la production.
 - Apres stabilisation, supprimer l'expedition de demonstration
   `29da0b3d-d275-471a-967c-46c621852ed6`.
+
+### Piege du lien de test — resolu le 16 aout au soir
+Apres l'acceptation, le lien envoye aux testeurs etait
+
+    play.google.com/store/apps/details?id=com.tunitransport.app
+
+c'est-a-dire la fiche ordinaire du Store. Tout compte qui l'ouvre sans
+etre INSCRIT au programme voit « Cet article n'est pas disponible dans
+votre pays » — message trompeur, qui fait chercher un probleme de pays
+ou de propagation la ou il n'y en a aucun. Deux personnes differentes ont
+vu le meme ecran, ce qui a d'abord fait croire a un defaut de
+configuration.
+
+Le bon lien est le lien d'inscription (`opt-in URL`) :
+
+    https://play.google.com/apps/testing/com.tunitransport.app
+
+Il affiche « Become a tester » ; une fois clique, la page repond
+« You are a tester » et la fiche Store devient installable. C'est CE
+lien-la qu'il faut envoyer aux douze testeurs, jamais l'autre.
+
+Verifie au passage cote console : release `27` = `Available to testers on
+Google Play`, `Full rollout`, bundle `Active`. Rien n'etait casse.
