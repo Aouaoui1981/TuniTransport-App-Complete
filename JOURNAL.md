@@ -1011,3 +1011,18 @@ developer `6432491093805773697`, app `4975919036721887169`.
   version web sont les meilleurs candidats).
 - Non traite : connexion Google native, domaine propre + support@, bon de
   remise, notifications push serveur, filtrage IA des objets interdits.
+
+### Soumis a Google — 16 aout 2026, 18h46
+14 modifications envoyees pour revue depuis `Publishing overview`
+(`Managed publishing off`, donc mise a disposition automatique des
+testeurs des l'acceptation).
+
+Track ferme : `Closed testing - Alpha`, AAB `1.0.0 (27)`, France + Tunisie,
+liste `THL Beta` (3 testeurs), notes de version fr-FR.
+
+A surveiller : les « quick checks » automatiques (~13 min) peuvent
+signaler un probleme avant la revue humaine. Reponse de Google attendue
+sous quelques heures a trois jours, par mail.
+
+L'`opt-in URL` n'apparait dans l'onglet `Testers` qu'APRES acceptation —
+inutile de le chercher avant.
