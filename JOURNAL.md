@@ -866,3 +866,37 @@ A faire apres le televersement, avec le bon SHA-1 sous les yeux.
 ### Fichiers touches
 - src/components/SocialAuthButtons.tsx, src/screens/auth/RegisterScreen.tsx
 - src/context/AuthContext.tsx
+
+---
+
+## 2026-08-16 — SHA-1 de la cle de signature Google Play
+AAB `1.0.0 (27)` televerse dans Closed testing (release encore en brouillon).
+Play App Signing actif, donc l'empreinte qui compte pour les utilisateurs
+installant depuis le Play Store est celle de GOOGLE, pas celle d'EAS :
+
+    App signing key certificate — Classical key — SHA-1
+    5F:CA:30:8A:8F:94:D6:E1:2A:44:E5:33:30:4A:38:57:84:14:09:90
+
+Ce n'est pas un secret : une empreinte de certificat est publique par
+nature, elle sert justement a etre declaree.
+
+### Ce qu'elle debloque
+1. **Cle API Maps** — aujourd'hui restreinte a « Android apps » avec la
+   seule empreinte du build EAS (E5:D1:C6:76:AA:60:C...). Une application
+   installee depuis le Play Store est resignee par Google : sans cette
+   empreinte-ci ajoutee A COTE de l'autre, la carte restera VIDE chez les
+   testeurs alors qu'elle fonctionne en APK local. Panne invisible depuis
+   le poste du developpeur.
+2. **Connexion Google native** — exige un client OAuth **Android** dans
+   Google Cloud (package `com.tunitransport.app` + cette empreinte). Tant
+   que ce client n'existe pas, tout code natif echouerait en
+   DEVELOPER_ERROR ; l'ordre est donc : creer le client, puis coder.
+
+### Reste bloquant pour la release (vu a l'ecran)
+- Description complete manquante (Main store listing).
+- Aucun pays/region selectionne sur le track.
+- Permissions sensibles non declarees — tres probablement la localisation
+  en arriere-plan, qui exige un formulaire ET une VIDEO de demonstration
+  (YouTube non repertorie). C'est desormais un bloqueur dur, plus une
+  tache optionnelle.
+- Question Advertising ID a repondre (l'application n'en utilise pas).
