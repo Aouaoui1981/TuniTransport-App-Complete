@@ -945,3 +945,69 @@ que la cause soit visible depuis la console.
 - `App content` > Advertising ID : **No**.
 - Pays/regions du track de test fermé.
 - Douze adresses Gmail de testeurs, puis `Select testers`.
+
+---
+
+## 2026-08-16 (soir) — Dossier Play Console termine, beta lancee
+Suite de la journee : tous les blocages de publication leves.
+
+### Fait
+- [x] **Declaration localisation en arriere-plan** (Sensitive app
+      permissions). Champs limites a 500 caracteres — les textes ont du
+      etre reecrits courts. Video YouTube en Unlisted fournie.
+- [x] **Declaration Foreground service** — exigence Android 14 decouverte
+      seulement a l'ecran « Preview and confirm » du track. Type declare :
+      `Location`, tache : **User-initiated location sharing** (le
+      transporteur active lui-meme le partage ; ce n'est ni de la
+      navigation ni du geofencing).
+- [x] Pays du track ferme : France + Tunisie.
+- [x] Categorie `Travel & Local`, coordonnees de contact publiques.
+- [x] Store listing fr-FR complet, AI asset declaration = « Don't label ».
+
+### Deux pieges trouves sur le compte de revue Google
+Le compte fourni au relecteur dans « App access » etait
+`google.review@tuni-transport.app`. Le compte reel en base est
+`google.review@tunitransport.app` — **sans tiret**. Un relecteur qui ne
+peut pas se connecter rejette l'application sans autre explication.
+
+Second piege, plus grave : ce compte, bien que transporteur verifie
+(`identity_status = verified`), n'avait **aucune expedition**. Sans colis
+accepte, l'onglet Livraisons est vide, donc ni `Detail de l'envoi`, ni
+`Suivi de l'envoi`, ni `Suivi en direct sur la carte`. Le relecteur aurait
+cherche la fonctionnalite decrite dans la declaration ET dans la video, ne
+l'aurait pas trouvee, et aurait rejete sur ce point precis.
+
+Une expedition de demonstration a donc ete inseree :
+
+    id 29da0b3d-d275-471a-967c-46c621852ed6
+    Paris -> Sfax, 6 kg / 24 EUR, statut `accepted`
+    expediteur test@test.com, transporteur google.review@tunitransport.app
+
+**A SUPPRIMER apres acceptation de l'application :**
+`delete from shipments where id = '29da0b3d-d275-471a-967c-46c621852ed6';`
+
+### Ce que « 12 testeurs / 14 jours » veut dire exactement
+Ce n'est PAS une condition pour lancer le test ferme — c'est la condition
+pour demander plus tard l'acces a la **production**, le compte etant un
+compte personnel. Le test ferme peut donc demarrer avec trois testeurs,
+et la liste s'enrichit ensuite. Le compteur de 14 jours ne court qu'a
+partir du moment ou douze testeurs sont inscrits SIMULTANEMENT.
+Conclusion : rien ne justifiait d'attendre douze adresses pour lancer.
+
+### Navigation Play Console — a ne pas rechercher a nouveau
+`App content` n'est ni sous `Test and release`, ni sous `Protected with
+Play` (section securite : Play Integrity), ni sous `Setup`. Le chemin
+fiable est `Publishing overview` > section `What you've told us`, ou les
+mots « App content » sont des liens. Plus simple encore : la page
+« Preview and confirm » du track liste chaque erreur bloquante AVEC un
+lien direct vers le formulaire qui la corrige.
+
+Identifiants de la console (publics) :
+developer `6432491093805773697`, app `4975919036721887169`.
+
+### Reste
+- Liste d'e-mails testeurs, `Send changes for review`, `Start rollout`.
+- Neuf testeurs supplementaires a trouver (les utilisateurs reels de la
+  version web sont les meilleurs candidats).
+- Non traite : connexion Google native, domaine propre + support@, bon de
+  remise, notifications push serveur, filtrage IA des objets interdits.
