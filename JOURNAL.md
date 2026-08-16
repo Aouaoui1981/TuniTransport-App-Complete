@@ -1091,3 +1091,40 @@ A retenir pour les douze testeurs : beaucoup de comptes Google de la
 diaspora sont enregistres dans un pays tiers. Sans cette ouverture, le
 probleme se serait repete testeur par testeur, avec a chaque fois un
 message trompeur parlant de pays au lieu d'inscription.
+
+### KYC des testeurs — verification artificielle, A ANNULER AVANT LE LANCEMENT
+Trois ecrans sont fermes tant que `identity_status <> 'verified'` :
+publier un envoi (`CreateShipmentScreen:358`), consulter les envois
+disponibles (`AvailableShipmentsScreen:77`), publier un trajet
+(`CreateRouteScreen:105`). Un testeur non verifie bute donc sur un mur des
+la premiere minute et conclut que l'application ne marche pas.
+
+Plutot que de collecter de vraies pieces d'identite aupres d'amis — des
+donnees personnelles sensibles, avec les obligations que cela entraine —
+les comptes de test sont passes a `verified` directement en base, sans
+qu'aucun document ne soit televerse ni stocke.
+
+Comptes ainsi verifies le 16 aout 2026 :
+- benmohamedwajdi07@gmail.com (Wajdi Ben mohamed)
+- walidchamkhi1981@gmail.com (Ala Aoioui)
+
+Pas encore inscrits dans l'application, a traiter de la meme facon quand
+ils le seront : timoumikamel75@gmail.com, amna.dahmanitn@gmail.com,
+alac6878@gmail.com.
+
+**A EXECUTER AVANT L'OUVERTURE AU PUBLIC :**
+
+    update public.profiles
+    set identity_status = 'unsubmitted', identity_reviewed_at = null
+    where lower(email) in (
+      'benmohamedwajdi07@gmail.com',
+      'walidchamkhi1981@gmail.com',
+      'timoumikamel75@gmail.com',
+      'amna.dahmanitn@gmail.com',
+      'alac6878@gmail.com'
+    );
+
+La fiche Play annonce « Identités vérifiées » et le livre blanc « 100 %
+transporteurs verifies (KYC) ». Laisser en production des comptes marques
+verifies sans piece justificative viderait cette promesse de sa substance
+au premier litige.
