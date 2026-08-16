@@ -1065,3 +1065,29 @@ lien-la qu'il faut envoyer aux douze testeurs, jamais l'autre.
 
 Verifie au passage cote console : release `27` = `Available to testers on
 Google Play`, `Full rollout`, bundle `Active`. Rien n'etait casse.
+
+### Pourquoi « pas disponible dans votre pays » — la vraie cause
+Le lien d'inscription corrige, la page repondait bien « You are a tester »,
+mais la fiche Store restait barree du message « Cet article n'est pas
+disponible dans votre pays ».
+
+Cause reelle, lue dans `Play Store > Parametres > General > Preferences
+relatives au compte > Pays et profils` : le compte du testeur est
+enregistre aux **Etats-Unis**. Le Play Store determine le pays d'apres le
+pays du COMPTE Google (lie au moyen de paiement), pas d'apres la
+localisation, la carte SIM ou la langue. Or la piste ne ciblait que la
+France et la Tunisie.
+
+Changer le pays d'un compte Google n'est possible qu'une fois par an et
+exige un moyen de paiement local : ce n'est pas une solution.
+
+Solution retenue : ouvrir la piste de test ferme a **tous les pays**
+(174 + « rest of world »). C'est sans risque — la distribution d'un test
+ferme est gouvernee par la LISTE D'E-MAILS, pas par la geographie :
+personne hors de `THL Beta` ne peut installer, quel que soit son pays.
+Le ciblage precis se fera au passage en production.
+
+A retenir pour les douze testeurs : beaucoup de comptes Google de la
+diaspora sont enregistres dans un pays tiers. Sans cette ouverture, le
+probleme se serait repete testeur par testeur, avec a chaque fois un
+message trompeur parlant de pays au lieu d'inscription.
