@@ -1026,3 +1026,19 @@ sous quelques heures a trois jours, par mail.
 
 L'`opt-in URL` n'apparait dans l'onglet `Testers` qu'APRES acceptation —
 inutile de le chercher avant.
+
+### ACCEPTE — 16 aout 2026, ~19h50
+Submission 1 : statut **Published**. Une heure entre l'envoi (18h47) et
+l'acceptation. Les 14 modifications sont passees : piste `Closed testing -
+Alpha` en `Start full rollout`, France + Tunisie, liste `THL Beta`, fiche
+fr-FR, et les deux declarations sensibles (localisation en arriere-plan,
+service au premier plan).
+
+THL est desormais reellement present sur Google Play, en test ferme.
+
+### Prochaines etapes
+- Recuperer l'`opt-in URL` (onglet `Testers`) et inviter les trois
+  testeurs ; en trouver neuf autres pour declencher le compteur des
+  14 jours qui ouvre l'acces a la production.
+- Apres stabilisation, supprimer l'expedition de demonstration
+  `29da0b3d-d275-471a-967c-46c621852ed6`.
