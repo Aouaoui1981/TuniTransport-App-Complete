@@ -900,3 +900,48 @@ nature, elle sert justement a etre declaree.
   (YouTube non repertorie). C'est desormais un bloqueur dur, plus une
   tache optionnelle.
 - Question Advertising ID a repondre (l'application n'en utilise pas).
+
+---
+
+## 2026-08-16 — Fiche Play Store et localisation en arriere-plan
+Journee sans code : uniquement la constitution du dossier Google Play.
+
+### Fait
+- [x] **Video de demonstration** de la localisation en arriere-plan
+      (83 s, telephone reel). Cinq prises ont ete jetees avant celle-ci :
+      mauvais compte (expediteur au lieu du transporteur), arret avant
+      l'ecran de suivi, arret sur la boite de dialogue, ecran d'accueil.
+      La prise retenue montre la chaine complete : connexion transporteur,
+      `Livraisons` > `Detail de l'envoi` > `Suivi de l'envoi` >
+      `Suivi en direct sur la carte`, activation de `Partager ma position`,
+      dialogue d'autorisation Android, page Parametres avec
+      « Toujours autoriser », carte qui bouge (14 km/h), et le volet de
+      notifications avec « Suivi THL actif ».
+      Publiee en **Unlisted** (verifie en navigation privee) :
+      https://www.youtube.com/watch?v=tZnJ9iaqt9w
+- [x] **Main store listing** complete : nom `THL — Colis France Tunisie`,
+      description courte et complete (fr-FR), icone, feature graphic,
+      quatre captures telephone, lien video.
+- [x] **AI asset declaration** : `Don't label assets`. Verifie a la source —
+      l'icone vient de `icon512.html` et le bandeau de `banner.html`, deux
+      rendus HTML/CSS captures par Playwright ; les captures et la video
+      sont des enregistrements reels de l'application. Aucun modele
+      generatif d'images n'est intervenu.
+
+### Piege evite
+Sur Android 11+, l'option « Toujours autoriser » **n'existe pas** dans la
+premiere boite de dialogue : celle-ci ne propose que « Lorsque vous utilisez
+l'appli » / « Uniquement cette fois-ci ». L'acces permanent se donne ensuite
+dans une page de Parametres ouverte par l'application. Une video qui
+s'arrete a la premiere boite ne montre donc pas ce que le relecteur cherche.
+
+Autre piege : sur YouTube, **`Private` n'est pas `Unlisted`**. Un lien prive
+affiche « Video unavailable » au relecteur, qui rejette la declaration sans
+que la cause soit visible depuis la console.
+
+### Reste avant `Start rollout`
+- Coller le lien video + le texte anglais dans
+  `App content` > `Sensitive app permissions` > background location.
+- `App content` > Advertising ID : **No**.
+- Pays/regions du track de test fermé.
+- Douze adresses Gmail de testeurs, puis `Select testers`.
