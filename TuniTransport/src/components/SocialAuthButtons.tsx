@@ -11,7 +11,7 @@ import { COLORS, SPACING, RADIUS, FONTS } from '../utils/theme';
 import { showAlert } from '../utils/alert';
 import { getErrorMessage } from '../utils/errors';
 import { useAuth } from '../context/AuthContext';
-import { OAuthProvider } from '../types';
+import { OAuthProvider, UserRole } from '../types';
 
 const PROVIDERS: {
   key: OAuthProvider;
@@ -29,14 +29,20 @@ const PROVIDERS: {
 // Le jour où l'app sort sur iOS, le bouton réapparaît sans changement de code.
 const VISIBLE_PROVIDERS = PROVIDERS.filter((p) => p.key !== 'apple' || Platform.OS === 'ios');
 
-export default function SocialAuthButtons() {
+/**
+ * `preferredRole` : le rôle coché sur l'écran d'inscription. Il ne sert QUE
+ * si le compte est créé à cette occasion — un compte Google déjà inscrit
+ * garde le sien, et l'utilisateur en est averti plutôt que de se retrouver
+ * silencieusement dans un rôle qu'il n'a pas choisi.
+ */
+export default function SocialAuthButtons({ preferredRole }: { preferredRole?: UserRole }) {
   const { signInWithProvider } = useAuth();
   const [busy, setBusy] = useState<OAuthProvider | null>(null);
 
   const onPress = async (provider: OAuthProvider) => {
     setBusy(provider);
     try {
-      await signInWithProvider(provider);
+      await signInWithProvider(provider, preferredRole);
       // Sur le web, la page redirige vers le provider : rien d'autre à faire.
     } catch (e) {
       showAlert('Connexion impossible', getErrorMessage(e));

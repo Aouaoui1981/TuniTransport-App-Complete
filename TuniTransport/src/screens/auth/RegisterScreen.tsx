@@ -456,7 +456,7 @@ export default function RegisterScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          <SocialAuthButtons />
+          <SocialAuthButtons preferredRole={role} />
 
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Déjà un compte ? </Text>

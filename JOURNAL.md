@@ -833,3 +833,36 @@ scopes sensibles non approuves : sans objet ici.
 Note pour plus tard : la cle API Google (Maps) est restreinte a « Android
 apps, 35 APIs ». C'est large pour une cle qui ne sert qu'aux cartes ; la
 restreindre aux seuls SDK Maps limiterait les degats en cas de fuite.
+
+---
+
+## 2026-08-16 (suite) — Inscription Google : le role choisi etait ignore
+### Le defaut, vu sur une video de l'utilisateur
+Ecran « Creer un compte », role **transporteur** coche, bouton Google :
+l'utilisateur se retrouvait connecte a un compte EXISTANT (Kamel Timoumi,
+expediteur) sans un mot d'explication. Il croyait s'etre inscrit comme
+transporteur et se retrouvait expediteur — de quoi conclure que
+l'application est cassee.
+Comportement normal d'OAuth (un compte Google = un compte), mais
+presentation trompeuse.
+### Fait
+- [x] `SocialAuthButtons` accepte `preferredRole`, transmis par
+      RegisterScreen depuis le role coche.
+- [x] `signInWithProvider(provider, preferredRole?)` le memorise.
+- [x] Au retour, si le compte existait deja avec un autre role, un message
+      le dit explicitement au lieu de laisser l'utilisateur deviner.
+- Pour un compte NEUF, rien ne change : l'ecran CompleteProfile demande le
+  role juste apres, comme avant.
+### Non traite, et pourquoi
+L'ecran gris vide pendant l'ouverture de Google. Ce n'est pas notre rendu :
+c'est le Chrome Custom Tab qui charge accounts.google.com. Le seul vrai
+remede est la connexion Google NATIVE (selecteur de compte du systeme, sans
+navigateur). Elle exige un client OAuth Android avec le SHA-1 du certificat
+de signature — et avec Play App Signing, le SHA-1 qui compte pour les
+testeurs est celui de Google Play, LISIBLE SEULEMENT APRES le televersement
+de l'AAB. L'implementer a l'aveugle transformerait une gene visuelle en
+echec total de la connexion Google (DEVELOPER_ERROR) pour les 12 testeurs.
+A faire apres le televersement, avec le bon SHA-1 sous les yeux.
+### Fichiers touches
+- src/components/SocialAuthButtons.tsx, src/screens/auth/RegisterScreen.tsx
+- src/context/AuthContext.tsx
