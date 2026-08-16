@@ -15,7 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, IS_LIVE } from '../services/supabase';
 import { fetchProfile, updateProfile, deleteOwnAccount, applyReferralCode } from '../services/api';
 import { MOCK_USERS } from '../services/mockData';
-import { User, LoginPayload, RegisterPayload, OAuthProvider } from '../types';
+import { User, LoginPayload, RegisterPayload, OAuthProvider, UserRole } from '../types';
 import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
@@ -38,7 +38,7 @@ interface AuthContextValue {
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<RegisterResult>;
   /** Social login (Google / Apple / Facebook) via Supabase OAuth. */
-  signInWithProvider: (provider: OAuthProvider) => Promise<void>;
+  signInWithProvider: (provider: OAuthProvider, preferredRole?: UserRole) => Promise<void>;
   logout: () => Promise<void>;
   /** Supprime définitivement le compte courant, puis déconnecte. */
   deleteAccount: () => Promise<void>;
@@ -68,6 +68,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const isMounted = React.useRef(true);
+  // Rôle coché sur l'écran d'inscription avant d'ouvrir Google. Il ne sert
+  // qu'à savoir quoi dire si le compte existait déjà : un compte Google
+  // déjà inscrit garde son rôle.
+  const preferredRoleRef = React.useRef<UserRole | null>(null);
 
   // Restore session on mount
   useEffect(() => {
@@ -99,6 +103,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 );
               } else if (profile && isMounted.current) {
                 setUser({ ...profile, email: session.user.email ?? profile.email });
+                // L'utilisateur venait de l'écran d'inscription et avait coché
+                // un rôle, mais ce compte Google existait déjà : on le dit.
+                // Sans ce message, il croyait s'être inscrit comme
+                // transporteur et se retrouvait expéditeur, sans explication.
+                const wanted = preferredRoleRef.current;
+                preferredRoleRef.current = null;
+                if (wanted && profile.onboarded !== false && profile.role !== wanted) {
+                  showAlert(
+                    'Compte déjà existant',
+                    `Ce compte Google est déjà inscrit sur THL en tant que ${
+                      profile.role === 'sender' ? 'expéditeur' : 'transporteur'
+                    }. Vous y avez été connecté — le rôle choisi à l'inscription n'a pas été appliqué.`
+                  );
+                }
               }
             } else {
               if (isMounted.current) {
@@ -229,7 +247,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── social login (OAuth) ─────────────────────────────────────────────────
 
-  const signInWithProvider = useCallback(async (provider: OAuthProvider) => {
+  const signInWithProvider = useCallback(async (provider: OAuthProvider, preferredRole?: UserRole) => {
+    preferredRoleRef.current = preferredRole ?? null;
     if (!IS_LIVE || !supabase) {
       throw new Error('La connexion sociale est disponible sur l’application en ligne.');
     }

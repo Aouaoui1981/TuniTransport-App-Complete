@@ -738,3 +738,131 @@ Règle: mettre à jour ce fichier À LA FIN de chaque session
       impossible dans le cas `point` ou l'expediteur depose et repart.
 ### Fichiers touches
 - src/screens/sender/CreateShipmentScreen.tsx, src/content/whitepaper.ts
+
+---
+
+## 2026-08-16 — CLOTURE de la phase « developpement avant beta »
+Derniere modification fonctionnelle avant la collecte des testeurs.
+Build final : **1.0.0 (26)**, profils `production` (AAB) et `preview` (APK),
+lances depuis `2b9f95f` (merge #146) — le HEAD exact de `main`.
+Les builds (21) a (25) sont perimes : ne rien televerser d'autre que (26).
+
+### Ce que contient (26) et que ne contenait pas (21)
+- Durcissement securite : RLS `profiles`, storage par dossier, RPC
+  `contact_phone`, bucket `id-documents` retire du schema.
+- Sept correctifs UI releves sur appareil (clavier Login/Register, barre
+  d'onglets, alertes aux couleurs de l'app, fenetre Google, etc.).
+- Coordonnees bancaires retirees de l'inscription transporteur.
+- Blocage d'un membre (conformite UGC Google Play).
+- Etiquette : papier minimal + QR a jeton opaque + scanner integre.
+- Lien d'etiquette ouvert a la camera -> ecran Etiquette (au lieu de la
+  page d'accueil).
+- Remise du colis : deux modes, `dropped_off`, preuve photo des deux cotes,
+  point de collecte au profil, litige `handover_disputed`.
+- Contenu du colis declare ligne par ligne ; poids = somme des lignes.
+- Livre blanc remis en accord avec la realite (publication Android en
+  phase 1, description exacte de l'etiquette).
+
+### CHEMIN CRITIQUE — rien de tout cela n'a bouge
+- [ ] Collecter 12 adresses Gmail (le compte a rebours de 14 jours ne
+      demarre qu'une fois les 12 inscrits, PAS a la publication).
+- [ ] Main store listing : icone, feature graphic, captures, textes.
+      Assets deja produits et livres.
+- [ ] Televerser l'AAB (26) dans Closed testing, SANS Start rollout.
+- [ ] Creer le groupe Google `THL Beta` et le brancher comme liste de
+      testeurs (evite d'ajouter les adresses une par une).
+- [ ] Faire tourner le secret client Google OAuth (depuis un ordinateur) —
+      l'ancien a transite par une conversation.
+- [ ] Supprimer le bucket `id-documents` cote dashboard Supabase.
+- [ ] Capture de la carte + video du suivi en arriere-plan (impossibles
+      depuis le web : react-native-maps ne rend pas, la camera non plus).
+- [ ] Domaine + `support@tunitransport.app` : cite dans les pages legales,
+      le courrier se perd aujourd'hui.
+
+### Idees mises en attente explicite
+- Bon de remise (propose en remplacement d'une signature au doigt, dont la
+  valeur probante est faible et qui est de toute facon impossible dans le
+  mode `point`).
+- Reprise automatique du point de collecte du transporteur dans
+  `handover_point` a l'acceptation (le champ existe, aucun flux ne le
+  remplit).
+- Transfert d'un colis a un autre transporteur avec accord du premier.
+- Notification push hors application (aucune edge function d'envoi).
+- IA : filtrage des contenus interdits a la creation, puis traduction dans
+  la messagerie. Rien avant la beta — et toute IA oblige a refaire les
+  declarations App content / Data safety.
+
+### Decision figee : identifiant de l'application
+`com.tunitransport.app` est CONSERVE. Choix pris en connaissance de cause
+avant le premier deploiement, seul moment ou il etait encore modifiable :
+apres publication, l'identifiant de paquet Android est definitif, et en
+changer reviendrait a publier une autre application (installations, notes
+et avis perdus).
+
+Le projet est ne « TuniTransport » puis a ete renomme THL ; l'interface a
+suivi, les identifiants techniques non. Sans consequence visible : ce que
+l'utilisateur voit s'appelle THL partout (nom sur le telephone, fiche du
+store, logo). L'identifiant n'apparait que dans l'URL du store et dans
+Parametres > Applications > details.
+
+Ce qui, lui, reste libre :
+- `slug` et `scheme` (internes, invisibles).
+- Le nom de domaine. Il se change sans toucher au code : definir
+  `EXPO_PUBLIC_APP_URL` au build suffit, et l'URL du QR des etiquettes
+  suit automatiquement (cf. src/config/app.ts). A decider avant d'imprimer
+  beaucoup d'etiquettes — le papier deja colle ne se met pas a jour.
+- Les pages legales citent `support@tunitransport.app`, ce qui suppose ce
+  domaine ; a trancher si la marque doit plutot vivre sur un `thl.*`.
+
+### Bloqueur beta trouve et leve : OAuth Google etait en « Testing »
+Google Auth Platform > Audience affichait `Publishing status: Testing`.
+Consequences si la beta avait ete ouverte ainsi :
+- seuls les comptes ajoutes a la main comme « test users » auraient pu se
+  connecter avec Google — les 12 testeurs auraient ete refuses ;
+- les sessions expirent au bout de 7 JOURS en mode Testing : les testeurs
+  auraient ete deconnectes au milieu de la fenetre de 14 jours, ce qui
+  aurait ressemble a un bug de l'application et non a un reglage Google.
+Corrige : `Publish app` -> `In production`, sans demande de verification
+(un seul domaine, et seulement les scopes de base email/profile/openid ;
+la verification n'est exigee qu'au-dela de 10 domaines, avec un logo, ou
+pour des scopes sensibles). C'etait aussi l'origine du triangle
+d'avertissement sur le client OAuth `THL Supabase`.
+Le plafond de 100 utilisateurs affiche sur cette page ne s'applique qu'aux
+scopes sensibles non approuves : sans objet ici.
+
+Note pour plus tard : la cle API Google (Maps) est restreinte a « Android
+apps, 35 APIs ». C'est large pour une cle qui ne sert qu'aux cartes ; la
+restreindre aux seuls SDK Maps limiterait les degats en cas de fuite.
+
+---
+
+## 2026-08-16 (suite) — Inscription Google : le role choisi etait ignore
+### Le defaut, vu sur une video de l'utilisateur
+Ecran « Creer un compte », role **transporteur** coche, bouton Google :
+l'utilisateur se retrouvait connecte a un compte EXISTANT (Kamel Timoumi,
+expediteur) sans un mot d'explication. Il croyait s'etre inscrit comme
+transporteur et se retrouvait expediteur — de quoi conclure que
+l'application est cassee.
+Comportement normal d'OAuth (un compte Google = un compte), mais
+presentation trompeuse.
+### Fait
+- [x] `SocialAuthButtons` accepte `preferredRole`, transmis par
+      RegisterScreen depuis le role coche.
+- [x] `signInWithProvider(provider, preferredRole?)` le memorise.
+- [x] Au retour, si le compte existait deja avec un autre role, un message
+      le dit explicitement au lieu de laisser l'utilisateur deviner.
+- Pour un compte NEUF, rien ne change : l'ecran CompleteProfile demande le
+  role juste apres, comme avant.
+### Non traite, et pourquoi
+L'ecran gris vide pendant l'ouverture de Google. Ce n'est pas notre rendu :
+c'est le Chrome Custom Tab qui charge accounts.google.com. Le seul vrai
+remede est la connexion Google NATIVE (selecteur de compte du systeme, sans
+navigateur). Elle exige un client OAuth Android avec le SHA-1 du certificat
+de signature — et avec Play App Signing, le SHA-1 qui compte pour les
+testeurs est celui de Google Play, LISIBLE SEULEMENT APRES le televersement
+de l'AAB. L'implementer a l'aveugle transformerait une gene visuelle en
+echec total de la connexion Google (DEVELOPER_ERROR) pour les 12 testeurs.
+A faire apres le televersement, avec le bon SHA-1 sous les yeux.
+### Fichiers touches
+- src/components/SocialAuthButtons.tsx, src/screens/auth/RegisterScreen.tsx
+- src/context/AuthContext.tsx
