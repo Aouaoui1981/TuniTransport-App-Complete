@@ -1170,3 +1170,31 @@ Phase `Read app config` : la section `android` doit contenir
     "config": { "googleMaps": { "apiKey": "AIza..." } }
 
 Sans cela, ne pas televerser.
+
+### La cle Maps passe en clair dans app.json — 17 aout 2026
+Le correctif precedent (declarer `environment` dans les profils de
+`eas.json`) n'a rien change : le build `1.0.0 (30)`, construit sur le commit
+de fusion de la PR #148, affiche bien `Environment: production` dans ses
+metadonnees, et pourtant la section `android` de `Read app config` ne
+contient toujours **aucune** entree `config.googleMaps`.
+
+La variable `GOOGLE_MAPS_API_KEY_ANDROID` existe dans EAS, est bien
+rattachee a l'environnement `production` (verifie en filtrant la liste sur
+`production`), porte exactement ce nom — et n'arrive quand meme pas jusqu'a
+`app.config.js`. La configuration est juste, l'acheminement ne fonctionne
+pas, et il n'y avait plus rien a corriger de ce cote.
+
+Decision : **ecrire la cle directement dans `app.json` et supprimer
+`app.config.js`.**
+
+Une cle Maps Android n'est pas un secret. Elle est extractible de n'importe
+quel APK avec un outil gratuit ; sa seule protection reelle est la
+restriction par nom de paquet (`com.tunitransport.app`) et par empreinte
+SHA-1, deja en place pour la cle d'EAS et celle de Play. C'est aussi ce que
+recommande Google : restreindre, pas dissimuler. Le depot etant public, la
+cle y est visible — un scanner GitHub peut alerter, sans consequence.
+
+Ce que l'indirection coutait : `app.config.js` etait ecrit pour ne PAS
+faire echouer le build quand la cle manquait. La panne devenait donc
+silencieuse et ne se manifestait que chez l'utilisateur final, apres
+publication. Un jour entier et un AAB casse en production.

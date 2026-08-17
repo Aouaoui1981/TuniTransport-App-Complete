@@ -8,10 +8,13 @@ name: Build Android (EAS)
 #   2. Jeton d'accès : expo.dev → Account settings → Access tokens →
 #      "Create token". À enregistrer dans GitHub → Settings → Secrets and
 #      variables → Actions → New repository secret, sous le nom EXPO_TOKEN.
-#   3. Clé Google Maps : expo.dev → le projet → Secrets → "Create" →
-#      nom GOOGLE_MAPS_API_KEY_ANDROID. Elle est injectée par app.config.js
-#      pendant le build sur les serveurs EAS ; elle ne transite jamais par
-#      GitHub ni par le dépôt.
+#
+# La clé Google Maps Android n'est PLUS une variable d'environnement : elle
+# est écrite en clair dans app.json. Ce n'est pas un secret — une clé Maps
+# Android est extractible de n'importe quel APK, sa protection est la
+# restriction par paquet + empreinte SHA-1 dans Google Cloud, pas le
+# masquage. L'injection par app.config.js avait échoué silencieusement et
+# livré un AAB sans carte : voir JOURNAL.md, 17 août 2026.
 #
 # Le build s'exécute sur l'infrastructure d'Expo. Ce workflow ne fait que le
 # déclencher (`--no-wait`) : il se termine en quelques minutes, tandis que le
