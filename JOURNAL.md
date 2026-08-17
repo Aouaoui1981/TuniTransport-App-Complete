@@ -1198,3 +1198,17 @@ Ce que l'indirection coutait : `app.config.js` etait ecrit pour ne PAS
 faire echouer le build quand la cle manquait. La panne devenait donc
 silencieuse et ne se manifestait que chez l'utilisateur final, apres
 publication. Un jour entier et un AAB casse en production.
+
+### AAB `1.0.0 (31)` soumis — 17 aout 2026, 19h08
+Premier build ou la cle Maps est ecrite dans `app.json` (commit `5fd5d9b`,
+fusion de la PR #149). Verifie a la source plutot que dans les journaux :
+sur `origin/main`, `app.config.js` est bien supprime et `app.json` porte la
+cle. Plus aucun code n'est en mesure de la retirer.
+
+Televerse en test ferme, zero erreur (seul le message deobfuscation
+subsiste, sans effet), envoye en revue.
+
+Test decisif apres acceptation : ouvrir THL sur un telephone testeur,
+onglet `Carte`. Si la carte s'affiche, l'affaire est close. Sinon, la cause
+est ailleurs et il faudra lire `adb logcat` sur l'appareil — la
+bibliotheque Maps y imprime le motif exact du refus.
