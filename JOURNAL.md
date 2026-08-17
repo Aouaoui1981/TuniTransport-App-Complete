@@ -866,3 +866,307 @@ A faire apres le televersement, avec le bon SHA-1 sous les yeux.
 ### Fichiers touches
 - src/components/SocialAuthButtons.tsx, src/screens/auth/RegisterScreen.tsx
 - src/context/AuthContext.tsx
+
+---
+
+## 2026-08-16 — SHA-1 de la cle de signature Google Play
+AAB `1.0.0 (27)` televerse dans Closed testing (release encore en brouillon).
+Play App Signing actif, donc l'empreinte qui compte pour les utilisateurs
+installant depuis le Play Store est celle de GOOGLE, pas celle d'EAS :
+
+    App signing key certificate — Classical key — SHA-1
+    5F:CA:30:8A:8F:94:D6:E1:2A:44:E5:33:30:4A:38:57:84:14:09:90
+
+Ce n'est pas un secret : une empreinte de certificat est publique par
+nature, elle sert justement a etre declaree.
+
+### Ce qu'elle debloque
+1. **Cle API Maps** — aujourd'hui restreinte a « Android apps » avec la
+   seule empreinte du build EAS (E5:D1:C6:76:AA:60:C...). Une application
+   installee depuis le Play Store est resignee par Google : sans cette
+   empreinte-ci ajoutee A COTE de l'autre, la carte restera VIDE chez les
+   testeurs alors qu'elle fonctionne en APK local. Panne invisible depuis
+   le poste du developpeur.
+2. **Connexion Google native** — exige un client OAuth **Android** dans
+   Google Cloud (package `com.tunitransport.app` + cette empreinte). Tant
+   que ce client n'existe pas, tout code natif echouerait en
+   DEVELOPER_ERROR ; l'ordre est donc : creer le client, puis coder.
+
+### Reste bloquant pour la release (vu a l'ecran)
+- Description complete manquante (Main store listing).
+- Aucun pays/region selectionne sur le track.
+- Permissions sensibles non declarees — tres probablement la localisation
+  en arriere-plan, qui exige un formulaire ET une VIDEO de demonstration
+  (YouTube non repertorie). C'est desormais un bloqueur dur, plus une
+  tache optionnelle.
+- Question Advertising ID a repondre (l'application n'en utilise pas).
+
+---
+
+## 2026-08-16 — Fiche Play Store et localisation en arriere-plan
+Journee sans code : uniquement la constitution du dossier Google Play.
+
+### Fait
+- [x] **Video de demonstration** de la localisation en arriere-plan
+      (83 s, telephone reel). Cinq prises ont ete jetees avant celle-ci :
+      mauvais compte (expediteur au lieu du transporteur), arret avant
+      l'ecran de suivi, arret sur la boite de dialogue, ecran d'accueil.
+      La prise retenue montre la chaine complete : connexion transporteur,
+      `Livraisons` > `Detail de l'envoi` > `Suivi de l'envoi` >
+      `Suivi en direct sur la carte`, activation de `Partager ma position`,
+      dialogue d'autorisation Android, page Parametres avec
+      « Toujours autoriser », carte qui bouge (14 km/h), et le volet de
+      notifications avec « Suivi THL actif ».
+      Publiee en **Unlisted** (verifie en navigation privee) :
+      https://www.youtube.com/watch?v=tZnJ9iaqt9w
+- [x] **Main store listing** complete : nom `THL — Colis France Tunisie`,
+      description courte et complete (fr-FR), icone, feature graphic,
+      quatre captures telephone, lien video.
+- [x] **AI asset declaration** : `Don't label assets`. Verifie a la source —
+      l'icone vient de `icon512.html` et le bandeau de `banner.html`, deux
+      rendus HTML/CSS captures par Playwright ; les captures et la video
+      sont des enregistrements reels de l'application. Aucun modele
+      generatif d'images n'est intervenu.
+
+### Piege evite
+Sur Android 11+, l'option « Toujours autoriser » **n'existe pas** dans la
+premiere boite de dialogue : celle-ci ne propose que « Lorsque vous utilisez
+l'appli » / « Uniquement cette fois-ci ». L'acces permanent se donne ensuite
+dans une page de Parametres ouverte par l'application. Une video qui
+s'arrete a la premiere boite ne montre donc pas ce que le relecteur cherche.
+
+Autre piege : sur YouTube, **`Private` n'est pas `Unlisted`**. Un lien prive
+affiche « Video unavailable » au relecteur, qui rejette la declaration sans
+que la cause soit visible depuis la console.
+
+### Reste avant `Start rollout`
+- Coller le lien video + le texte anglais dans
+  `App content` > `Sensitive app permissions` > background location.
+- `App content` > Advertising ID : **No**.
+- Pays/regions du track de test fermé.
+- Douze adresses Gmail de testeurs, puis `Select testers`.
+
+---
+
+## 2026-08-16 (soir) — Dossier Play Console termine, beta lancee
+Suite de la journee : tous les blocages de publication leves.
+
+### Fait
+- [x] **Declaration localisation en arriere-plan** (Sensitive app
+      permissions). Champs limites a 500 caracteres — les textes ont du
+      etre reecrits courts. Video YouTube en Unlisted fournie.
+- [x] **Declaration Foreground service** — exigence Android 14 decouverte
+      seulement a l'ecran « Preview and confirm » du track. Type declare :
+      `Location`, tache : **User-initiated location sharing** (le
+      transporteur active lui-meme le partage ; ce n'est ni de la
+      navigation ni du geofencing).
+- [x] Pays du track ferme : France + Tunisie.
+- [x] Categorie `Travel & Local`, coordonnees de contact publiques.
+- [x] Store listing fr-FR complet, AI asset declaration = « Don't label ».
+
+### Deux pieges trouves sur le compte de revue Google
+Le compte fourni au relecteur dans « App access » etait
+`google.review@tuni-transport.app`. Le compte reel en base est
+`google.review@tunitransport.app` — **sans tiret**. Un relecteur qui ne
+peut pas se connecter rejette l'application sans autre explication.
+
+Second piege, plus grave : ce compte, bien que transporteur verifie
+(`identity_status = verified`), n'avait **aucune expedition**. Sans colis
+accepte, l'onglet Livraisons est vide, donc ni `Detail de l'envoi`, ni
+`Suivi de l'envoi`, ni `Suivi en direct sur la carte`. Le relecteur aurait
+cherche la fonctionnalite decrite dans la declaration ET dans la video, ne
+l'aurait pas trouvee, et aurait rejete sur ce point precis.
+
+Une expedition de demonstration a donc ete inseree :
+
+    id 29da0b3d-d275-471a-967c-46c621852ed6
+    Paris -> Sfax, 6 kg / 24 EUR, statut `accepted`
+    expediteur test@test.com, transporteur google.review@tunitransport.app
+
+**A SUPPRIMER apres acceptation de l'application :**
+`delete from shipments where id = '29da0b3d-d275-471a-967c-46c621852ed6';`
+
+### Ce que « 12 testeurs / 14 jours » veut dire exactement
+Ce n'est PAS une condition pour lancer le test ferme — c'est la condition
+pour demander plus tard l'acces a la **production**, le compte etant un
+compte personnel. Le test ferme peut donc demarrer avec trois testeurs,
+et la liste s'enrichit ensuite. Le compteur de 14 jours ne court qu'a
+partir du moment ou douze testeurs sont inscrits SIMULTANEMENT.
+Conclusion : rien ne justifiait d'attendre douze adresses pour lancer.
+
+### Navigation Play Console — a ne pas rechercher a nouveau
+`App content` n'est ni sous `Test and release`, ni sous `Protected with
+Play` (section securite : Play Integrity), ni sous `Setup`. Le chemin
+fiable est `Publishing overview` > section `What you've told us`, ou les
+mots « App content » sont des liens. Plus simple encore : la page
+« Preview and confirm » du track liste chaque erreur bloquante AVEC un
+lien direct vers le formulaire qui la corrige.
+
+Identifiants de la console (publics) :
+developer `6432491093805773697`, app `4975919036721887169`.
+
+### Reste
+- Liste d'e-mails testeurs, `Send changes for review`, `Start rollout`.
+- Neuf testeurs supplementaires a trouver (les utilisateurs reels de la
+  version web sont les meilleurs candidats).
+- Non traite : connexion Google native, domaine propre + support@, bon de
+  remise, notifications push serveur, filtrage IA des objets interdits.
+
+### Soumis a Google — 16 aout 2026, 18h46
+14 modifications envoyees pour revue depuis `Publishing overview`
+(`Managed publishing off`, donc mise a disposition automatique des
+testeurs des l'acceptation).
+
+Track ferme : `Closed testing - Alpha`, AAB `1.0.0 (27)`, France + Tunisie,
+liste `THL Beta` (3 testeurs), notes de version fr-FR.
+
+A surveiller : les « quick checks » automatiques (~13 min) peuvent
+signaler un probleme avant la revue humaine. Reponse de Google attendue
+sous quelques heures a trois jours, par mail.
+
+L'`opt-in URL` n'apparait dans l'onglet `Testers` qu'APRES acceptation —
+inutile de le chercher avant.
+
+### ACCEPTE — 16 aout 2026, ~19h50
+Submission 1 : statut **Published**. Une heure entre l'envoi (18h47) et
+l'acceptation. Les 14 modifications sont passees : piste `Closed testing -
+Alpha` en `Start full rollout`, France + Tunisie, liste `THL Beta`, fiche
+fr-FR, et les deux declarations sensibles (localisation en arriere-plan,
+service au premier plan).
+
+THL est desormais reellement present sur Google Play, en test ferme.
+
+### Prochaines etapes
+- Recuperer l'`opt-in URL` (onglet `Testers`) et inviter les trois
+  testeurs ; en trouver neuf autres pour declencher le compteur des
+  14 jours qui ouvre l'acces a la production.
+- Apres stabilisation, supprimer l'expedition de demonstration
+  `29da0b3d-d275-471a-967c-46c621852ed6`.
+
+### Piege du lien de test — resolu le 16 aout au soir
+Apres l'acceptation, le lien envoye aux testeurs etait
+
+    play.google.com/store/apps/details?id=com.tunitransport.app
+
+c'est-a-dire la fiche ordinaire du Store. Tout compte qui l'ouvre sans
+etre INSCRIT au programme voit « Cet article n'est pas disponible dans
+votre pays » — message trompeur, qui fait chercher un probleme de pays
+ou de propagation la ou il n'y en a aucun. Deux personnes differentes ont
+vu le meme ecran, ce qui a d'abord fait croire a un defaut de
+configuration.
+
+Le bon lien est le lien d'inscription (`opt-in URL`) :
+
+    https://play.google.com/apps/testing/com.tunitransport.app
+
+Il affiche « Become a tester » ; une fois clique, la page repond
+« You are a tester » et la fiche Store devient installable. C'est CE
+lien-la qu'il faut envoyer aux douze testeurs, jamais l'autre.
+
+Verifie au passage cote console : release `27` = `Available to testers on
+Google Play`, `Full rollout`, bundle `Active`. Rien n'etait casse.
+
+### Pourquoi « pas disponible dans votre pays » — la vraie cause
+Le lien d'inscription corrige, la page repondait bien « You are a tester »,
+mais la fiche Store restait barree du message « Cet article n'est pas
+disponible dans votre pays ».
+
+Cause reelle, lue dans `Play Store > Parametres > General > Preferences
+relatives au compte > Pays et profils` : le compte du testeur est
+enregistre aux **Etats-Unis**. Le Play Store determine le pays d'apres le
+pays du COMPTE Google (lie au moyen de paiement), pas d'apres la
+localisation, la carte SIM ou la langue. Or la piste ne ciblait que la
+France et la Tunisie.
+
+Changer le pays d'un compte Google n'est possible qu'une fois par an et
+exige un moyen de paiement local : ce n'est pas une solution.
+
+Solution retenue : ouvrir la piste de test ferme a **tous les pays**
+(174 + « rest of world »). C'est sans risque — la distribution d'un test
+ferme est gouvernee par la LISTE D'E-MAILS, pas par la geographie :
+personne hors de `THL Beta` ne peut installer, quel que soit son pays.
+Le ciblage precis se fera au passage en production.
+
+A retenir pour les douze testeurs : beaucoup de comptes Google de la
+diaspora sont enregistres dans un pays tiers. Sans cette ouverture, le
+probleme se serait repete testeur par testeur, avec a chaque fois un
+message trompeur parlant de pays au lieu d'inscription.
+
+### KYC des testeurs — verification artificielle, A ANNULER AVANT LE LANCEMENT
+Trois ecrans sont fermes tant que `identity_status <> 'verified'` :
+publier un envoi (`CreateShipmentScreen:358`), consulter les envois
+disponibles (`AvailableShipmentsScreen:77`), publier un trajet
+(`CreateRouteScreen:105`). Un testeur non verifie bute donc sur un mur des
+la premiere minute et conclut que l'application ne marche pas.
+
+Plutot que de collecter de vraies pieces d'identite aupres d'amis — des
+donnees personnelles sensibles, avec les obligations que cela entraine —
+les comptes de test sont passes a `verified` directement en base, sans
+qu'aucun document ne soit televerse ni stocke.
+
+Comptes ainsi verifies le 16 aout 2026 :
+- benmohamedwajdi07@gmail.com (Wajdi Ben mohamed)
+- walidchamkhi1981@gmail.com (Ala Aoioui)
+
+Pas encore inscrits dans l'application, a traiter de la meme facon quand
+ils le seront : timoumikamel75@gmail.com, amna.dahmanitn@gmail.com,
+alac6878@gmail.com.
+
+**A EXECUTER AVANT L'OUVERTURE AU PUBLIC :**
+
+    update public.profiles
+    set identity_status = 'unsubmitted', identity_reviewed_at = null
+    where lower(email) in (
+      'benmohamedwajdi07@gmail.com',
+      'walidchamkhi1981@gmail.com',
+      'timoumikamel75@gmail.com',
+      'amna.dahmanitn@gmail.com',
+      'alac6878@gmail.com'
+    );
+
+La fiche Play annonce « Identités vérifiées » et le livre blanc « 100 %
+transporteurs verifies (KYC) ». Laisser en production des comptes marques
+verifies sans piece justificative viderait cette promesse de sa substance
+au premier litige.
+
+## 2026-08-17 — Carte vide en production : cause trouvee
+L'application installee depuis le Play Store affichait un cadre vide a la
+place de la carte, alors que la meme carte fonctionnait dans la video
+tournee la veille depuis un APK `preview`.
+
+Quatre pistes explorees et ecartees une a une, toutes du cote Google Cloud :
+empreinte SHA-1 de Play absente (elle etait deja enregistree), cle
+differente de celle de l'application (identique), `Maps SDK for Android`
+desactivee (activee), facturation non liee (liee). Aucune ne tenait.
+
+La preuve est venue du journal de build EAS, phase **`Read app config`**.
+La section `android` de la configuration resolue au moment du build ne
+contenait **aucune entree `config.googleMaps`** — exactement ce que fait
+`app.config.js` lorsque la variable manque :
+
+    delete config.android?.config?.googleMaps;
+
+L'AAB `1.0.0 (27)` a donc ete construit **sans aucune cle Maps**. Aucun
+reglage dans la console Google Cloud ne pouvait y changer quoi que ce soit :
+l'application n'envoyait pas de cle du tout.
+
+### Pourquoi la variable n'arrivait pas
+`GOOGLE_MAPS_API_KEY_ANDROID` existe bien dans EAS, cochee pour les trois
+environnements. Mais les profils de `eas.json` ne declaraient **aucun**
+environnement. Les variables d'environnement EAS etant rattachees a un
+environnement, leur injection dependait d'un comportement implicite.
+Corrige en ajoutant `"environment"` a chacun des trois profils.
+
+### Ce que cet episode apprend
+Un build `preview` qui marche ne prouve rien sur un build `production` :
+ce sont deux environnements distincts. Et `app.config.js` a ete ecrit pour
+ne PAS faire echouer le build quand la cle manque — choix defendable, mais
+la panne devient alors silencieuse et n'apparait que chez l'utilisateur
+final. Le journal `Read app config` est l'endroit ou la verifier.
+
+### Verification a faire sur le build 28
+Phase `Read app config` : la section `android` doit contenir
+
+    "config": { "googleMaps": { "apiKey": "AIza..." } }
+
+Sans cela, ne pas televerser.
