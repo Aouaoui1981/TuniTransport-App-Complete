@@ -1212,3 +1212,32 @@ Test decisif apres acceptation : ouvrir THL sur un telephone testeur,
 onglet `Carte`. Si la carte s'affiche, l'affaire est close. Sinon, la cause
 est ailleurs et il faudra lire `adb logcat` sur l'appareil — la
 bibliotheque Maps y imprime le motif exact du refus.
+
+### Carte : DEUX pannes superposees — 17 aout 2026, 19h40
+Apres la mise a jour vers `1.0.0 (31)`, la carte n'etait plus noire mais
+**grise avec le logo Google** dans un coin. Ce changement d'apparence etait
+le signe que le premier correctif avait marche : la bibliotheque Maps
+s'initialise desormais, donc la cle est bien presente dans le paquet.
+
+Restait un refus cote serveur. Cause trouvee par un mail de Google : le
+compte de facturation `01CCB1-5C710F-4DA6BE` etait **suspendu**, et vient
+d'etre retabli apres paiement.
+
+Les deux pannes etaient reelles et independantes :
+
+1. l'AAB `27` etait construit sans aucune cle Maps (la variable EAS
+   n'atteignait pas `app.config.js`) — ecran **noir** ;
+2. la facturation Google Cloud etait suspendue — ecran **gris avec le
+   logo Google**.
+
+Corriger l'une sans l'autre n'aurait rien montre. C'est ce qui a rendu le
+diagnostic si long : chaque verification cote Google Cloud (empreintes,
+cle, API activee, facturation « liee ») paraissait correcte, et la
+facturation affichait bien un compte LIE — un compte suspendu reste lie.
+
+A retenir : sur une carte vide, distinguer les deux signatures.
+Noir = pas de cle dans l'application. Gris + logo Google = cle presente,
+refus du serveur (facturation, restrictions, quota).
+
+Aucun nouveau build n'est necessaire : la cle est dans le paquet installe,
+la facturation est active. Vider le cache de l'application suffit.
