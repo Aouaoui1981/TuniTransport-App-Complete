@@ -1128,3 +1128,45 @@ La fiche Play annonce « Identités vérifiées » et le livre blanc « 100 %
 transporteurs verifies (KYC) ». Laisser en production des comptes marques
 verifies sans piece justificative viderait cette promesse de sa substance
 au premier litige.
+
+## 2026-08-17 — Carte vide en production : cause trouvee
+L'application installee depuis le Play Store affichait un cadre vide a la
+place de la carte, alors que la meme carte fonctionnait dans la video
+tournee la veille depuis un APK `preview`.
+
+Quatre pistes explorees et ecartees une a une, toutes du cote Google Cloud :
+empreinte SHA-1 de Play absente (elle etait deja enregistree), cle
+differente de celle de l'application (identique), `Maps SDK for Android`
+desactivee (activee), facturation non liee (liee). Aucune ne tenait.
+
+La preuve est venue du journal de build EAS, phase **`Read app config`**.
+La section `android` de la configuration resolue au moment du build ne
+contenait **aucune entree `config.googleMaps`** — exactement ce que fait
+`app.config.js` lorsque la variable manque :
+
+    delete config.android?.config?.googleMaps;
+
+L'AAB `1.0.0 (27)` a donc ete construit **sans aucune cle Maps**. Aucun
+reglage dans la console Google Cloud ne pouvait y changer quoi que ce soit :
+l'application n'envoyait pas de cle du tout.
+
+### Pourquoi la variable n'arrivait pas
+`GOOGLE_MAPS_API_KEY_ANDROID` existe bien dans EAS, cochee pour les trois
+environnements. Mais les profils de `eas.json` ne declaraient **aucun**
+environnement. Les variables d'environnement EAS etant rattachees a un
+environnement, leur injection dependait d'un comportement implicite.
+Corrige en ajoutant `"environment"` a chacun des trois profils.
+
+### Ce que cet episode apprend
+Un build `preview` qui marche ne prouve rien sur un build `production` :
+ce sont deux environnements distincts. Et `app.config.js` a ete ecrit pour
+ne PAS faire echouer le build quand la cle manque — choix defendable, mais
+la panne devient alors silencieuse et n'apparait que chez l'utilisateur
+final. Le journal `Read app config` est l'endroit ou la verifier.
+
+### Verification a faire sur le build 28
+Phase `Read app config` : la section `android` doit contenir
+
+    "config": { "googleMaps": { "apiKey": "AIza..." } }
+
+Sans cela, ne pas televerser.
