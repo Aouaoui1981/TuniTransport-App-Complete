@@ -1241,3 +1241,22 @@ refus du serveur (facturation, restrictions, quota).
 
 Aucun nouveau build n'est necessaire : la cle est dans le paquet installe,
 la facturation est active. Vider le cache de l'application suffit.
+
+### RAPPEL — connexion Google native, a faire apres les 12 testeurs
+Reporte le 18 aout 2026 a la demande de l'utilisateur, a reprendre des que
+le test ferme atteint douze testeurs.
+
+Aujourd'hui la connexion Google ouvre un Chrome Custom Tab qui affiche
+« to continue to leuntmiyxqvetksfrjfm.supabase.co » : l'utilisateur voit une
+chaine aleatoire au lieu du nom de l'application, precedee d'un ecran gris
+de chargement. C'est le premier point de friction de tout le parcours.
+
+La connexion native remplace cela par le selecteur de comptes du systeme :
+pas de navigateur, pas d'URL, pas d'ecran gris.
+
+Le prerequis qui manquait est desormais rempli : le client OAuth **Android**
+existe dans Google Cloud avec l'empreinte SHA-1 de la cle de signature Play
+(`5F:CA:30:8A:8F:94:D6:E1:2A:44:E5:33:30:4A:38:57:84:14:09:90`).
+
+Cout : quelques heures de code, un build, une revue. La connexion par
+e-mail et mot de passe reste inchangee — le risque est faible.
