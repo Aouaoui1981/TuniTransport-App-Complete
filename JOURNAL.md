@@ -1300,3 +1300,37 @@ Les metriques de `Maps SDK for Android` accusent un retard pouvant aller
 jusqu'a 24 h, contrairement aux API web. Une fenetre « 1 hour » vide ne
 prouve donc RIEN. J'en avais conclu a tort que l'application n'emettait
 aucune requete.
+
+## 2026-08-19 — Connexion Google native
+La connexion Google ouvrait un Chrome Custom Tab affichant « to continue to
+leuntmiyxqvetksfrjfm.supabase.co » : une chaine aleatoire montree a
+l'utilisateur au moment precis ou on lui demande son compte Google, precedee
+d'un ecran gris de chargement. Premier point de friction du parcours.
+
+### Fait
+- [x] `@react-native-google-signin/google-signin` 16.1.4 + son plugin Expo
+      declare dans `app.json`.
+- [x] `GOOGLE_WEB_CLIENT_ID` dans `src/config/app.ts`. C'est le client
+      **web** qu'il faut : Supabase verifie le jeton d'identite contre lui.
+      Le client Android existe aussi mais ne s'ecrit nulle part — Google le
+      reconnait au nom de paquet et a l'empreinte de signature. Un
+      identifiant de client n'est pas un secret ; le secret associe, si.
+- [x] `src/services/googleSignIn.ts` : sélecteur natif, puis
+      `supabase.auth.signInWithIdToken`. Variante `.web.ts` qui se declare
+      indisponible, pour que le module natif n'entre jamais dans le bundle
+      navigateur (verifie : aucune trace dans `dist/`).
+- [x] `logout()` coupe aussi la session Google locale — sinon Google
+      reprend le dernier compte en silence et changer de compte devient
+      impossible depuis l'application.
+
+### Le parcours navigateur reste en place
+Toute defaillance du natif — services Google Play absents, configuration
+incomplete, `DEVELOPER_ERROR` — renvoie `unavailable`, et l'ancien parcours
+prend le relais. Une connexion qui passe par un ecran laid vaut mieux
+qu'une connexion qui ne passe pas. Le web est inchange.
+
+### A verifier sur l'appareil apres le build
+Le selecteur de comptes doit s'ouvrir SANS navigateur. S'il ouvre encore
+Chrome, c'est que le natif a echoue en silence et que le repli a joue :
+verifier alors le client OAuth Android (paquet + empreinte SHA-1 de la cle
+de signature Play).

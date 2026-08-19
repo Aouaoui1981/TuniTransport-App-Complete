@@ -42,3 +42,18 @@ export function parseLabelUrl(raw: string): { shipmentId: string; token: string 
   if (!match) return null;
   return { shipmentId: match[1], token: match[2] };
 }
+
+/**
+ * Identifiant du client OAuth « web » déclaré dans Google Cloud. C'est lui
+ * que Supabase attend pour vérifier le jeton d'identité renvoyé par le
+ * sélecteur de comptes Android — le client Android existe aussi mais ne
+ * s'écrit nulle part : Google le reconnaît au nom de paquet et à
+ * l'empreinte de signature.
+ *
+ * Un identifiant de client n'est pas un secret : il voyage dans chaque
+ * requête d'autorisation et se lit dans n'importe quelle application. Le
+ * secret associé, lui, ne doit jamais quitter la console Google.
+ */
+export const GOOGLE_WEB_CLIENT_ID =
+  process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+  '833218073949-49sv8jetm27br62ve0o1v4825u9dg5a4.apps.googleusercontent.com';
