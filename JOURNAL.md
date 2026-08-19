@@ -1370,3 +1370,31 @@ imprimee ne casse.
 - Play Console > Store settings > Contact details : e-mail et site a
   basculer sur le nouveau domaine.
 - Verifier l'e-mail ICANN dans les 14 jours, sous peine de suspension.
+
+### Connexion Google sur le web — Google Identity Services
+Le web souffrait du meme defaut que le mobile, en pire : la redirection
+Supabase quittait entierement le site pour afficher
+« to continue to leuntmiyxqvetksfrjfm.supabase.co ».
+
+`googleSignIn.web.ts` — jusqu'ici un simple « indisponible » — implemente
+desormais Google Identity Services : une fenetre legere par-dessus le
+site, intitulee **du nom du site** (« Se connecter a thlcolis.com »), parce
+que Google lit l'ORIGINE de la page et non l'URL de retour. On ne quitte
+plus l'application.
+
+Le bloc Google d'`AuthContext` a ete deplace AVANT la branche web : il
+retournait auparavant trop tot et la variante web n'etait jamais appelee.
+Un seul chemin couvre maintenant les deux plateformes, chacune resolvant
+son propre fichier.
+
+Replis en cascade, aucun fatal : script bloque, origine non declaree dans
+la console Google, invite refusee recemment — tout renvoie `unavailable`
+et la redirection Supabase reprend la main.
+
+**Prerequis cote Google Cloud :** ajouter `https://thlcolis.com` (et
+`https://www.thlcolis.com`) aux **Authorized JavaScript origins** du client
+OAuth web. Sans cela l'invite ne s'affiche pas et le repli joue — donc
+aucune casse, mais aucun gain non plus.
+
+Verifie apres `expo export --platform web` : `gsi/client` present dans le
+bundle, module natif absent.

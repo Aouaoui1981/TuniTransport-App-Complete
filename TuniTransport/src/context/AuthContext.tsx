@@ -257,6 +257,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('La connexion sociale est disponible sur l’application en ligne.');
     }
 
+    // ── Google : demander le jeton d'identité sans quitter l'application ──
+    // Sur mobile, c'est le sélecteur de comptes du système ; sur le web, une
+    // fenêtre Google intitulée du nom du site. Les deux évitent la page
+    // affichant « to continue to <projet>.supabase.co » — une chaîne
+    // technique montrée à l'endroit exact où l'on demande son compte à
+    // quelqu'un.
+    //
+    // Toute indisponibilité — services Google Play absents, script bloqué,
+    // origine non déclarée — retombe sur la redirection Supabase ci-dessous.
+    // Une connexion qui passe par un écran laid vaut mieux qu'une connexion
+    // qui ne passe pas.
+    if (provider === 'google') {
+      const direct = await signInWithGoogleNatively();
+      if (direct.status === 'cancelled') return;
+      if (direct.status === 'ok') {
+        const { error: idTokenError } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: direct.idToken,
+        });
+        if (idTokenError) throw new Error(idTokenError.message);
+        return;
+      }
+    }
+
     // ── Web : redirection classique ────────────────────────────────────────
     // Supabase envoie l'utilisateur chez le fournisseur puis le ramène sur
     // l'origine de l'app, où detectSessionInUrl établit la session ; le
@@ -268,25 +292,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw new Error(error.message);
       return;
-    }
-
-    // ── Natif, Google : sélecteur de comptes du système ────────────────────
-    // Le parcours navigateur ci-dessous fonctionne, mais il montre l'adresse
-    // technique du projet Supabase au moment précis où l'on demande à
-    // quelqu'un son compte Google. Le sélecteur natif évite cet écran.
-    // En cas d'indisponibilité — services Google Play absents, configuration
-    // incomplète — on ne bloque pas : on reprend le parcours navigateur.
-    if (provider === 'google') {
-      const native = await signInWithGoogleNatively();
-      if (native.status === 'cancelled') return;
-      if (native.status === 'ok') {
-        const { error: idTokenError } = await supabase.auth.signInWithIdToken({
-          provider: 'google',
-          token: native.idToken,
-        });
-        if (idTokenError) throw new Error(idTokenError.message);
-        return;
-      }
     }
 
     // ── Natif : session d'authentification + lien profond ──────────────────
