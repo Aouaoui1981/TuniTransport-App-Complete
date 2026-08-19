@@ -65,6 +65,22 @@ function buildDemoUser(email: string): User {
   return { ...base, email };
 }
 
+/**
+ * Lit le profil en laissant au déclencheur de base de données le temps de
+ * l'écrire. Cinq tentatives sur environ deux secondes : assez pour absorber
+ * une connexion lente, assez court pour ne pas faire attendre inutilement.
+ */
+async function fetchProfileWithRetry(userId: string, attempts = 5): Promise<User | null> {
+  for (let i = 0; i < attempts; i += 1) {
+    const profile = await fetchProfile(userId);
+    if (profile) return profile;
+    if (i < attempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+  }
+  return null;
+}
+
 // ── Provider ─────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -212,16 +228,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (error) throw new Error(error.message);
         if (data.session && data.user) {
-          // Code de parrainage (facultatif) — best-effort, ne bloque jamais l'inscription.
+          // Code de parrainage (facultatif). Volontairement NON attendu : il
+          // était annoncé « best-effort » mais bloquait l'inscription le temps
+          // d'un aller-retour réseau supplémentaire. Le compte est déjà créé,
+          // le parrainage peut se poser une seconde plus tard.
           if (payload.referralCode?.trim()) {
-            try {
-              await applyReferralCode(payload.referralCode.trim());
-            } catch (e) {
-              console.warn('Code de parrainage non appliqué:', e);
-            }
+            applyReferralCode(payload.referralCode.trim()).catch((e) =>
+              console.warn('Code de parrainage non appliqué:', e)
+            );
           }
-          const profile = await fetchProfile(data.user.id);
-          if (profile) setUser({ ...profile, email: data.user.email ?? payload.email });
+
+          // Le profil est créé par un déclencheur sur `auth.users`. Le lire
+          // aussitôt après `signUp` est une course : sur une connexion lente,
+          // la lecture arrivait avant l'écriture, `fetchProfile` renvoyait
+          // null, `setUser` n'était jamais appelé — et l'utilisateur restait
+          // sur l'écran d'inscription à regarder tourner un indicateur, alors
+          // que son compte venait bel et bien d'être créé. Il fermait
+          // l'application, la rouvrait, et se retrouvait connecté.
+          const profile = await fetchProfileWithRetry(data.user.id);
+          if (profile) {
+            setUser({ ...profile, email: data.user.email ?? payload.email });
+          } else {
+            // Le déclencheur tarde plus que de raison. Plutôt que de laisser
+            // l'écran figé, on ouvre l'application avec ce que l'on sait déjà :
+            // la session est valide, et le profil complet sera relu au
+            // prochain rafraîchissement.
+            setUser({
+              id: data.user.id,
+              email: data.user.email ?? payload.email,
+              firstName: payload.firstName,
+              lastName: payload.lastName,
+              phone: payload.phone,
+              role: payload.role,
+              rating: 0,
+              totalRatings: 0,
+              createdAt: new Date().toISOString(),
+              identityStatus: 'unsubmitted',
+            });
+          }
           return { emailConfirmationRequired: false };
         }
         // E-mail confirmation flow enabled on the project: account created,

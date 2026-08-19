@@ -1398,3 +1398,34 @@ aucune casse, mais aucun gain non plus.
 
 Verifie apres `expo export --platform web` : `gsi/client` present dans le
 bundle, module natif absent.
+
+## 2026-08-19 (soir) — Inscription bloquee sur l'indicateur de chargement
+Deux testeurs ont signale que la creation de compte « restait en
+chargement ». La base a tranche : les deux comptes existaient, confirmes,
+avec leur profil — et les deux se sont reconnectes quelques minutes plus
+tard sans difficulte. Ce n'etait donc ni le reseau ni le serveur.
+
+### La course
+Le profil est ecrit par un declencheur sur `auth.users`. `register()`
+appelait `fetchProfile()` immediatement apres `signUp()` : sur une
+connexion lente, la lecture precedait l'ecriture, `fetchProfile` renvoyait
+`null`, `setUser` n'etait jamais appele — et le navigateur restait sur la
+pile d'authentification. L'utilisateur voyait un ecran fige alors que son
+compte venait d'etre cree. Il fermait l'application, la rouvrait, et se
+retrouvait connecte : exactement ce qu'ils ont decrit.
+
+### Corrige
+- `fetchProfileWithRetry` : cinq tentatives sur ~2 s, le temps que le
+  declencheur commite.
+- Repli : si le profil manque toujours, la session etant valide, on ouvre
+  l'application avec les donnees du formulaire. Le profil complet sera relu
+  au rafraichissement suivant. Mieux vaut entrer avec un profil partiel que
+  rester dehors avec un compte qui existe.
+- `applyReferralCode` n'est plus attendu. Il etait annote « best-effort, ne
+  bloque jamais l'inscription » et bloquait pourtant, le temps d'un
+  aller-retour reseau de plus, juste avant la lecture du profil.
+
+### Testeurs inscrits ce soir
+- zainebchamkhi47@gmail.com (Zaineb Chamkhi)
+- othmanmont@gmail.com (MONA OTHMAN)
+Verifies en base comme les precedents. Total : six comptes.
