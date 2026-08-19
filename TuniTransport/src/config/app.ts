@@ -13,7 +13,11 @@
 // le domaine propre est acheté, il n'y a rien à recompiler à la main.
 // ──────────────────────────────────────────────────────────────────────────
 
-const FALLBACK_APP_URL = 'https://tunitransport-app-complete.lasaadawewi2.workers.dev';
+// Domaine propre depuis le 19 août 2026. L'adresse précédente
+// (`tunitransport-app-complete.lasaadawewi2.workers.dev`) reste servie par
+// le même Worker : les étiquettes déjà imprimées continuent de fonctionner.
+// Elle exposait au passage le nom du compte à quiconque scannait un colis.
+const FALLBACK_APP_URL = 'https://thlcolis.com';
 
 /** Adresse publique de l'application, sans barre oblique finale. */
 export const APP_URL = (process.env.EXPO_PUBLIC_APP_URL || FALLBACK_APP_URL).replace(/\/+$/, '');

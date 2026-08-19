@@ -1334,3 +1334,39 @@ Le selecteur de comptes doit s'ouvrir SANS navigateur. S'il ouvre encore
 Chrome, c'est que le natif a echoue en silence et que le repli a joue :
 verifier alors le client OAuth Android (paquet + empreinte SHA-1 de la cle
 de signature Play).
+
+## 2026-08-19 — Domaine propre : thlcolis.com
+Enregistre chez Cloudflare (10,46 $/an, renouvellement automatique jusqu'au
+19 aout 2027, WHOIS masque). Court, sans tiret, et il dit ce que fait
+l'application — trois defauts evites d'un coup : `thl-logistic` portait un
+tiret (dont on a vu ce qu'il coute : `tuni-transport` a failli faire
+echouer la revue Google) et un `logistic` au singulier, faute de langue en
+francais comme en anglais.
+
+### Fait
+- [x] `thlcolis.com` et `www.thlcolis.com` relies au Worker
+      `tunitransport-app-complete` (domaines personnalises, SSL emis).
+- [x] Routage d'e-mails Cloudflare : `support@thlcolis.com` arrive dans la
+      boite de l'equipe. Teste avec un vrai message.
+- [x] `SUPPORT_EMAIL` corrige dans `legal.ts`, dix pages statiques
+      regenerees.
+- [x] `FALLBACK_APP_URL` passe de `…lasaadawewi2.workers.dev` a
+      `https://thlcolis.com`.
+
+### Deux vrais defauts corriges au passage
+1. **Les pages legales promettaient une adresse morte.** Dix pages —
+   conditions, confidentialite, remboursement, suppression de compte —
+   citaient `support@tunitransport.app`, sur un domaine jamais achete.
+   La page de suppression de compte demandait meme d'ecrire a cette
+   adresse pour exercer ses droits. Chaque message rebondissait.
+2. **L'ancienne adresse exposait le nom du compte.** Le QR d'une etiquette
+   collee sur un colis menait a `…lasaadawewi2.workers.dev` : le nom du
+   proprietaire, lisible par tout destinataire.
+
+L'ancienne adresse reste servie par le meme Worker : aucune etiquette deja
+imprimee ne casse.
+
+### Reste
+- Play Console > Store settings > Contact details : e-mail et site a
+  basculer sur le nouveau domaine.
+- Verifier l'e-mail ICANN dans les 14 jours, sous peine de suspension.
