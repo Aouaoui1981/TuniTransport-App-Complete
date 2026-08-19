@@ -1260,3 +1260,43 @@ existe dans Google Cloud avec l'empreinte SHA-1 de la cle de signature Play
 
 Cout : quelques heures de code, un build, une revue. La connexion par
 e-mail et mot de passe reste inchangee — le risque est faible.
+
+## 2026-08-18 — Carte : la cause etait la restriction de la cle
+Apres avoir elimine une a une toutes les autres pistes, le test decisif a
+ete de passer `Application restrictions` de `Android apps` a **`None`** sur
+la cle Maps, sans rien reconstruire. Cinq minutes plus tard, cache de
+l'application vide et application relancee : **la carte s'affiche**, avec
+la France, la Tunisie, les marqueurs Paris et Tunis et la polyligne.
+
+La cle, la facturation, l'API activee et le code etaient donc tous corrects.
+Seul le VERROU de la cle bloquait.
+
+### Ce que le test a permis d'ecarter
+L'intuition etait de supprimer la cle et de tout recreer. Cela aurait coute
+une cle a recreer, a restreindre, un `app.json` a modifier, un build, un
+televersement et une revue — pour reproduire exactement la meme panne,
+puisque la valeur de la cle n'etait pas en cause. Le test a `None` coute
+deux clics et repond a la meme question.
+
+### L'empreinte n'etait pourtant pas fausse
+Comparee caractere par caractere avec celle du `App signing key
+certificate` de la Play Console, l'empreinte enregistree etait identique
+(20 octets, exacte). Le defaut se trouvait donc ailleurs dans l'entree —
+tres probablement le NOM DE PAQUET, jamais visible en entier : la colonne
+etait tronquee (`com.tunitran...`) sur toutes les captures. Une espace ou
+un caractere manquant y suffit.
+
+Impossible de le verifier apres coup : en enregistrant `None`, Google a
+**supprime** les entrees de restriction (« No rows to display »). Elles ont
+donc ete resaisies proprement, par copier-coller.
+
+### Signature a retenir pour la prochaine fois
+- Carte **noire**, pas de logo Google — aucune cle dans l'application.
+- Carte **grise ou noire AVEC le logo Google** — cle presente, refus du
+  serveur : facturation suspendue, ou restriction de cle.
+
+### Piege des metriques
+Les metriques de `Maps SDK for Android` accusent un retard pouvant aller
+jusqu'a 24 h, contrairement aux API web. Une fenetre « 1 hour » vide ne
+prouve donc RIEN. J'en avais conclu a tort que l'application n'emettait
+aucune requete.
