@@ -33,7 +33,12 @@ export interface LegalPage {
   sections: LegalSection[];
 }
 
-export const SUPPORT_EMAIL = 'support@tunitransport.app';
+// Boîte réelle depuis le 19 août 2026 : `thlcolis.com` est enregistré et
+// son routage d'e-mails renvoie vers la boîte de l'équipe. L'adresse
+// citée ici auparavant appartenait à un domaine jamais acheté — un
+// utilisateur qui écrivait au support recevait un rejet, alors que dix
+// pages légales lui promettaient une réponse.
+export const SUPPORT_EMAIL = 'support@thlcolis.com';
 
 export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
   // ── Conditions générales ────────────────────────────────────────────────
