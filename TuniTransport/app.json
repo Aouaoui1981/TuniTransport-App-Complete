@@ -40,7 +40,8 @@
         {
           "cameraPermission": "THL utilise l'appareil photo pour lire le QR code d'une étiquette d'expédition."
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "ios": {
       "supportsTablet": true,

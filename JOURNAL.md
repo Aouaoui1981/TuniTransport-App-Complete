@@ -1198,3 +1198,139 @@ Ce que l'indirection coutait : `app.config.js` etait ecrit pour ne PAS
 faire echouer le build quand la cle manquait. La panne devenait donc
 silencieuse et ne se manifestait que chez l'utilisateur final, apres
 publication. Un jour entier et un AAB casse en production.
+
+### AAB `1.0.0 (31)` soumis — 17 aout 2026, 19h08
+Premier build ou la cle Maps est ecrite dans `app.json` (commit `5fd5d9b`,
+fusion de la PR #149). Verifie a la source plutot que dans les journaux :
+sur `origin/main`, `app.config.js` est bien supprime et `app.json` porte la
+cle. Plus aucun code n'est en mesure de la retirer.
+
+Televerse en test ferme, zero erreur (seul le message deobfuscation
+subsiste, sans effet), envoye en revue.
+
+Test decisif apres acceptation : ouvrir THL sur un telephone testeur,
+onglet `Carte`. Si la carte s'affiche, l'affaire est close. Sinon, la cause
+est ailleurs et il faudra lire `adb logcat` sur l'appareil — la
+bibliotheque Maps y imprime le motif exact du refus.
+
+### Carte : DEUX pannes superposees — 17 aout 2026, 19h40
+Apres la mise a jour vers `1.0.0 (31)`, la carte n'etait plus noire mais
+**grise avec le logo Google** dans un coin. Ce changement d'apparence etait
+le signe que le premier correctif avait marche : la bibliotheque Maps
+s'initialise desormais, donc la cle est bien presente dans le paquet.
+
+Restait un refus cote serveur. Cause trouvee par un mail de Google : le
+compte de facturation `01CCB1-5C710F-4DA6BE` etait **suspendu**, et vient
+d'etre retabli apres paiement.
+
+Les deux pannes etaient reelles et independantes :
+
+1. l'AAB `27` etait construit sans aucune cle Maps (la variable EAS
+   n'atteignait pas `app.config.js`) — ecran **noir** ;
+2. la facturation Google Cloud etait suspendue — ecran **gris avec le
+   logo Google**.
+
+Corriger l'une sans l'autre n'aurait rien montre. C'est ce qui a rendu le
+diagnostic si long : chaque verification cote Google Cloud (empreintes,
+cle, API activee, facturation « liee ») paraissait correcte, et la
+facturation affichait bien un compte LIE — un compte suspendu reste lie.
+
+A retenir : sur une carte vide, distinguer les deux signatures.
+Noir = pas de cle dans l'application. Gris + logo Google = cle presente,
+refus du serveur (facturation, restrictions, quota).
+
+Aucun nouveau build n'est necessaire : la cle est dans le paquet installe,
+la facturation est active. Vider le cache de l'application suffit.
+
+### RAPPEL — connexion Google native, a faire apres les 12 testeurs
+Reporte le 18 aout 2026 a la demande de l'utilisateur, a reprendre des que
+le test ferme atteint douze testeurs.
+
+Aujourd'hui la connexion Google ouvre un Chrome Custom Tab qui affiche
+« to continue to leuntmiyxqvetksfrjfm.supabase.co » : l'utilisateur voit une
+chaine aleatoire au lieu du nom de l'application, precedee d'un ecran gris
+de chargement. C'est le premier point de friction de tout le parcours.
+
+La connexion native remplace cela par le selecteur de comptes du systeme :
+pas de navigateur, pas d'URL, pas d'ecran gris.
+
+Le prerequis qui manquait est desormais rempli : le client OAuth **Android**
+existe dans Google Cloud avec l'empreinte SHA-1 de la cle de signature Play
+(`5F:CA:30:8A:8F:94:D6:E1:2A:44:E5:33:30:4A:38:57:84:14:09:90`).
+
+Cout : quelques heures de code, un build, une revue. La connexion par
+e-mail et mot de passe reste inchangee — le risque est faible.
+
+## 2026-08-18 — Carte : la cause etait la restriction de la cle
+Apres avoir elimine une a une toutes les autres pistes, le test decisif a
+ete de passer `Application restrictions` de `Android apps` a **`None`** sur
+la cle Maps, sans rien reconstruire. Cinq minutes plus tard, cache de
+l'application vide et application relancee : **la carte s'affiche**, avec
+la France, la Tunisie, les marqueurs Paris et Tunis et la polyligne.
+
+La cle, la facturation, l'API activee et le code etaient donc tous corrects.
+Seul le VERROU de la cle bloquait.
+
+### Ce que le test a permis d'ecarter
+L'intuition etait de supprimer la cle et de tout recreer. Cela aurait coute
+une cle a recreer, a restreindre, un `app.json` a modifier, un build, un
+televersement et une revue — pour reproduire exactement la meme panne,
+puisque la valeur de la cle n'etait pas en cause. Le test a `None` coute
+deux clics et repond a la meme question.
+
+### L'empreinte n'etait pourtant pas fausse
+Comparee caractere par caractere avec celle du `App signing key
+certificate` de la Play Console, l'empreinte enregistree etait identique
+(20 octets, exacte). Le defaut se trouvait donc ailleurs dans l'entree —
+tres probablement le NOM DE PAQUET, jamais visible en entier : la colonne
+etait tronquee (`com.tunitran...`) sur toutes les captures. Une espace ou
+un caractere manquant y suffit.
+
+Impossible de le verifier apres coup : en enregistrant `None`, Google a
+**supprime** les entrees de restriction (« No rows to display »). Elles ont
+donc ete resaisies proprement, par copier-coller.
+
+### Signature a retenir pour la prochaine fois
+- Carte **noire**, pas de logo Google — aucune cle dans l'application.
+- Carte **grise ou noire AVEC le logo Google** — cle presente, refus du
+  serveur : facturation suspendue, ou restriction de cle.
+
+### Piege des metriques
+Les metriques de `Maps SDK for Android` accusent un retard pouvant aller
+jusqu'a 24 h, contrairement aux API web. Une fenetre « 1 hour » vide ne
+prouve donc RIEN. J'en avais conclu a tort que l'application n'emettait
+aucune requete.
+
+## 2026-08-19 — Connexion Google native
+La connexion Google ouvrait un Chrome Custom Tab affichant « to continue to
+leuntmiyxqvetksfrjfm.supabase.co » : une chaine aleatoire montree a
+l'utilisateur au moment precis ou on lui demande son compte Google, precedee
+d'un ecran gris de chargement. Premier point de friction du parcours.
+
+### Fait
+- [x] `@react-native-google-signin/google-signin` 16.1.4 + son plugin Expo
+      declare dans `app.json`.
+- [x] `GOOGLE_WEB_CLIENT_ID` dans `src/config/app.ts`. C'est le client
+      **web** qu'il faut : Supabase verifie le jeton d'identite contre lui.
+      Le client Android existe aussi mais ne s'ecrit nulle part — Google le
+      reconnait au nom de paquet et a l'empreinte de signature. Un
+      identifiant de client n'est pas un secret ; le secret associe, si.
+- [x] `src/services/googleSignIn.ts` : sélecteur natif, puis
+      `supabase.auth.signInWithIdToken`. Variante `.web.ts` qui se declare
+      indisponible, pour que le module natif n'entre jamais dans le bundle
+      navigateur (verifie : aucune trace dans `dist/`).
+- [x] `logout()` coupe aussi la session Google locale — sinon Google
+      reprend le dernier compte en silence et changer de compte devient
+      impossible depuis l'application.
+
+### Le parcours navigateur reste en place
+Toute defaillance du natif — services Google Play absents, configuration
+incomplete, `DEVELOPER_ERROR` — renvoie `unavailable`, et l'ancien parcours
+prend le relais. Une connexion qui passe par un ecran laid vaut mieux
+qu'une connexion qui ne passe pas. Le web est inchange.
+
+### A verifier sur l'appareil apres le build
+Le selecteur de comptes doit s'ouvrir SANS navigateur. S'il ouvre encore
+Chrome, c'est que le natif a echoue en silence et que le repli a joue :
+verifier alors le client OAuth Android (paquet + empreinte SHA-1 de la cle
+de signature Play).

@@ -15,6 +15,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, IS_LIVE } from '../services/supabase';
 import { fetchProfile, updateProfile, deleteOwnAccount, applyReferralCode } from '../services/api';
 import { MOCK_USERS } from '../services/mockData';
+import {
+  signInWithGoogleNatively,
+  signOutFromGoogleNatively,
+} from '../services/googleSignIn';
 import { User, LoginPayload, RegisterPayload, OAuthProvider, UserRole } from '../types';
 import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
@@ -266,6 +270,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // ── Natif, Google : sélecteur de comptes du système ────────────────────
+    // Le parcours navigateur ci-dessous fonctionne, mais il montre l'adresse
+    // technique du projet Supabase au moment précis où l'on demande à
+    // quelqu'un son compte Google. Le sélecteur natif évite cet écran.
+    // En cas d'indisponibilité — services Google Play absents, configuration
+    // incomplète — on ne bloque pas : on reprend le parcours navigateur.
+    if (provider === 'google') {
+      const native = await signInWithGoogleNatively();
+      if (native.status === 'cancelled') return;
+      if (native.status === 'ok') {
+        const { error: idTokenError } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: native.idToken,
+        });
+        if (idTokenError) throw new Error(idTokenError.message);
+        return;
+      }
+    }
+
     // ── Natif : session d'authentification + lien profond ──────────────────
     // Sans redirectTo, Supabase renverrait vers l'URL du site : le navigateur
     // afficherait l'app web et l'app native ne recevrait jamais la session.
@@ -329,6 +352,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       await AsyncStorage.removeItem(DEMO_SESSION_KEY);
     }
+    // Sans cela, Google garderait le compte choisi : la prochaine connexion
+    // repartirait en silence sur le même, et changer de compte deviendrait
+    // impossible depuis l'application.
+    await signOutFromGoogleNatively();
     setUser(null);
   }, []);
 
