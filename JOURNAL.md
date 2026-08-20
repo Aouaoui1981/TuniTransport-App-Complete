@@ -1446,3 +1446,34 @@ et y injecte l'icone et le script). Il ajoute :
   chargement sur fond sombre
 
 `public/og-image.png` (1200x630) est rendu aux couleurs de la marque.
+
+### AAB `1.0.0 (38)` soumis — 20 aout 2026
+Construit sur `68f04d0` (fusion de la PR #152). Contient, dans l'ordre
+d'importance : le correctif de l'inscription bloquee sur l'indicateur de
+chargement, la connexion Google native sur Android, la connexion Google
+sans redirection sur le web, le domaine `thlcolis.com`, l'adresse
+`support@thlcolis.com` et l'apercu Open Graph des liens partages.
+
+Le correctif d'inscription est le plus urgent : deux testeurs sur six
+l'avaient rencontre, et chaque nouveau testeur y etait expose.
+
+### Origines JavaScript declarees
+`https://thlcolis.com` et `https://www.thlcolis.com` ajoutees aux
+**Authorized JavaScript origins** du client OAuth web.
+
+Piege evite de justesse : l'origine `www` avait d'abord ete saisie dans
+**Authorized redirect URIs**, en remplacant
+`https://leuntmiyxqvetksfrjfm.supabase.co/auth/v1/callback`. Enregistrer
+cela aurait casse la connexion Google partout, mobile compris — Supabase
+renvoie l'utilisateur sur cette URL exacte et Google refuse toute adresse
+non declaree. Corrige avant le `Save`.
+
+A retenir : **origins** = depuis quel site le navigateur peut ouvrir
+Google. **redirect URIs** = ou Google renvoie l'utilisateur, c'est-a-dire
+le serveur Supabase, jamais le site.
+
+### A verifier apres acceptation
+1. Creer un compte neuf — l'application doit s'ouvrir sans rester figee.
+2. Bouton Google — selecteur de comptes sans navigateur.
+3. Onglet `Carte` — verification toujours en attente depuis la remise en
+   place de la restriction de cle.
