@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!--
+  Gabarit de la page web. Expo y injecte l'icône et le script au moment de
+  `expo export --platform web` ; sans ce fichier il génère un squelette nu,
+  en anglais, sans description ni image de partage — un lien collé dans
+  WhatsApp ou Facebook n'affichait qu'un rectangle noir.
+-->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <title>THL — Colis France ⇄ Tunisie</title>
+    <meta
+      name="description"
+      content="Envoyez vos colis entre la France et la Tunisie avec des transporteurs vérifiés voyageant en ferry. Dès 4 €/kg, paiement sécurisé et suivi en temps réel."
+    />
+    <meta name="theme-color" content="#0A1420" />
+
+    <!-- Partage : ce que voient WhatsApp, Facebook, Messenger et iMessage. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="THL" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:url" content="https://thlcolis.com/" />
+    <meta property="og:title" content="THL — Colis France ⇄ Tunisie" />
+    <meta
+      property="og:description"
+      content="Envoyez vos colis avec des transporteurs vérifiés voyageant en ferry. Dès 4 €/kg, paiement sécurisé et suivi en temps réel."
+    />
+    <meta property="og:image" content="https://thlcolis.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="THL — vos colis entre la France et la Tunisie, en toute confiance" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="THL — Colis France ⇄ Tunisie" />
+    <meta
+      name="twitter:description"
+      content="Envoyez vos colis avec des transporteurs vérifiés voyageant en ferry. Dès 4 €/kg."
+    />
+    <meta name="twitter:image" content="https://thlcolis.com/og-image.png" />
+
+    <!-- Réinitialisation recommandée par react-native-web. -->
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        overflow: hidden;
+        background-color: #0a1420;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>Cette application nécessite JavaScript.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

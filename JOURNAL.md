@@ -1429,3 +1429,20 @@ retrouvait connecte : exactement ce qu'ils ont decrit.
 - zainebchamkhi47@gmail.com (Zaineb Chamkhi)
 - othmanmont@gmail.com (MONA OTHMAN)
 Verifies en base comme les precedents. Total : six comptes.
+
+### Aperçu des liens partagés — Open Graph
+Un lien vers `thlcolis.com` colle dans WhatsApp, Messenger ou Facebook
+n'affichait qu'un rectangle noir : `expo export` genere un `index.html`
+minimal, en anglais, sans description ni image de partage. C'est la
+premiere impression de quiconque recoit le lien — et le canal principal
+de recrutement, puisque l'application ne sort pas dans les recherches
+tant qu'elle est en test ferme.
+
+`public/index.html` sert desormais de gabarit (verifie : Expo le reprend
+et y injecte l'icone et le script). Il ajoute :
+- `lang="fr"`, un titre parlant, une description
+- les balises Open Graph et Twitter Card
+- `theme-color` et un fond `#0A1420`, pour ne plus voir un flash blanc au
+  chargement sur fond sombre
+
+`public/og-image.png` (1200x630) est rendu aux couleurs de la marque.
