@@ -1370,3 +1370,79 @@ imprimee ne casse.
 - Play Console > Store settings > Contact details : e-mail et site a
   basculer sur le nouveau domaine.
 - Verifier l'e-mail ICANN dans les 14 jours, sous peine de suspension.
+
+### Connexion Google sur le web — Google Identity Services
+Le web souffrait du meme defaut que le mobile, en pire : la redirection
+Supabase quittait entierement le site pour afficher
+« to continue to leuntmiyxqvetksfrjfm.supabase.co ».
+
+`googleSignIn.web.ts` — jusqu'ici un simple « indisponible » — implemente
+desormais Google Identity Services : une fenetre legere par-dessus le
+site, intitulee **du nom du site** (« Se connecter a thlcolis.com »), parce
+que Google lit l'ORIGINE de la page et non l'URL de retour. On ne quitte
+plus l'application.
+
+Le bloc Google d'`AuthContext` a ete deplace AVANT la branche web : il
+retournait auparavant trop tot et la variante web n'etait jamais appelee.
+Un seul chemin couvre maintenant les deux plateformes, chacune resolvant
+son propre fichier.
+
+Replis en cascade, aucun fatal : script bloque, origine non declaree dans
+la console Google, invite refusee recemment — tout renvoie `unavailable`
+et la redirection Supabase reprend la main.
+
+**Prerequis cote Google Cloud :** ajouter `https://thlcolis.com` (et
+`https://www.thlcolis.com`) aux **Authorized JavaScript origins** du client
+OAuth web. Sans cela l'invite ne s'affiche pas et le repli joue — donc
+aucune casse, mais aucun gain non plus.
+
+Verifie apres `expo export --platform web` : `gsi/client` present dans le
+bundle, module natif absent.
+
+## 2026-08-19 (soir) — Inscription bloquee sur l'indicateur de chargement
+Deux testeurs ont signale que la creation de compte « restait en
+chargement ». La base a tranche : les deux comptes existaient, confirmes,
+avec leur profil — et les deux se sont reconnectes quelques minutes plus
+tard sans difficulte. Ce n'etait donc ni le reseau ni le serveur.
+
+### La course
+Le profil est ecrit par un declencheur sur `auth.users`. `register()`
+appelait `fetchProfile()` immediatement apres `signUp()` : sur une
+connexion lente, la lecture precedait l'ecriture, `fetchProfile` renvoyait
+`null`, `setUser` n'etait jamais appele — et le navigateur restait sur la
+pile d'authentification. L'utilisateur voyait un ecran fige alors que son
+compte venait d'etre cree. Il fermait l'application, la rouvrait, et se
+retrouvait connecte : exactement ce qu'ils ont decrit.
+
+### Corrige
+- `fetchProfileWithRetry` : cinq tentatives sur ~2 s, le temps que le
+  declencheur commite.
+- Repli : si le profil manque toujours, la session etant valide, on ouvre
+  l'application avec les donnees du formulaire. Le profil complet sera relu
+  au rafraichissement suivant. Mieux vaut entrer avec un profil partiel que
+  rester dehors avec un compte qui existe.
+- `applyReferralCode` n'est plus attendu. Il etait annote « best-effort, ne
+  bloque jamais l'inscription » et bloquait pourtant, le temps d'un
+  aller-retour reseau de plus, juste avant la lecture du profil.
+
+### Testeurs inscrits ce soir
+- zainebchamkhi47@gmail.com (Zaineb Chamkhi)
+- othmanmont@gmail.com (MONA OTHMAN)
+Verifies en base comme les precedents. Total : six comptes.
+
+### Aperçu des liens partagés — Open Graph
+Un lien vers `thlcolis.com` colle dans WhatsApp, Messenger ou Facebook
+n'affichait qu'un rectangle noir : `expo export` genere un `index.html`
+minimal, en anglais, sans description ni image de partage. C'est la
+premiere impression de quiconque recoit le lien — et le canal principal
+de recrutement, puisque l'application ne sort pas dans les recherches
+tant qu'elle est en test ferme.
+
+`public/index.html` sert desormais de gabarit (verifie : Expo le reprend
+et y injecte l'icone et le script). Il ajoute :
+- `lang="fr"`, un titre parlant, une description
+- les balises Open Graph et Twitter Card
+- `theme-color` et un fond `#0A1420`, pour ne plus voir un flash blanc au
+  chargement sur fond sombre
+
+`public/og-image.png` (1200x630) est rendu aux couleurs de la marque.

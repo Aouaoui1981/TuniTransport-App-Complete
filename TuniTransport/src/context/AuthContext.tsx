@@ -65,6 +65,22 @@ function buildDemoUser(email: string): User {
   return { ...base, email };
 }
 
+/**
+ * Lit le profil en laissant au déclencheur de base de données le temps de
+ * l'écrire. Cinq tentatives sur environ deux secondes : assez pour absorber
+ * une connexion lente, assez court pour ne pas faire attendre inutilement.
+ */
+async function fetchProfileWithRetry(userId: string, attempts = 5): Promise<User | null> {
+  for (let i = 0; i < attempts; i += 1) {
+    const profile = await fetchProfile(userId);
+    if (profile) return profile;
+    if (i < attempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+  }
+  return null;
+}
+
 // ── Provider ─────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -212,16 +228,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (error) throw new Error(error.message);
         if (data.session && data.user) {
-          // Code de parrainage (facultatif) — best-effort, ne bloque jamais l'inscription.
+          // Code de parrainage (facultatif). Volontairement NON attendu : il
+          // était annoncé « best-effort » mais bloquait l'inscription le temps
+          // d'un aller-retour réseau supplémentaire. Le compte est déjà créé,
+          // le parrainage peut se poser une seconde plus tard.
           if (payload.referralCode?.trim()) {
-            try {
-              await applyReferralCode(payload.referralCode.trim());
-            } catch (e) {
-              console.warn('Code de parrainage non appliqué:', e);
-            }
+            applyReferralCode(payload.referralCode.trim()).catch((e) =>
+              console.warn('Code de parrainage non appliqué:', e)
+            );
           }
-          const profile = await fetchProfile(data.user.id);
-          if (profile) setUser({ ...profile, email: data.user.email ?? payload.email });
+
+          // Le profil est créé par un déclencheur sur `auth.users`. Le lire
+          // aussitôt après `signUp` est une course : sur une connexion lente,
+          // la lecture arrivait avant l'écriture, `fetchProfile` renvoyait
+          // null, `setUser` n'était jamais appelé — et l'utilisateur restait
+          // sur l'écran d'inscription à regarder tourner un indicateur, alors
+          // que son compte venait bel et bien d'être créé. Il fermait
+          // l'application, la rouvrait, et se retrouvait connecté.
+          const profile = await fetchProfileWithRetry(data.user.id);
+          if (profile) {
+            setUser({ ...profile, email: data.user.email ?? payload.email });
+          } else {
+            // Le déclencheur tarde plus que de raison. Plutôt que de laisser
+            // l'écran figé, on ouvre l'application avec ce que l'on sait déjà :
+            // la session est valide, et le profil complet sera relu au
+            // prochain rafraîchissement.
+            setUser({
+              id: data.user.id,
+              email: data.user.email ?? payload.email,
+              firstName: payload.firstName,
+              lastName: payload.lastName,
+              phone: payload.phone,
+              role: payload.role,
+              rating: 0,
+              totalRatings: 0,
+              createdAt: new Date().toISOString(),
+              identityStatus: 'unsubmitted',
+            });
+          }
           return { emailConfirmationRequired: false };
         }
         // E-mail confirmation flow enabled on the project: account created,
@@ -257,6 +301,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('La connexion sociale est disponible sur l’application en ligne.');
     }
 
+    // ── Google : demander le jeton d'identité sans quitter l'application ──
+    // Sur mobile, c'est le sélecteur de comptes du système ; sur le web, une
+    // fenêtre Google intitulée du nom du site. Les deux évitent la page
+    // affichant « to continue to <projet>.supabase.co » — une chaîne
+    // technique montrée à l'endroit exact où l'on demande son compte à
+    // quelqu'un.
+    //
+    // Toute indisponibilité — services Google Play absents, script bloqué,
+    // origine non déclarée — retombe sur la redirection Supabase ci-dessous.
+    // Une connexion qui passe par un écran laid vaut mieux qu'une connexion
+    // qui ne passe pas.
+    if (provider === 'google') {
+      const direct = await signInWithGoogleNatively();
+      if (direct.status === 'cancelled') return;
+      if (direct.status === 'ok') {
+        const { error: idTokenError } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: direct.idToken,
+        });
+        if (idTokenError) throw new Error(idTokenError.message);
+        return;
+      }
+    }
+
     // ── Web : redirection classique ────────────────────────────────────────
     // Supabase envoie l'utilisateur chez le fournisseur puis le ramène sur
     // l'origine de l'app, où detectSessionInUrl établit la session ; le
@@ -268,25 +336,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw new Error(error.message);
       return;
-    }
-
-    // ── Natif, Google : sélecteur de comptes du système ────────────────────
-    // Le parcours navigateur ci-dessous fonctionne, mais il montre l'adresse
-    // technique du projet Supabase au moment précis où l'on demande à
-    // quelqu'un son compte Google. Le sélecteur natif évite cet écran.
-    // En cas d'indisponibilité — services Google Play absents, configuration
-    // incomplète — on ne bloque pas : on reprend le parcours navigateur.
-    if (provider === 'google') {
-      const native = await signInWithGoogleNatively();
-      if (native.status === 'cancelled') return;
-      if (native.status === 'ok') {
-        const { error: idTokenError } = await supabase.auth.signInWithIdToken({
-          provider: 'google',
-          token: native.idToken,
-        });
-        if (idTokenError) throw new Error(idTokenError.message);
-        return;
-      }
     }
 
     // ── Natif : session d'authentification + lien profond ──────────────────
