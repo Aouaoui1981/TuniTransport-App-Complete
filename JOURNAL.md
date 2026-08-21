@@ -1558,3 +1558,23 @@ silence.
 Un indicateur de chargement doit avoir une sortie sur TOUS les chemins, pas
 seulement sur l'erreur. Le chemin « l'utilisateur renonce » est un chemin
 normal, et c'est celui qui manquait.
+
+### CARTE : RESOLU — 21 aout 2026
+La restriction est de nouveau active sur la cle Maps (`Android apps`, nom
+de paquet + empreinte SHA-1 de la cle de signature Play) **et la carte
+s'affiche**. La cle est donc protegee et la fonctionnalite marche : les
+deux a la fois, ce qui n'avait jamais ete le cas jusqu'ici.
+
+Le dossier aura dure trois jours et aura recouvert **deux pannes
+independantes** — un AAB construit sans cle, puis une facturation Google
+Cloud suspendue — plus une entree de restriction defectueuse, dont le
+defaut exact restera inconnu : enregistrer `None` a efface les entrees,
+et les resaisir par copier-coller a suffi. Le nom de paquet, jamais
+visible en entier dans la console mobile, reste le suspect le plus
+probable.
+
+### ICANN : sans objet
+Le domaine affiche `Active` jusqu'au 19 aout 2027, renouvellement
+automatique, sans banniere de verification. L'adresse du registrant etait
+deja verifiee sur le compte Cloudflare — la verification est liee au
+registrant, pas a chaque domaine. Rien a faire.
