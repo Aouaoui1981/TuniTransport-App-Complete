@@ -97,6 +97,14 @@ export default function RegisterScreen() {
     if (errors[field]) setFieldError(field, undefined);
   }
 
+  // Le même refus, quel que soit le chemin choisi pour créer le compte.
+  function warnTermsRequired() {
+    showAlert(
+      'Conditions à accepter',
+      "Pour créer un compte, veuillez accepter les Conditions générales et la Politique de confidentialité."
+    );
+  }
+
   async function handleRegister() {
     const nextErrors: FieldErrors = {};
     (Object.keys(validators) as Field[]).forEach((field) => {
@@ -110,10 +118,7 @@ export default function RegisterScreen() {
       return;
     }
     if (!acceptedTerms) {
-      showAlert(
-        'Conditions à accepter',
-        "Pour créer un compte, veuillez accepter les Conditions générales et la Politique de confidentialité."
-      );
+      warnTermsRequired();
       return;
     }
     setSubmitting(true);
@@ -456,7 +461,11 @@ export default function RegisterScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          <SocialAuthButtons preferredRole={role} />
+          <SocialAuthButtons
+            preferredRole={role}
+            blocked={!acceptedTerms}
+            onBlockedPress={warnTermsRequired}
+          />
 
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Déjà un compte ? </Text>
