@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,6 +20,11 @@ import { SPACING, RADIUS, FONTS, DARK } from '../../utils/theme';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import PressableScale from '../../components/PressableScale';
 import OnboardingOverlay from '../../components/OnboardingOverlay';
+
+const STORES: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
+  { icon: 'logo-google-playstore', label: 'Google Play' },
+  { icon: 'logo-apple-appstore', label: 'App Store' },
+];
 
 const TRUST_POINTS: {
   icon: keyof typeof Ionicons.glyphMap;
@@ -189,6 +195,35 @@ export default function WelcomeScreen() {
               <Ionicons name="chevron-forward" size={14} color={DARK.colors.accent} />
             </TouchableOpacity>
           </View>
+
+          {/* Magasins d'applications — web uniquement : sur mobile,
+              l'utilisateur EST déjà dans l'application. Volontairement
+              inertes : l'application n'est pas encore ouverte au public sur
+              Google Play (test fermé) et n'existe pas sur l'App Store.
+              Un badge cliquable menant à une page « introuvable » serait pire
+              qu'un badge honnête qui annonce la suite. */}
+          {Platform.OS === 'web' ? (
+            <View style={styles.stores}>
+              <Text style={styles.storesTitle}>L'application mobile</Text>
+
+              <View style={styles.storesRow}>
+                {STORES.map((store) => (
+                  <View key={store.label} style={styles.storeBadge}>
+                    <Ionicons name={store.icon} size={26} color={DARK.colors.textSecondary} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.storeSoon}>Bientôt sur</Text>
+                      <Text style={styles.storeLabel}>{store.label}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              <Text style={styles.storesNote}>
+                Pas encore disponible au téléchargement. En attendant, THL fonctionne
+                entièrement depuis votre navigateur.
+              </Text>
+            </View>
+          ) : null}
         </View>
       </ScrollView>
     </View>
@@ -196,6 +231,38 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  stores: { marginTop: SPACING.xxl, alignItems: 'center', gap: SPACING.md },
+  storesTitle: {
+    fontSize: FONTS.sizes.xs,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: DARK.colors.textSecondary,
+  },
+  storesRow: { flexDirection: 'row', gap: SPACING.sm, flexWrap: 'wrap', justifyContent: 'center' },
+  storeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    minWidth: 168,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: DARK.colors.borderStrong,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    // Ni bouton ni lien : rien à presser tant que rien n'est publié.
+    opacity: 0.65,
+  },
+  storeSoon: { fontSize: FONTS.sizes.xs, color: DARK.colors.textSecondary },
+  storeLabel: { fontSize: FONTS.sizes.md, fontWeight: '800', color: DARK.colors.text },
+  storesNote: {
+    fontSize: FONTS.sizes.sm,
+    color: DARK.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 420,
+  },
   root: { flex: 1, backgroundColor: DARK.colors.bgBase },
   scroll: { paddingBottom: SPACING.xxxl },
 
