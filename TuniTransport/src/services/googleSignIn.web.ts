@@ -27,7 +27,13 @@ const GSI_SRC = 'https://accounts.google.com/gsi/client';
 type GsiNotification = {
   isNotDisplayed?: () => boolean;
   isSkippedMoment?: () => boolean;
+  isDismissedMoment?: () => boolean;
 };
+
+// Filet de sécurité : l'invite Google peut se fermer sans qu'aucun de ses
+// rappels ne soit déclenché. Sans cette limite, la promesse ne se résoudrait
+// jamais et le bouton tournerait indéfiniment.
+const PROMPT_TIMEOUT_MS = 20000;
 
 type GsiId = {
   initialize: (config: {
@@ -76,11 +82,18 @@ export async function signInWithGoogleNatively(): Promise<NativeGoogleResult> {
   return new Promise<NativeGoogleResult>((resolve) => {
     // Une seule résolution : l'invite peut se fermer après avoir déjà répondu.
     let done = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const settle = (r: NativeGoogleResult) => {
       if (done) return;
       done = true;
+      if (timer) clearTimeout(timer);
       resolve(r);
     };
+
+    timer = setTimeout(
+      () => settle({ status: 'unavailable', reason: 'Invite Google sans réponse.' }),
+      PROMPT_TIMEOUT_MS
+    );
 
     try {
       id.initialize({
@@ -97,6 +110,12 @@ export async function signInWithGoogleNatively(): Promise<NativeGoogleResult> {
       // origine non déclarée, refus récent. Ce n'est pas un échec — on rend
       // la main à la redirection Supabase, qui fonctionne partout.
       id.prompt((notification) => {
+        // Fermée par l'utilisateur : ce n'est pas une panne, on ne bascule
+        // pas sur la redirection derrière son dos.
+        if (notification.isDismissedMoment?.()) {
+          settle({ status: 'cancelled' });
+          return;
+        }
         if (notification.isNotDisplayed?.() || notification.isSkippedMoment?.()) {
           settle({ status: 'unavailable', reason: 'Invite Google non affichée.' });
         }
