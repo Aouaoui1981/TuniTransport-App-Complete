@@ -1529,3 +1529,32 @@ que les visuels officiels des magasins, dont l'usage est encadre par leurs
 chartes de marque.
 
 Rendu verifie par capture apres `expo export --platform web`.
+
+## 2026-08-21 (soir) — Le bouton Google tournait indefiniment
+Signale par un testeur : « Teb9a dour haka » — l'indicateur du bouton
+Google tourne sans fin, sans autre issue que de quitter l'ecran.
+
+### Cause
+`SocialAuthButtons.onPress` ne remettait `busy` a zero que dans le `catch`.
+Or `signInWithProvider` peut revenir **sans erreur et sans naviguer** :
+c'est exactement ce qui arrive quand l'utilisateur ferme le selecteur de
+comptes sans rien choisir. L'appel se termine normalement, l'ecran ne
+change pas, et l'indicateur reste allume pour toujours.
+
+La structure precedait mon travail, mais je l'ai rendue atteignable : avant
+la connexion native, le web redirigeait toujours (la page partait) et le
+natif ouvrait toujours le navigateur. Desormais une annulation revient en
+silence.
+
+### Corrige
+- `finally { setBusy(null) }`. En cas de succes l'application change
+  d'ecran de toute facon, donc rien n'est perdu a remettre l'etat a zero.
+- Cote web, l'invite Google peut aussi se fermer sans declencher aucun de
+  ses rappels : la promesse ne se resolvait alors jamais. Ajout du moment
+  « dismissed » (traite comme une annulation, sans bascule sournoise vers
+  la redirection) et d'un delai de garde de 20 s.
+
+### Lecon
+Un indicateur de chargement doit avoir une sortie sur TOUS les chemins, pas
+seulement sur l'erreur. Le chemin « l'utilisateur renonce » est un chemin
+normal, et c'est celui qui manquait.

@@ -66,6 +66,13 @@ export default function SocialAuthButtons({
       // Sur le web, la page redirige vers le provider : rien d'autre à faire.
     } catch (e) {
       showAlert('Connexion impossible', getErrorMessage(e));
+    } finally {
+      // Toujours relâcher l'indicateur. Il n'était remis à zéro que dans le
+      // `catch` : quand l'utilisateur fermait le sélecteur de comptes sans
+      // rien choisir, l'appel revenait sans erreur et sans naviguer, et le
+      // bouton tournait indéfiniment — sans autre issue que de quitter
+      // l'écran. En cas de succès, l'application change d'écran de toute
+      // façon, remettre l'état à zéro n'y change rien.
       setBusy(null);
     }
   };
