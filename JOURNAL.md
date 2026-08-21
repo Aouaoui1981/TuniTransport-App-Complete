@@ -1477,3 +1477,34 @@ le serveur Supabase, jamais le site.
 2. Bouton Google — selecteur de comptes sans navigateur.
 3. Onglet `Carte` — verification toujours en attente depuis la remise en
    place de la restriction de cle.
+
+## 2026-08-21 — Inscription par Google sans accepter les conditions
+Signale par l'utilisateur, enregistrement d'ecran a l'appui : creer un
+compte via Google aboutissait **sans qu'aucun consentement n'ait ete
+donne**.
+
+La verification existait bien — `RegisterScreen.tsx:112` refusait la
+soumission tant que la case n'etait pas cochee — mais elle vivait a
+l'interieur de `handleRegister()`, c'est-a-dire sur le seul chemin
+e-mail + mot de passe. `SocialAuthButtons` etait rendu plus bas, en
+dehors de ce controle, et appelait `signInWithProvider` directement.
+
+Ce n'est pas un defaut d'interface. Les Conditions generales et la
+Politique de confidentialite fondent le statut d'intermediaire technique
+de THL, la liste des objets interdits et la decharge de responsabilite.
+Un compte cree sans les avoir acceptees affaiblit tout cela au premier
+litige — et la fiche Play declare pourtant que ces textes s'appliquent.
+
+### Corrige
+- `SocialAuthButtons` accepte `blocked` et `onBlockedPress`. Bouton grise
+  mais toujours pressable : une pression explique ce qui manque, la ou un
+  bouton inerte n'aurait rien dit.
+- `RegisterScreen` passe `blocked={!acceptedTerms}` et partage le meme
+  message de refus entre les deux chemins (`warnTermsRequired`).
+- `LoginScreen` reste inchange : les comptes existants ont deja accepte.
+
+### Reste a faire un jour
+Rien ne conserve la DATE d'acceptation cote profil. Les expeditions ont
+`terms_accepted_at`, pas les comptes. En cas de contestation, on ne peut
+prouver que la personne a accepte a l'inscription. A ajouter quand le
+sujet reviendra.

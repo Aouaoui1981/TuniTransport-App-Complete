@@ -34,12 +34,32 @@ const VISIBLE_PROVIDERS = PROVIDERS.filter((p) => p.key !== 'apple' || Platform.
  * si le compte est créé à cette occasion — un compte Google déjà inscrit
  * garde le sien, et l'utilisateur en est averti plutôt que de se retrouver
  * silencieusement dans un rôle qu'il n'a pas choisi.
+ *
+ * `blocked` / `onBlockedPress` : sur l'écran d'inscription, un compte ne peut
+ * naître qu'après acceptation des Conditions générales et de la Politique de
+ * confidentialité. Ce garde-fou n'existait que sur le formulaire e-mail :
+ * passer par Google créait un compte sans qu'aucun consentement n'ait été
+ * donné, alors que ces textes fondent le statut d'intermédiaire technique,
+ * la liste des objets interdits et la décharge de responsabilité. L'écran de
+ * connexion, lui, ne passe rien : les comptes existants ont déjà accepté.
  */
-export default function SocialAuthButtons({ preferredRole }: { preferredRole?: UserRole }) {
+export default function SocialAuthButtons({
+  preferredRole,
+  blocked = false,
+  onBlockedPress,
+}: {
+  preferredRole?: UserRole;
+  blocked?: boolean;
+  onBlockedPress?: () => void;
+}) {
   const { signInWithProvider } = useAuth();
   const [busy, setBusy] = useState<OAuthProvider | null>(null);
 
   const onPress = async (provider: OAuthProvider) => {
+    if (blocked) {
+      onBlockedPress?.();
+      return;
+    }
     setBusy(provider);
     try {
       await signInWithProvider(provider, preferredRole);
@@ -55,7 +75,7 @@ export default function SocialAuthButtons({ preferredRole }: { preferredRole?: U
       {VISIBLE_PROVIDERS.map((p) => (
         <TouchableOpacity
           key={p.key}
-          style={styles.button}
+          style={[styles.button, blocked && styles.buttonBlocked]}
           activeOpacity={0.8}
           disabled={busy !== null}
           onPress={() => onPress(p.key)}
@@ -78,6 +98,8 @@ export default function SocialAuthButtons({ preferredRole }: { preferredRole?: U
 
 const styles = StyleSheet.create({
   wrap: { gap: SPACING.sm },
+  // Grisé sans être inerte : la pression explique ce qui manque.
+  buttonBlocked: { opacity: 0.5 },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
