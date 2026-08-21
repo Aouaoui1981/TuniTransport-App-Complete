@@ -1508,3 +1508,24 @@ Rien ne conserve la DATE d'acceptation cote profil. Les expeditions ont
 `terms_accepted_at`, pas les comptes. En cas de contestation, on ne peut
 prouver que la personne a accepte a l'inscription. A ajouter quand le
 sujet reviendra.
+
+### Badges des magasins sur la page d'accueil web
+Ajoutes en bas de `WelcomeScreen`, **web uniquement** — sur mobile
+l'utilisateur est deja dans l'application, un badge « telecharger » y
+serait absurde.
+
+Volontairement **inertes** : ni bouton ni lien. L'application n'est pas
+ouverte au public sur Google Play (test ferme : la fiche renvoie un 404 a
+qui n'est pas testeur) et n'existe pas du tout sur l'App Store. Un badge
+cliquable menant a une page introuvable ferait plus de mal qu'un badge
+honnete qui annonce la suite : « Bientot sur Google Play », « Bientot sur
+App Store ».
+
+Sous les deux, une phrase qui evite la deception : l'application n'est pas
+telechargeable, mais THL fonctionne entierement dans le navigateur.
+
+Icones Ionicons (`logo-google-playstore`, `logo-apple-appstore`) plutot
+que les visuels officiels des magasins, dont l'usage est encadre par leurs
+chartes de marque.
+
+Rendu verifie par capture apres `expo export --platform web`.
