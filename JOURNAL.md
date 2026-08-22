@@ -1633,9 +1633,14 @@ d'envoi, pour que les APK `preview` marchent aussi).
 - `TuniTransport/src/context/AuthContext.tsx`
 
 ### Reste à faire
-- [ ] Supabase → Authentication → URL Configuration : **Site URL** affiche
-      encore `https://tunitransport-app-complete.lasaadaw…`. À remplacer par
-      `https://thlcolis.com` (les Redirect URLs, elles, sont à jour).
+- [x] Supabase → Authentication → URL Configuration : **Site URL** vaut
+      désormais `https://thlcolis.com` (il pointait encore sur l'ancienne
+      adresse `workers.dev`). Les Redirect URLs étaient déjà à jour.
+      Le formulaire n'enregistre le Site URL que par son propre bouton
+      *Save changes* ; les Redirect URLs, elles, se sauvegardent une par une
+      à chaque *Add URL* — d'où une page à moitié enregistrée sans que rien
+      ne le signale. Un bouton *Save changes* grisé **sans** *Cancel* à côté
+      signifie « rien à enregistrer », donc c'est enregistré.
 - [ ] Play Console → Store settings → Contact details :
       `support@thlcolis.com` et `https://thlcolis.com` — l'adresse Gmail
       personnelle est encore affichée publiquement.
