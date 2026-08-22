@@ -1709,3 +1709,53 @@ installé et montre le numéro de build (PR #158).
       natif fonctionne, mais à traiter ensuite.
 - [ ] Retirer le bloc de diagnostic avant l'ouverture au public.
 - [ ] Recruter 6 testeurs de plus (6 sur 12).
+
+---
+
+## 2026-08-22 (nuit) — RESOLU : la connexion Google fonctionne
+
+### Ce qui a corrige
+Deux clients OAuth **Android** ajoutes dans le projet `THL-Transport`
+(`833218073949`), paquet `com.tunitransport.app`, a cote du client
+existant :
+
+    THL Android deployment   CB:ED:73:C0:46:66:37:3C:9D:5A:B3:E2:6C:F7:19:A5:30:87:96:C0
+    THL Android pqc          D5:00:73:A4:21:3B:32:38:E8:76:21:8D:70:43:2C:2A:5F:42:80:7B
+
+Effet immediat, sans nouveau build ni nouvel envoi sur Play : le selecteur
+natif s'ouvre, le compte est choisi, la session s'etablit. Plus de repli
+navigateur, donc plus la chaine `leuntmiyxqvetksfrjfm.supabase.co` a
+l'ecran au moment ou l'on demande son compte a quelqu'un.
+
+### Honnetement : on ne sait pas laquelle des deux
+Les deux empreintes ont ete ajoutees ensemble. `deployment_cert` est de
+loin la plus probable — son nom designe la signature des artefacts livres
+aux appareils — mais rien ne le prouve. Verifier couterait une suppression
+et un nouveau test ; sans interet, garder les deux ne nuit pas.
+
+### Le piege, a retenir
+La console Play affiche l'empreinte SHA-1 sous « App signing key >
+Classical key », et la console Google Cloud renvoie explicitement a cette
+page. Suivre les deux consoles a la lettre donne `5F:CA` — et un
+`DEVELOPER_ERROR`. L'empreinte qui compte n'est visible **qu'en
+telechargeant `certificates.zip`** et en lisant `deployment_cert.der` :
+
+    openssl x509 -inform DER -in deployment_cert.der -noout -fingerprint -sha1
+
+Le mecanisme « Quantum-ready (beta) » de Play App Signing produit trois
+certificats la ou il y en avait un ; l'interface n'en montre que deux, et
+pas celui qui signe.
+
+### Etat des lieux
+- [x] Connexion Google native sur Android
+- [ ] Repli navigateur : se referme sans revenir sur
+      `tunitransport://auth-callback` (`dismiss`). Latent — le chemin natif
+      fonctionne, donc plus personne n'y arrive. A traiter un jour, pas
+      urgent.
+- [ ] Retirer le bloc de diagnostic avant l'ouverture au public. Le garder
+      pendant la beta : il ne se declenche que si les deux chemins
+      echouent, donc il est muet en fonctionnement normal.
+- [ ] Compte `walidchamkhi1981@gmail.com` (« Ala Aouaoui ») cree pendant ce
+      test via Google, role expediteur. A supprimer avec les autres donnees
+      de test si on ne le garde pas.
+- [ ] Recruter 6 testeurs de plus (6 sur 12).
