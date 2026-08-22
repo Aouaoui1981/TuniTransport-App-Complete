@@ -57,10 +57,12 @@ export async function signInWithGoogleNatively(): Promise<NativeGoogleResult> {
     const code = (e as { code?: string })?.code;
     // L'utilisateur a fermé le sélecteur : ce n'est pas une panne.
     if (code === 'SIGN_IN_CANCELLED' || code === '12501') return { status: 'cancelled' };
-    return {
-      status: 'unavailable',
-      reason: e instanceof Error ? e.message : 'Connexion Google native indisponible.',
-    };
+    const message = e instanceof Error ? e.message : 'Connexion Google native indisponible.';
+    // Le code compte plus que le message : `DEVELOPER_ERROR` (10) ne dit
+    // rien à l'utilisateur mais désigne précisément une empreinte SHA-1 ou
+    // un identifiant client qui ne correspond pas. Sans lui, tous les
+    // échecs se ressemblent.
+    return { status: 'unavailable', reason: code ? `${code} — ${message}` : message };
   }
 }
 
