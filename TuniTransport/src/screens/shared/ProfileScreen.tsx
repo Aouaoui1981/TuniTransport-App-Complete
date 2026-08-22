@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
+import * as Application from 'expo-application';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../utils/theme';
 import { showAlert } from '../../utils/alert';
 import { getErrorMessage } from '../../utils/errors';
@@ -26,6 +27,22 @@ import { supabase, IS_LIVE } from '../../services/supabase';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { IdentityStatus } from '../../types';
 import { LEGAL_PAGES, LegalPageKey } from '../../content/legal';
+
+// Le numéro affiché était écrit en dur — « v1.1.0 » alors que
+// l'application publiait 1.0.0, et surtout le même d'un envoi à l'autre.
+// Pendant la bêta, la première question posée à un testeur est « quelle
+// version as-tu ? » : sans réponse lisible à l'écran, on ne sait jamais si
+// un correctif est réellement installé. On lit donc le paquet installé, et
+// on montre le numéro de build — le seul qui change à chaque envoi sur Play.
+
+const buildLabel = (() => {
+  // `nativeApplicationVersion` et `nativeBuildVersion` valent null sur le
+  // web : il n'y a pas de paquet installé à interroger.
+  const version = Application.nativeApplicationVersion;
+  const build = Application.nativeBuildVersion;
+  if (!version) return 'THL';
+  return build ? `THL v${version} (${build})` : `THL v${version}`;
+})();
 
 const MENU: {
   icon: keyof typeof Ionicons.glyphMap;
@@ -309,7 +326,7 @@ export default function ProfileScreen() {
           )}
         </TouchableOpacity>
 
-        <Text style={styles.version}>THL v1.1.0</Text>
+        <Text style={styles.version}>{buildLabel}</Text>
       </ScrollView>
 
       <Modal

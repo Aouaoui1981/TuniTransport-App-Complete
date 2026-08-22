@@ -27,6 +27,7 @@
     "base64-arraybuffer": "^1.0.2",
     "expo": "~57.0.0",
     "expo-camera": "^57.0.3",
+    "expo-application": "~57.0.0",
     "expo-constants": "~57.0.0",
     "expo-device": "~57.0.0",
     "expo-file-system": "~57.0.0",

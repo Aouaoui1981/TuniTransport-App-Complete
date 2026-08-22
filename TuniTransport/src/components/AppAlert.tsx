@@ -24,13 +24,20 @@ export default function AppAlertHost() {
     button.onPress?.();
   };
 
+  // Au-dela de deux boutons, ils s'empilent. La distinction compte pour la
+  // largeur : `flex: 1` fait partager la ligne en mode horizontal, mais dans
+  // une colonne sans hauteur imposee il vaut `flexBasis: 0` et ecrase la
+  // hauteur du contenu — le libelle disparaissait, ne laissant qu'une pilule
+  // vide. Le defaut ne se voyait que sur les alertes a trois boutons.
+  const stacked = buttons.length > 2;
+
   return (
     <Modal transparent animationType="fade" visible onRequestClose={() => setAlert(null)}>
       <View style={styles.backdrop}>
         <View style={styles.card}>
           <Text style={styles.title}>{alert.title}</Text>
           {alert.message ? <Text style={styles.message}>{alert.message}</Text> : null}
-          <View style={buttons.length > 2 ? styles.buttonsCol : styles.buttonsRow}>
+          <View style={stacked ? styles.buttonsCol : styles.buttonsRow}>
             {buttons.map((button, index) => {
               const isCancel = button.style === 'cancel';
               const isDestructive = button.style === 'destructive';
@@ -39,6 +46,7 @@ export default function AppAlertHost() {
                   key={`${button.text}-${index}`}
                   style={[
                     styles.button,
+                    !stacked && styles.buttonInRow,
                     isCancel && styles.buttonCancel,
                     isDestructive && styles.buttonDestructive,
                   ]}
@@ -103,13 +111,14 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   button: {
-    flex: 1,
     backgroundColor: COLORS.primary,
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md + 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Uniquement en ligne : les boutons se partagent la largeur a parts egales.
+  buttonInRow: { flex: 1 },
   buttonCancel: {
     backgroundColor: COLORS.surface,
     borderWidth: 1.5,

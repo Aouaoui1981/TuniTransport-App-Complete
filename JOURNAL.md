@@ -1646,3 +1646,116 @@ d'envoi, pour que les APK `preview` marchent aussi).
       personnelle est encore affichée publiquement.
 - [ ] Recruter 6 testeurs de plus (6 sur 12). Aucun n'a encore testé le
       rôle transporteur.
+
+---
+
+## 2026-08-22 (nuit) — Le diagnostic parle : DEVELOPER_ERROR
+
+### Le message obtenu
+Version 40 installée depuis la piste de test **interne** (publication
+immédiate, sans revue — d'où le choix de cette piste plutôt que la piste
+fermée) :
+
+    Sélecteur du système : 10 — DEVELOPER_ERROR
+    Navigateur : fenêtre refermée sans retour (dismiss)
+    Retour attendu sur : tunitransport://auth-callback
+
+### Ce que dit le code 10
+Les services Google Play n'ont trouvé **aucun client OAuth Android**
+correspondant au couple *nom de paquet + empreinte du certificat de
+signature de l'application installée*, dans le projet qui possède le
+client Web. Ni le code ni Supabase ne sont en cause : c'est une
+déclaration manquante côté Google.
+
+### Le suspect, revenu par la preuve
+Le fichier `certificates.zip` de Play App Signing contient **trois**
+certificats, tous émis le 11 août 2026 à 14:29 :
+
+    deployment_cert.der        CB:ED:73:C0:46:66:37:3C:9D:5A:B3:E2:6C:F7:19:A5:30:87:96:C0
+    hybrid_classical_cert.der  5F:CA:30:8A:8F:94:D6:E1:2A:44:E5:33:30:4A:38:57:84:14:09:90
+    hybrid_pqc_cert.der        D5:00:73:A4:21:3B:32:38:E8:76:21:8D:70:43:2C:2A:5F:42:80:7B
+
+Seule `5F:CA` est déclarée — c'est celle que la console affiche sous
+« Classical key », donc la seule qu'on voit sans télécharger l'archive.
+`deployment_cert`, dont le nom désigne la signature des artefacts livrés
+aux appareils, n'est déclarée nulle part.
+
+J'avais proposé de l'ajouter, puis suspendu pour comparer d'abord les
+projets Google Cloud. Cette comparaison n'a rien donné (le client
+`THL WEB`, projet `95651702852`, est un vestige jamais réutilisé depuis sa
+création ; Supabase et l'application pointent bien tous deux sur
+`833218073949`). Le code 10 ramène l'hypothèse, cette fois étayée.
+
+### Ce qui a coûté cher dans cette séance
+Cinq hypothèses successives, cinq erreurs — toutes formulées avant d'avoir
+un signal. Le diagnostic a donné la réponse en une tentative. La leçon est
+la même qu'au dossier de la carte : **instrumenter avant de supposer**, et
+le coût d'un build de mesure est inférieur au coût d'une supposition.
+
+Deuxième perte de temps : un test lancé sur un téléphone qui n'avait pas
+la nouvelle version. Corrigé à la racine — l'écran Profil affichait
+`THL v1.1.0` écrit en dur, faux et immuable ; il lit désormais le paquet
+installé et montre le numéro de build (PR #158).
+
+### Reste à faire
+- [ ] Créer deux clients OAuth **Android** supplémentaires dans le projet
+      `THL-Transport` (`833218073949`), paquet `com.tunitransport.app`,
+      avec les empreintes `CB:ED:73…` et `D5:00:73…`. Ne pas supprimer le
+      client existant. Effet immédiat, aucun build nécessaire.
+- [ ] Vérifier que le client Android existant est bien dans ce projet et
+      que le nom de paquet n'a pas de faute.
+- [ ] Second défaut, distinct : le repli navigateur se referme sans
+      revenir sur `tunitransport://auth-callback`. Sans objet si le chemin
+      natif fonctionne, mais à traiter ensuite.
+- [ ] Retirer le bloc de diagnostic avant l'ouverture au public.
+- [ ] Recruter 6 testeurs de plus (6 sur 12).
+
+---
+
+## 2026-08-22 (nuit) — RESOLU : la connexion Google fonctionne
+
+### Ce qui a corrige
+Deux clients OAuth **Android** ajoutes dans le projet `THL-Transport`
+(`833218073949`), paquet `com.tunitransport.app`, a cote du client
+existant :
+
+    THL Android deployment   CB:ED:73:C0:46:66:37:3C:9D:5A:B3:E2:6C:F7:19:A5:30:87:96:C0
+    THL Android pqc          D5:00:73:A4:21:3B:32:38:E8:76:21:8D:70:43:2C:2A:5F:42:80:7B
+
+Effet immediat, sans nouveau build ni nouvel envoi sur Play : le selecteur
+natif s'ouvre, le compte est choisi, la session s'etablit. Plus de repli
+navigateur, donc plus la chaine `leuntmiyxqvetksfrjfm.supabase.co` a
+l'ecran au moment ou l'on demande son compte a quelqu'un.
+
+### Honnetement : on ne sait pas laquelle des deux
+Les deux empreintes ont ete ajoutees ensemble. `deployment_cert` est de
+loin la plus probable — son nom designe la signature des artefacts livres
+aux appareils — mais rien ne le prouve. Verifier couterait une suppression
+et un nouveau test ; sans interet, garder les deux ne nuit pas.
+
+### Le piege, a retenir
+La console Play affiche l'empreinte SHA-1 sous « App signing key >
+Classical key », et la console Google Cloud renvoie explicitement a cette
+page. Suivre les deux consoles a la lettre donne `5F:CA` — et un
+`DEVELOPER_ERROR`. L'empreinte qui compte n'est visible **qu'en
+telechargeant `certificates.zip`** et en lisant `deployment_cert.der` :
+
+    openssl x509 -inform DER -in deployment_cert.der -noout -fingerprint -sha1
+
+Le mecanisme « Quantum-ready (beta) » de Play App Signing produit trois
+certificats la ou il y en avait un ; l'interface n'en montre que deux, et
+pas celui qui signe.
+
+### Etat des lieux
+- [x] Connexion Google native sur Android
+- [ ] Repli navigateur : se referme sans revenir sur
+      `tunitransport://auth-callback` (`dismiss`). Latent — le chemin natif
+      fonctionne, donc plus personne n'y arrive. A traiter un jour, pas
+      urgent.
+- [ ] Retirer le bloc de diagnostic avant l'ouverture au public. Le garder
+      pendant la beta : il ne se declenche que si les deux chemins
+      echouent, donc il est muet en fonctionnement normal.
+- [ ] Compte `walidchamkhi1981@gmail.com` (« Ala Aouaoui ») cree pendant ce
+      test via Google, role expediteur. A supprimer avec les autres donnees
+      de test si on ne le garde pas.
+- [ ] Recruter 6 testeurs de plus (6 sur 12).
