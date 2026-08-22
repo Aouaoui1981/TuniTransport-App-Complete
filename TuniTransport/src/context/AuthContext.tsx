@@ -312,6 +312,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // origine non déclarée — retombe sur la redirection Supabase ci-dessous.
     // Une connexion qui passe par un écran laid vaut mieux qu'une connexion
     // qui ne passe pas.
+    //
+    // `nativeFailure` retient pourquoi le chemin natif a renoncé. Tant que le
+    // navigateur prend le relais avec succès, personne n'en entend parler.
+    // Mais si le navigateur échoue lui aussi, c'est cette raison-là qui
+    // explique la panne — la fermeture de la fenêtre n'en est que la
+    // conséquence visible.
+    let nativeFailure: string | null = null;
+
     if (provider === 'google') {
       const direct = await signInWithGoogleNatively();
       if (direct.status === 'cancelled') return;
@@ -320,9 +328,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           provider: 'google',
           token: direct.idToken,
         });
-        if (idTokenError) throw new Error(idTokenError.message);
+        // Le jeton était bon mais Supabase l'a refusé : l'identifiant client
+        // web déclaré côté Supabase ne correspond pas à celui de l'app.
+        if (idTokenError) throw new Error(`Jeton Google refusé — ${idTokenError.message}`);
         return;
       }
+      nativeFailure = direct.reason;
     }
 
     // ── Web : redirection classique ────────────────────────────────────────
@@ -370,7 +381,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       preferEphemeralSession: true,
     });
     if (result.type !== 'success') {
-      // 'cancel' / 'dismiss' : l'utilisateur a fermé la fenêtre — pas une erreur.
+      // 'cancel' / 'dismiss' : normalement l'utilisateur a fermé la fenêtre —
+      // pas une erreur, on se tait.
+      //
+      // Sauf si le sélecteur natif avait déjà renoncé avant : les deux
+      // chemins ont alors échoué l'un après l'autre, et se taire renvoie le
+      // testeur au formulaire sans session ni explication. On dit ce que
+      // l'on sait, en une seule fois, pour qu'une capture d'écran suffise.
+      //
+      // Bloc de diagnostic ajouté pour la bêta fermée — à retirer avant
+      // l'ouverture au public (cf. JOURNAL.md).
+      if (nativeFailure) {
+        throw new Error(
+          'La connexion Google a échoué deux fois de suite.\n\n' +
+            `• Sélecteur du système : ${nativeFailure}\n` +
+            `• Navigateur : fenêtre refermée sans retour (${result.type})\n` +
+            `• Retour attendu sur : ${redirectTo}\n\n` +
+            'Merci de photographier ce message et de l’envoyer au support : ' +
+            'il désigne la cause exacte.'
+        );
+      }
       return;
     }
 
