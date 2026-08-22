@@ -1578,3 +1578,66 @@ Le domaine affiche `Active` jusqu'au 19 aout 2027, renouvellement
 automatique, sans banniere de verification. L'adresse du registrant etait
 deja verifiee sur le compte Cloudflare — la verification est liee au
 registrant, pas a chaque domaine. Rien a faire.
+
+---
+
+## 2026-08-22 — Connexion Google Android : arrêter de deviner, mesurer
+
+### Symptôme
+Le sélecteur de comptes du système s'ouvre bien (titre « THL »), le compte
+est choisi, puis **rien** : indicateur, ouverture du navigateur de secours,
+choix du compte une seconde fois, page blanche, retour au formulaire
+d'inscription. Aucune session, aucun message d'erreur.
+
+### Trois hypothèses écartées
+1. Empreinte SHA-1 du client OAuth Android incorrecte — vérifiée, correcte.
+2. `tunitransport://auth-callback` absent des Redirect URLs Supabase —
+   il y était déjà.
+3. La case des conditions bloquait le bouton — elle est cochée dans la
+   vidéo.
+
+Trois suppositions, trois erreurs. La suite du dossier passe par la mesure,
+pas par une quatrième idée.
+
+### Pourquoi l'échec était muet
+Deux `return` silencieux se relayaient. `signInWithGoogleNatively()` renvoie
+`unavailable` sur **toute** exception, par conception : l'appelant retombe
+alors sur le navigateur. Et le navigateur, lui, se refermait sur
+`result.type !== 'success'`, traité comme « l'utilisateur a fermé la
+fenêtre ». Chaque branche était défendable seule ; ensemble elles
+effaçaient la panne.
+
+### Ajouté (bêta fermée, à retirer avant l'ouverture au public)
+- Le code d'erreur Google accompagne désormais la raison. C'est lui qui
+  porte l'information : `DEVELOPER_ERROR` (10) désigne une empreinte ou un
+  identifiant client qui ne correspond pas, là où le message seul ne
+  distingue aucune panne d'une autre.
+- Si le navigateur de secours se referme **après** un renoncement du
+  chemin natif, l'application ne se tait plus : elle rapporte les deux
+  échecs et l'URL de retour attendue en un seul message, qu'il suffit de
+  photographier.
+- Un jeton refusé par Supabase est nommé comme tel.
+
+### Piste principale que la mesure tranchera
+Google Play **resigne** l'AAB avec la clé de signature de l'application,
+qui n'est pas la clé d'envoi. Un client OAuth Android portant l'empreinte
+de la clé d'envoi laisse le sélecteur s'ouvrir puis échoue au moment de
+délivrer le jeton — exactement le symptôme observé. Les deux empreintes
+sont listées dans Play Console → *Test and release* → *Setup* → *App
+integrity*. Un client OAuth Android ne porte qu'une empreinte : il en faut
+donc **deux** (celle de la clé de signature Play et celle de la clé
+d'envoi, pour que les APK `preview` marchent aussi).
+
+### Fichiers touchés
+- `TuniTransport/src/services/googleSignIn.ts`
+- `TuniTransport/src/context/AuthContext.tsx`
+
+### Reste à faire
+- [ ] Supabase → Authentication → URL Configuration : **Site URL** affiche
+      encore `https://tunitransport-app-complete.lasaadaw…`. À remplacer par
+      `https://thlcolis.com` (les Redirect URLs, elles, sont à jour).
+- [ ] Play Console → Store settings → Contact details :
+      `support@thlcolis.com` et `https://thlcolis.com` — l'adresse Gmail
+      personnelle est encore affichée publiquement.
+- [ ] Recruter 6 testeurs de plus (6 sur 12). Aucun n'a encore testé le
+      rôle transporteur.
