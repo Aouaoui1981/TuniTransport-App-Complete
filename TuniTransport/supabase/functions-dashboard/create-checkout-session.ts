@@ -730,7 +730,11 @@ function sanitizeCheckoutUrl(raw: string, fallback: string): string {
   }
 }
 
-const DEFAULT_CHECKOUT_URL = 'https://thl-colis-app-complete.vercel.app';
+// Domaine de l'application. Sert de repli quand CHECKOUT_SUCCESS_URL /
+// CHECKOUT_CANCEL_URL sont absents ou illisibles : le payeur revient sur le
+// site plutot que sur une adresse morte. Pointait encore sur l'ancien
+// deploiement Vercel, abandonne depuis l'achat de thlcolis.com.
+const DEFAULT_CHECKOUT_URL = 'https://thlcolis.com';
 
 servePost(async (req) => {
   const admin = createAdminClient();
