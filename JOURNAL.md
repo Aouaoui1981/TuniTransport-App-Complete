@@ -1121,7 +1121,8 @@ alac6878@gmail.com.
       'walidchamkhi1981@gmail.com',
       'timoumikamel75@gmail.com',
       'amna.dahmanitn@gmail.com',
-      'alac6878@gmail.com'
+      'alac6878@gmail.com',
+      'rahmahamzaoui30@gmail.com'
     );
 
 La fiche Play annonce « Identités vérifiées » et le livre blanc « 100 %
@@ -1759,3 +1760,26 @@ pas celui qui signe.
       test via Google, role expediteur. A supprimer avec les autres donnees
       de test si on ne le garde pas.
 - [ ] Recruter 6 testeurs de plus (6 sur 12).
+
+---
+
+## 2026-08-23 — Testeurs : 8 sur 12, et enfin un transporteur
+
+`rahmahamzaoui30@gmail.com` (Rahma Hamzaoui) verifiee a la main comme les
+autres testeurs, et ajoutee a la liste de reversion ci-dessus.
+
+Premier compte de **role transporteur** parmi les testeurs. Les huit
+precedents etaient tous expediteurs : la moitie transporteur de
+l'application — itineraires, offres, partage de position en arriere-plan,
+scan d'etiquette — n'avait encore ete essayee par personne d'exterieur.
+C'est aussi la partie la plus sensible du dossier Play.
+
+### Compte a rebours
+La console reclame 12 testeurs inscrits **puis** 14 jours de test. Les
+quatre inscriptions manquantes ne retardent pas seulement la date : elles
+retardent le **debut** du decompte.
+
+### Build 41
+Construit depuis `c936d6a` (PR #158) : libelles des alertes empilees et
+version installee affichee. A publier sur la piste **fermee** — la 40
+n'etait allee que sur la piste interne, et ne contenait aucun des deux.
