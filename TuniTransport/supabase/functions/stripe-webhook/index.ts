@@ -15,6 +15,9 @@
 //   payment failed     → payments.status = 'failed' with Stripe's error
 //                        code/message kept for support and retry UX.
 //   session expired    → payments.status = 'canceled'.
+//   intent canceled    → payments.status = 'canceled' — tentative
+//                        abandonnee (feuille fermee, ou annulation
+//                        depuis le tableau de bord Stripe).
 //   charge refunded    → payments.status = 'refunded'.
 //
 // On a processing error the idempotency claim is released and a 500 is
@@ -144,6 +147,19 @@ async function handleEvent(
       await markPaymentStatus(admin, { checkoutSessionId: session.id }, 'failed', {
         errorCode: 'async_payment_failed',
         errorMessage: 'Le paiement différé a échoué.',
+      });
+      break;
+    }
+    case 'payment_intent.canceled': {
+      // Tentative abandonnee : la feuille de paiement a ete fermee sans
+      // qu'une carte soit saisie, ou l'intention a ete annulee depuis le
+      // tableau de bord. Sans ce cas, la ligne restait 'pending' pour
+      // toujours et le grand livre ne pouvait plus repondre a « combien de
+      // paiements attendent reellement ? ».
+      const intent = event.data.object as unknown as PaymentIntentObject;
+      await markPaymentStatus(admin, { paymentIntentId: intent.id }, 'canceled', {
+        errorCode: 'payment_intent_canceled',
+        errorMessage: 'Le paiement a été abandonné.',
       });
       break;
     }
