@@ -784,16 +784,18 @@ servePost(async (req) => {
     metadata,
     payment_intent_data: {
       metadata,
-      // Financial split: our commission stays on the platform account, the
-      // rest is transferred to the transporter's connected account. Without
-      // a connected account the full amount lands on the platform and the
-      // payout is settled later from the payments ledger.
-      ...(shipment.transporterStripeAccountId
-        ? {
-            application_fee_amount: split.platformFeeCents,
-            transfer_data: { destination: shipment.transporterStripeAccountId },
-          }
-        : {}),
+      // Pas de repartition au moment du debit : le montant entier reste sur le
+      // compte de la plateforme, et la part du transporteur lui est versee
+      // APRES la livraison (demande de retrait, ecran d'administration, ou plus
+      // tard un transfert Stripe declenche par le passage a `delivered`).
+      //
+      // Le code precedent posait `transfer_data.destination` + une commission
+      // d'application, ce qui payait le transporteur des l'encaissement, donc
+      // avant qu'il ait livre quoi que ce soit. Le systeme de litiges n'aurait
+      // alors plus rien a retenir. La repartition reste calculee et enregistree
+      // dans le grand livre (`payments.platform_fee_cents`,
+      // `transporter_amount_cents`, `destination_account_id`) : elle dit qui
+      // doit recevoir combien, elle ne le verse pas.
     },
   };
 
