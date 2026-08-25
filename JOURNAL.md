@@ -1783,3 +1783,42 @@ retardent le **debut** du decompte.
 Construit depuis `c936d6a` (PR #158) : libelles des alertes empilees et
 version installee affichee. A publier sur la piste **fermee** — la 40
 n'etait allee que sur la piste interne, et ne contenait aucun des deux.
+
+---
+
+## 2026-08-23 (soir) — 12 testeurs atteints : le compte a rebours court
+
+La console a raye la deuxieme condition :
+
+    [x] Publish a closed testing release
+    [x] Have at least 12 testers opted-in to your closed test
+    [ ] Run your closed test with at least 12 testers, for at least 14 days
+
+Il ne reste que le temps. Echeance visee : **~6 septembre 2026**.
+
+### Ce qui peut encore faire perdre les deux semaines
+La condition n'est pas « 12 se sont inscrits un jour » mais « 12 sont
+inscrits **pendant toute** la duree ». Un desistement ramene a 11 et peut
+relancer le decompte. Donc : ne perdre aucun testeur, ne pas mettre la
+piste en pause, et obtenir de vraies sessions d'usage — la demande d'acces
+a la production pose des questions sur le deroulement du test.
+
+### La liste d'avant-lancement devient datee
+- [ ] Retirer le bloc de diagnostic de la connexion Google.
+- [ ] Executer la reversion KYC des testeurs (commande plus haut dans ce
+      fichier). La fiche Play annonce « Identites verifiees ».
+- [ ] Play Console → Store settings → Contact details :
+      `support@thlcolis.com` et `https://thlcolis.com`. L'adresse Gmail
+      personnelle est encore publique.
+- [ ] Supprimer l'envoi de demonstration.
+
+### Stripe Connect : la question change de nature
+Tant que le test est ferme, garder l'argent des transporteurs sur le compte
+plateforme est un probleme d'organisation. Apres l'ouverture au public, avec
+une cle `pk_live`, c'est detenir les fonds de tiers a grande echelle. Zero
+transporteur sur huit est connecte : chaque paiement arrive entier sur le
+compte de la plateforme, la part du transporteur devant etre viree a la
+main.
+
+Deux semaines suffisent pour le construire. A trancher cette semaine, pas le
+dernier jour.
