@@ -1822,3 +1822,43 @@ main.
 
 Deux semaines suffisent pour le construire. A trancher cette semaine, pas le
 dernier jour.
+
+---
+
+## 2026-08-25 — Paiements : le grand livre est de nouveau exact
+
+### Ce qui a ete corrige
+1. **`transfer_data` retire des deux fonctions de paiement.** Le premier
+   transporteur qui aurait relie un compte Stripe aurait declenche un
+   versement de sa part **des l'encaissement, avant livraison** — sans
+   decision de personne, et en vidant le systeme de litiges de son objet.
+   Le montant entier reste desormais sur le compte plateforme ; la
+   repartition reste calculee et enregistree, elle n'est plus versee.
+2. **`payment_intent.canceled` pris en charge** par le webhook. Une feuille
+   de paiement fermee sans saisie de carte laissait sa ligne en `pending`
+   pour toujours.
+3. **`payment_intent.canceled` ajoute** aux evenements ecoutes par le
+   destination Stripe (8 → 9). Sans cet abonnement, le code n'aurait jamais
+   ete appele.
+
+### La seule tentative de paiement de l'historique
+`pi_3U4qWTIwX5XJcgLW07C2ddCj`, 112 EUR, creee le 16 aout. Moyen de paiement
+« None » : la feuille a ete ouverte puis fermee, rien n'a jamais ete debite.
+Annulee dans le tableau de bord le 25 aout.
+
+La ligne a ete passee a `canceled` **a la main**, avec exactement les valeurs
+que le webhook aurait ecrites — l'evenement d'annulation est anterieur a
+l'abonnement, donc Stripe ne l'a jamais livre et il n'y avait rien a
+renvoyer (`Resend` absent : pas de tentative de livraison a rejouer).
+
+Etat du grand livre : **une ligne, `canceled`**. Plus aucun `pending`.
+
+### Le correctif n'est donc pas encore verifie en conditions reelles
+Il le sera au premier abandon de paiement — qui viendra de lui-meme des
+qu'un utilisateur ouvrira la feuille et la fermera. A verifier ce jour-la :
+la ligne doit passer a `canceled` seule.
+
+### Rappel : redeployer, sinon rien ne change
+Les trois fonctions ont ete redeployees avec le SHA du merge. Sans cette
+etape, aucun de ces correctifs n'aurait quitte le depot (cf. le README de
+`functions-dashboard/`).
