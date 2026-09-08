@@ -1862,3 +1862,57 @@ la ligne doit passer a `canceled` seule.
 Les trois fonctions ont ete redeployees avec le SHA du merge. Sans cette
 etape, aucun de ces correctifs n'aurait quitte le depot (cf. le README de
 `functions-dashboard/`).
+
+---
+
+## 2026-09-08 — Demande d'acces a la production envoyee
+
+Les trois conditions de la Play Console sont remplies : release en test
+ferme publiee, 12 testeurs inscrits, 14 jours continus. Le formulaire a ete
+rempli et envoye ce soir.
+
+### Ce qui a ete declare
+Les reponses ont ete ecrites pour etre verifiables, pas flatteuses.
+
+- **Recrutement** : amis, famille et communaute tunisienne de France,
+  contactes un par un. Declaration explicite : aucun prestataire de test
+  paye, aucun groupe d'echange de testeurs.
+- **Engagement** : les testeurs ont installe, cree un compte, verifie leur
+  identite et cree des envois — mais **aucun cycle commercial complet**.
+  Dit tel quel, avec la raison : une livraison reelle demande un voyageur
+  reel et de l'argent reel, et il n'etait pas question de debiter des
+  proches avec une cle `pk_live` pour des colis fictifs.
+- **Retours** : collectes par WhatsApp, appels et enregistrements d'ecran
+  envoyes par les testeurs. Quatre defauts nommes, tous corriges.
+- **Volume attendu** : 0–10K la premiere annee.
+- **Pret pour la production** : perimetre volontairement limite a un seul
+  corridor, France → Tunisie.
+
+### Une phrase qui n'aurait pas ete vraie la veille
+« Payments hold funds until delivery » est exact **depuis le retrait de
+`transfer_data`**. Avant ce correctif, le premier transporteur connecte
+aurait ete paye des l'encaissement. Declarer cela avant aurait ete faux.
+
+### Formulation choisie avec prudence
+« released to the closed test » et non « verifie sur une version installee
+depuis Play » : la version 41 a bien ete publiee, mais personne n'a confirme
+l'avoir vue tourner. On n'ecrit pas dans un formulaire officiel ce qu'on n'a
+pas verifie.
+
+### Etat reel du produit, sans habillage
+    envois : 4 · offres : 0 · messages : 0 · livraisons : 0 · paiements : 0
+La moitie transporteur de l'application n'a jamais ete parcourue de bout en
+bout par quelqu'un d'exterieur. C'est le premier risque produit, avant tout
+sujet de croissance.
+
+### Pendant l'attente (quelques jours)
+- [ ] Play Console → Store settings → Contact details :
+      `support@thlcolis.com` et `https://thlcolis.com` (l'adresse Gmail
+      personnelle est encore publique). Sans risque, a faire tout de suite.
+- [ ] Preparer le retrait du bloc de diagnostic Google — a livrer dans le
+      build qui partira en production, pas avant.
+- [ ] Reversion KYC des 15 identites forcees : **juste avant** l'ouverture
+      publique, pas maintenant (le test ferme continue).
+- [ ] Supprimer l'envoi de demonstration.
+- [ ] Nettoyage differe : projet Supabase vide `wocxvszzdfpbqlanpbgj`,
+      projets Google Cloud inutilises, comptes de test.
