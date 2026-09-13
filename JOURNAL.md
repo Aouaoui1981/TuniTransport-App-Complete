@@ -1916,3 +1916,42 @@ sujet de croissance.
 - [ ] Supprimer l'envoi de demonstration.
 - [ ] Nettoyage differe : projet Supabase vide `wocxvszzdfpbqlanpbgj`,
       projets Google Cloud inutilises, comptes de test.
+## 2026-09-11 — Demande refusee : « your app requires more testing »
+
+Reponse de Google, vendredi 11 septembre 10:01. Le compteur repart a zero :
+14 nouveaux jours **a partir de la date de revue**. Nouvelle echeance
+~25 septembre.
+
+### La cause est dans notre propre formulaire
+Nous avions ecrit, mot pour mot :
+
+    None completed a paid delivery... Real users will also pay and deliver.
+
+La condition n'est pas « 12 personnes ont installe » mais « 12 personnes
+ont **utilise** ». Le risque avait ete signale avant l'envoi — mais
+signaler ne suffisait pas : il aurait fallu recommander de differer d'une
+semaine et de faire les cycles d'abord. Erreur de conseil, notee ici pour
+ne pas la repeter.
+
+Le refus n'est pas une sanction : pas de marque au dossier, pas de limite
+de tentatives. Il coute 14 jours.
+
+### Ce qui change pour la prochaine tentative
+L'objectif n'est plus de tenir le compte de testeurs, c'est de **produire
+de l'usage reel**. Cible : 3 a 5 cycles complets, de l'envoi a la
+livraison, pour pouvoir ecrire « X operations completees, dont paiement et
+livraison » au lieu de « aucune ».
+
+### Paiement reel : position revisee
+Il reste exclu de faire payer les testeurs avec une cle `pk_live`. En
+revanche le proprietaire du compte peut payer lui-meme un petit colis
+(~4 EUR) avec sa carte, puis rembourser depuis le tableau de bord. Cout
+quasi nul, et trois benefices : une ligne `succeeded` reelle dans le grand
+livre, le premier test de bout en bout du chemin paiement → webhook →
+confirmation de reservation, et la verification du correctif
+`payment_intent.canceled` qui n'a jamais ete exerce.
+
+### Etat au moment du refus
+    envois 4 · offres 0 · messages 0 · livraisons 0 · paiements 0
+La moitie transporteur de l'application n'a toujours ete parcourue de bout
+en bout par personne.
