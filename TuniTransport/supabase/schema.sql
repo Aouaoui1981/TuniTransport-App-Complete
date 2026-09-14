@@ -94,6 +94,10 @@ create table public.bids (
 create table public.conversations (
   id          uuid primary key default gen_random_uuid(),
   shipment_id uuid references public.shipments(id) on delete set null,
+  -- Auteur de la ligne. Sans lui, le RETURNING de l'INSERT est refusé :
+  -- la policy SELECT exige d'être participant, et les participants sont
+  -- insérés juste après, avec l'id que ce RETURNING devait rapporter.
+  created_by  uuid default auth.uid(),
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
@@ -519,9 +523,10 @@ create policy "bids_sender_update" on public.bids
 
 -- conversations / participants / messages: participants only
 create policy "conversations_select" on public.conversations
-  for select to authenticated using (public.is_conversation_participant(id));
+  for select to authenticated
+  using (public.is_conversation_participant(id) or created_by = auth.uid());
 create policy "conversations_insert" on public.conversations
-  for insert to authenticated with check (true);
+  for insert to authenticated with check (created_by = auth.uid());
 create policy "conversations_update" on public.conversations
   for update to authenticated using (public.is_conversation_participant(id));
 
