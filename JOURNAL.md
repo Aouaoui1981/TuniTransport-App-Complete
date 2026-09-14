@@ -1955,3 +1955,56 @@ confirmation de reservation, et la verification du correctif
     envois 4 · offres 0 · messages 0 · livraisons 0 · paiements 0
 La moitie transporteur de l'application n'a toujours ete parcourue de bout
 en bout par personne.
+
+---
+
+## 2026-09-14 — iOS : etat des lieux, et le site rendu installable
+
+### Ce qui existe deja pour iOS
+    bundleIdentifier            com.tunitransport.app          present
+    UIBackgroundModes           remote-notification, location  present
+    bouton « Continuer avec Apple »                            present (iOS seul)
+    expo-apple-authentication                                  absent
+    compte Apple Developer                                     absent
+
+L'application se **construit** pour iOS des aujourd'hui : EAS compile dans
+le cloud, aucun Mac n'est necessaire. Ce qui manque n'est pas du code mais
+un compte et des exigences de magasin.
+
+### Le cout reel
+- **99 USD par an**, renouvelables — la` ou Google a coute 25 USD une fois.
+- **Sign in with Apple obligatoire** : Apple l'exige des qu'on propose un
+  tiers (Google). Le bouton est la, mais ni la bibliotheque native ni le
+  fournisseur Supabase ne sont configures — et les configurer suppose deja
+  le compte.
+- **Localisation en arriere-plan** : Apple est nettement plus severe que
+  Google sur ce point.
+
+### Decision : pas maintenant
+L'acces production Android n'est pas acquis, et le goulot d'etranglement
+reste **zero livraison terminee**, pas la couverture des plateformes. Chez
+les Tunisiens de France, Android domine largement.
+
+### Mais la ou cela coute vraiment
+- **Expediteur sur iPhone** : le site suffit.
+- **Transporteur sur iPhone** : **impossible**. Le suivi de position en
+  arriere-plan n'existe dans aucun navigateur. Un voyageur sous iPhone ne
+  peut donc pas offrir le suivi en direct — l'une des quatre promesses.
+- **Notifications** : nulles sur Safari tant que le site n'est pas installe
+  sur l'ecran d'accueil. Dans une place de marche ou tout depend de « vous
+  avez recu une offre », c'est une lacune de fond.
+
+### Fait aujourd'hui
+Site rendu installable : `manifest.webmanifest`, balises iOS, et les icones
+192 / 512 / maskable 512 / apple-touch-icon 180. La maskable place le logo
+dans les 60 % centraux (Android rogne jusqu'a 20 % par bord) ; l'icone iOS
+est un aplat, iOS n'appliquant ni masque ni transparence.
+
+Pas de service worker, deliberement : il n'est pas necessaire a
+l'installation sur iPhone, et un cache mal regle sur une SPA sert des
+bundles perimes. Consequence assumee : Chrome ne proposera pas
+l'installation automatiquement, l'utilisateur passe par « Ajouter a l'ecran
+d'accueil ».
+
+Cela ferme la lacune pour les **expediteurs** iPhone. Les transporteurs
+iPhone restent hors couverture jusqu'a une vraie application native.
