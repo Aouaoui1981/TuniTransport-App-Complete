@@ -2042,3 +2042,92 @@ moment ou elle veut dire quelque chose.
 
 Decision de produit, pas detail technique : a trancher apres le cycle, pas
 pendant.
+
+---
+
+## 2026-09-14 — La messagerie n'a jamais fonctionne en production
+
+Cycle de test, suite. L'acceptation par le transporteur passe
+(`44fc3e05-…` : `pending` → `accepted`, `transporter_terms_accepted_at`
+horodate). Le bouton de discussion, lui, ouvre une alerte :
+
+> **Messagerie** — new row violates row-level security policy for table
+> "conversations"
+
+### Ce qui se passait
+
+L'INSERT passait : `conversations_insert` avait `WITH CHECK true`. C'est le
+**RETURNING** qui echouait. Le client ecrit :
+
+```ts
+.from('conversations').insert({ shipment_id }).select('*').single()
+```
+
+et PostgreSQL verifie la ligne renvoyee contre la policy SELECT,
+`is_conversation_participant(id)`. A cet instant precis, aucune ligne
+n'existe dans `conversation_participants` : elles sont inserees juste
+apres, avec l'identifiant que ce RETURNING devait justement rapporter. La
+policy se mordait la queue.
+
+Reproduit a la main sur la base, role `authenticated` avec le JWT de
+l'expediteur :
+
+```
+insert … returning id;   → ERROR 42501  new row violates RLS policy
+insert … (sans RETURNING) → OK
+```
+
+### L'ampleur
+
+```sql
+select count(*) from conversations;          -- 0
+select count(*) from conversation_participants; -- 0
+select count(*) from messages;               -- 0
+```
+
+Zero. Depuis l'ouverture. Le bouton est present sur chaque envoi, et il
+n'a jamais rien pu creer. Aucun utilisateur ne l'a signale — ils ont
+simplement referme l'alerte.
+
+C'est exactement ce qu'un parcours complet est cense trouver, et ce
+qu'aucune relecture de code n'avait trouve : la policy est correcte lue
+isolement, elle ne casse qu'a la seconde ou la ligne naît.
+
+### Le correctif
+
+`20260914200000_fix_conversations_insert_returning_rls.sql` — applique en
+base, `schema.sql` synchronise :
+
+- `conversations.created_by uuid default auth.uid()`
+- SELECT : `is_conversation_participant(id) or created_by = auth.uid()`
+- INSERT : `with check (created_by = auth.uid())` (au lieu de `true`) —
+  on ne peut plus attribuer une conversation a quelqu'un d'autre
+
+Voir sa propre conversation a peine creee ne revele rien : on en est
+l'auteur, et les deux participants y sont ajoutes dans la foulee.
+
+**Aucune reconstruction necessaire** : le correctif est entierement en
+base. Il vaut pour le web et pour l'APK deja installe.
+
+### Verification
+
+Parcours complet rejoue en transaction (puis `rollback`), role
+`authenticated`, trois identites successives :
+
+```
+1. expediteur cree la conversation (RETURNING)   OK
+2. expediteur s'ajoute comme participant         OK
+3. expediteur ajoute le transporteur             OK
+4. expediteur envoie un message (RETURNING)      OK
+5. transporteur voit la conversation             1
+6. transporteur lit le message                   OK
+7. transporteur repond                           OK
+8. un tiers voit la conversation                 0   ← cloisonnement intact
+9. un tiers lit les messages                     0
+```
+
+### Reste a faire sur ce cycle
+
+Paiement (`especes` — la cle Stripe est `pk_live_…`, une carte debiterait
+80 € reels ; la carte est reservee au cycle 2 avec un montant faible),
+puis depot, remise, livraison, evaluation.
