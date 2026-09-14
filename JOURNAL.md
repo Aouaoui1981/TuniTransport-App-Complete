@@ -1122,7 +1122,8 @@ alac6878@gmail.com.
       'timoumikamel75@gmail.com',
       'amna.dahmanitn@gmail.com',
       'alac6878@gmail.com',
-      'rahmahamzaoui30@gmail.com'
+      'rahmahamzaoui30@gmail.com',
+      'amirfatnasi@gmail.com'
     );
 
 La fiche Play annonce « Identités vérifiées » et le livre blanc « 100 %
@@ -2008,3 +2009,36 @@ d'accueil ».
 
 Cela ferme la lacune pour les **expediteurs** iPhone. Les transporteurs
 iPhone restent hors couverture jusqu'a une vraie application native.
+
+---
+
+## 2026-09-14 — Premier parcours complet : bloque des la deuxieme etape
+
+`amirfatnasi@gmail.com` (role expediteur, cree le jour meme) bute sur
+« Verification requise — vous devez d'abord faire verifier votre identite
+avant de publier un envoi ». Verifie a la main pour debloquer le cycle, et
+ajoute a la liste de reversion ci-dessus.
+
+### La question de produit que ce blocage revele
+Ce n'est pas un defaut : la porte est voulue. Mais elle se referme au pire
+endroit.
+
+Le jour du lancement, quelqu'un installe l'application, s'inscrit, veut
+envoyer un colis a sa mere — et on lui demande de photographier une piece
+d'identite avant qu'il ait rien vu du service. La plupart ferment
+l'application la.
+
+Et la logique n'est pas symetrique entre les deux roles :
+
+- le **transporteur** prend en charge un colis qui n'est pas le sien et lui
+  fait passer une frontiere. Le verifier est indispensable, et c'est le
+  fondement de la promesse « identites verifiees » ;
+- l'**expediteur** paie et remet un colis qui lui appartient. Le risque
+  qu'il porte est le sien.
+
+Ordre a moindre friction : laisser l'expediteur **publier et recevoir des
+offres**, exiger la verification **avant le paiement ou la remise** — au
+moment ou elle veut dire quelque chose.
+
+Decision de produit, pas detail technique : a trancher apres le cycle, pas
+pendant.
