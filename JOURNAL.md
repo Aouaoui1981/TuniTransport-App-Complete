@@ -2131,3 +2131,112 @@ Parcours complet rejoue en transaction (puis `rollback`), role
 Paiement (`especes` — la cle Stripe est `pk_live_…`, une carte debiterait
 80 € reels ; la carte est reservee au cycle 2 avec un montant faible),
 puis depot, remise, livraison, evaluation.
+
+---
+
+## 2026-09-14 — Le parcours a saute son propre milieu
+
+Suite du cycle. Le paiement en especes passe (`paid_at`, `payment_method
+= cash`), la messagerie fonctionne dans les deux sens (deux messages
+echanges, 22:08). Puis l'envoi est passe a `delivered` — sans depot, sans
+scan, sans prise en charge :
+
+```
+21:39  cree           pending
+21:57  accepte        accepted
+22:02  paye especes   accepted
+22:15  RECEPTION      delivered      dropped_off_at null, collected_at null
+```
+
+Treize minutes entre « je paierai en especes » et « j'ai recu le colis en
+Tunisie ». Rien dans l'application ne l'a empeche.
+
+### Quatre defauts, un seul enchainement
+
+**1. L'ordre des boutons.** Apres le paiement, un bouton vert apparait
+au-dessus du jaune :
+
+```
+  Imprimer l'etiquette
+  Confirmer la reception du colis    ← derniere etape du trajet
+  J'ai depose le colis               ← premiere etape du trajet
+```
+
+La fin au-dessus du debut. N'importe qui appuie sur le premier.
+
+**2. Le depot rendait la main en silence.** `launchCameraAsync` suivi de
+`if (shot.canceled) return;` — dans un navigateur Chromebook, la camera ne
+s'ouvre pas et le bouton parait mort. Aucun message.
+
+**3. `confirm_delivery` ne verifiait pas la prise en charge.** Payeur,
+transporteur attitre, reglement, statut non annule — mais jamais que le
+colis avait bouge.
+
+**4. La carte « Transporteur » etait affichee au transporteur lui-meme**,
+et son bouton de discussion visait toujours `shipment.transporterId`. Le
+transporteur ouvrait donc une conversation avec lui-meme : la cle primaire
+`(conversation_id, user_id)` refusait le doublon, et une conversation
+orpheline restait en base (constatee, puis supprimee). Consequence de
+fond : **le transporteur n'avait aucun moyen d'ecrire a l'expediteur en
+premier** — il ne pouvait que repondre.
+
+### Correctifs
+
+Cote base — `20260914210000_confirm_delivery_requires_collection.sql`,
+applique et synchronise dans `schema.sql` :
+
+```sql
+if v_shipment.status not in ('collected', 'in_transit', 'arrived') then
+  raise exception 'Le transporteur n''a pas encore pris ce colis en charge…'
+```
+
+La prise en charge est le seul moment ou quelqu'un d'autre que
+l'expediteur atteste que le colis existe : elle exige le jeton de
+l'etiquette **et** une photo. C'est elle, pas le paiement, qui ouvre la
+porte.
+
+Verifie dans les deux sens (transaction puis `rollback`) :
+
+```
+confirmation depuis accepted    REFUSEE : Le transporteur n'a pas encore…
+confirmation depuis collected   ACCEPTEE — statut : delivered
+```
+
+Cote client — `ShipmentDetailScreen.tsx` et `DataContext.tsx` :
+
+- le depot passe **au-dessus** de la confirmation de reception
+- la confirmation n'apparait qu'a partir de `collected`
+- camera : `try/catch` + un message explicite sur le web au lieu du retour
+  muet
+- la carte affiche **le correspondant** (l'expediteur pour le
+  transporteur, le transporteur pour l'expediteur), titre compris, et son
+  bouton de discussion vise la bonne personne
+- les etoiles ne s'affichent que si une note existe — cinq etoiles par
+  defaut sous un expediteur dont personne n'a rien dit etait un avis
+  invente
+- `ensureConversation` refuse une conversation avec soi-meme avant toute
+  ecriture
+
+`npx tsc --noEmit` : propre.
+
+### Contrepartie assumee
+
+Un transporteur qui ne scanne jamais l'etiquette laisse l'envoi ouvert :
+l'expediteur ne peut plus confirmer. Le litige (« Signaler un probleme »)
+et les actions d'administration restent la sortie. A surveiller sur les
+prochains cycles — si le scan se revele trop fragile sur le terrain, il
+faudra une seconde voie, pas un retour a l'ancien comportement.
+
+### Ce que ce cycle n'a toujours pas teste
+
+Depot, scan QR, prise en charge. Le prochain cycle doit se faire
+**entierement sur le telephone** : ni la camera ni le scan n'existent dans
+un navigateur Chromebook.
+
+### Question ouverte — l'argent des especes
+
+Un paiement en especes ne cree **aucune ligne** dans `payments` : ce
+jeton-la ne trace que Stripe. Les 80 € n'existent que comme `paid_at` sur
+l'envoi, sans commission de plateforme enregistree. Comment la plateforme
+gagne-t-elle sa vie sur les transactions en especes ? A trancher avant
+l'ouverture au public.
