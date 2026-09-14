@@ -1862,3 +1862,149 @@ la ligne doit passer a `canceled` seule.
 Les trois fonctions ont ete redeployees avec le SHA du merge. Sans cette
 etape, aucun de ces correctifs n'aurait quitte le depot (cf. le README de
 `functions-dashboard/`).
+
+---
+
+## 2026-09-08 — Demande d'acces a la production envoyee
+
+Les trois conditions de la Play Console sont remplies : release en test
+ferme publiee, 12 testeurs inscrits, 14 jours continus. Le formulaire a ete
+rempli et envoye ce soir.
+
+### Ce qui a ete declare
+Les reponses ont ete ecrites pour etre verifiables, pas flatteuses.
+
+- **Recrutement** : amis, famille et communaute tunisienne de France,
+  contactes un par un. Declaration explicite : aucun prestataire de test
+  paye, aucun groupe d'echange de testeurs.
+- **Engagement** : les testeurs ont installe, cree un compte, verifie leur
+  identite et cree des envois — mais **aucun cycle commercial complet**.
+  Dit tel quel, avec la raison : une livraison reelle demande un voyageur
+  reel et de l'argent reel, et il n'etait pas question de debiter des
+  proches avec une cle `pk_live` pour des colis fictifs.
+- **Retours** : collectes par WhatsApp, appels et enregistrements d'ecran
+  envoyes par les testeurs. Quatre defauts nommes, tous corriges.
+- **Volume attendu** : 0–10K la premiere annee.
+- **Pret pour la production** : perimetre volontairement limite a un seul
+  corridor, France → Tunisie.
+
+### Une phrase qui n'aurait pas ete vraie la veille
+« Payments hold funds until delivery » est exact **depuis le retrait de
+`transfer_data`**. Avant ce correctif, le premier transporteur connecte
+aurait ete paye des l'encaissement. Declarer cela avant aurait ete faux.
+
+### Formulation choisie avec prudence
+« released to the closed test » et non « verifie sur une version installee
+depuis Play » : la version 41 a bien ete publiee, mais personne n'a confirme
+l'avoir vue tourner. On n'ecrit pas dans un formulaire officiel ce qu'on n'a
+pas verifie.
+
+### Etat reel du produit, sans habillage
+    envois : 4 · offres : 0 · messages : 0 · livraisons : 0 · paiements : 0
+La moitie transporteur de l'application n'a jamais ete parcourue de bout en
+bout par quelqu'un d'exterieur. C'est le premier risque produit, avant tout
+sujet de croissance.
+
+### Pendant l'attente (quelques jours)
+- [ ] Play Console → Store settings → Contact details :
+      `support@thlcolis.com` et `https://thlcolis.com` (l'adresse Gmail
+      personnelle est encore publique). Sans risque, a faire tout de suite.
+- [ ] Preparer le retrait du bloc de diagnostic Google — a livrer dans le
+      build qui partira en production, pas avant.
+- [ ] Reversion KYC des 15 identites forcees : **juste avant** l'ouverture
+      publique, pas maintenant (le test ferme continue).
+- [ ] Supprimer l'envoi de demonstration.
+- [ ] Nettoyage differe : projet Supabase vide `wocxvszzdfpbqlanpbgj`,
+      projets Google Cloud inutilises, comptes de test.
+## 2026-09-11 — Demande refusee : « your app requires more testing »
+
+Reponse de Google, vendredi 11 septembre 10:01. Le compteur repart a zero :
+14 nouveaux jours **a partir de la date de revue**. Nouvelle echeance
+~25 septembre.
+
+### La cause est dans notre propre formulaire
+Nous avions ecrit, mot pour mot :
+
+    None completed a paid delivery... Real users will also pay and deliver.
+
+La condition n'est pas « 12 personnes ont installe » mais « 12 personnes
+ont **utilise** ». Le risque avait ete signale avant l'envoi — mais
+signaler ne suffisait pas : il aurait fallu recommander de differer d'une
+semaine et de faire les cycles d'abord. Erreur de conseil, notee ici pour
+ne pas la repeter.
+
+Le refus n'est pas une sanction : pas de marque au dossier, pas de limite
+de tentatives. Il coute 14 jours.
+
+### Ce qui change pour la prochaine tentative
+L'objectif n'est plus de tenir le compte de testeurs, c'est de **produire
+de l'usage reel**. Cible : 3 a 5 cycles complets, de l'envoi a la
+livraison, pour pouvoir ecrire « X operations completees, dont paiement et
+livraison » au lieu de « aucune ».
+
+### Paiement reel : position revisee
+Il reste exclu de faire payer les testeurs avec une cle `pk_live`. En
+revanche le proprietaire du compte peut payer lui-meme un petit colis
+(~4 EUR) avec sa carte, puis rembourser depuis le tableau de bord. Cout
+quasi nul, et trois benefices : une ligne `succeeded` reelle dans le grand
+livre, le premier test de bout en bout du chemin paiement → webhook →
+confirmation de reservation, et la verification du correctif
+`payment_intent.canceled` qui n'a jamais ete exerce.
+
+### Etat au moment du refus
+    envois 4 · offres 0 · messages 0 · livraisons 0 · paiements 0
+La moitie transporteur de l'application n'a toujours ete parcourue de bout
+en bout par personne.
+
+---
+
+## 2026-09-14 — iOS : etat des lieux, et le site rendu installable
+
+### Ce qui existe deja pour iOS
+    bundleIdentifier            com.tunitransport.app          present
+    UIBackgroundModes           remote-notification, location  present
+    bouton « Continuer avec Apple »                            present (iOS seul)
+    expo-apple-authentication                                  absent
+    compte Apple Developer                                     absent
+
+L'application se **construit** pour iOS des aujourd'hui : EAS compile dans
+le cloud, aucun Mac n'est necessaire. Ce qui manque n'est pas du code mais
+un compte et des exigences de magasin.
+
+### Le cout reel
+- **99 USD par an**, renouvelables — la` ou Google a coute 25 USD une fois.
+- **Sign in with Apple obligatoire** : Apple l'exige des qu'on propose un
+  tiers (Google). Le bouton est la, mais ni la bibliotheque native ni le
+  fournisseur Supabase ne sont configures — et les configurer suppose deja
+  le compte.
+- **Localisation en arriere-plan** : Apple est nettement plus severe que
+  Google sur ce point.
+
+### Decision : pas maintenant
+L'acces production Android n'est pas acquis, et le goulot d'etranglement
+reste **zero livraison terminee**, pas la couverture des plateformes. Chez
+les Tunisiens de France, Android domine largement.
+
+### Mais la ou cela coute vraiment
+- **Expediteur sur iPhone** : le site suffit.
+- **Transporteur sur iPhone** : **impossible**. Le suivi de position en
+  arriere-plan n'existe dans aucun navigateur. Un voyageur sous iPhone ne
+  peut donc pas offrir le suivi en direct — l'une des quatre promesses.
+- **Notifications** : nulles sur Safari tant que le site n'est pas installe
+  sur l'ecran d'accueil. Dans une place de marche ou tout depend de « vous
+  avez recu une offre », c'est une lacune de fond.
+
+### Fait aujourd'hui
+Site rendu installable : `manifest.webmanifest`, balises iOS, et les icones
+192 / 512 / maskable 512 / apple-touch-icon 180. La maskable place le logo
+dans les 60 % centraux (Android rogne jusqu'a 20 % par bord) ; l'icone iOS
+est un aplat, iOS n'appliquant ni masque ni transparence.
+
+Pas de service worker, deliberement : il n'est pas necessaire a
+l'installation sur iPhone, et un cache mal regle sur une SPA sert des
+bundles perimes. Consequence assumee : Chrome ne proposera pas
+l'installation automatiquement, l'utilisateur passe par « Ajouter a l'ecran
+d'accueil ».
+
+Cela ferme la lacune pour les **expediteurs** iPhone. Les transporteurs
+iPhone restent hors couverture jusqu'a une vraie application native.

@@ -1,0 +1,19 @@
+{
+  "name": "THL — Colis France ⇄ Tunisie",
+  "short_name": "THL",
+  "description": "Envoyez vos colis entre la France et la Tunisie avec des transporteurs vérifiés. Dès 4 €/kg, paiement sécurisé et suivi en temps réel.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A1420",
+  "theme_color": "#0A1420",
+  "categories": ["travel", "business", "utilities"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
