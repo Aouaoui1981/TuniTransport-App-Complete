@@ -2240,3 +2240,67 @@ jeton-la ne trace que Stripe. Les 80 € n'existent que comme `paid_at` sur
 l'envoi, sans commission de plateforme enregistree. Comment la plateforme
 gagne-t-elle sa vie sur les transactions en especes ? A trancher avant
 l'ouverture au public.
+
+---
+
+## 2026-09-15 — Pause. Etat des lieux avant le cycle 2
+
+Les deux PR de la nuit sont fusionnees : **#164** (RLS `conversations`) et
+**#165** (garde `collected`, ordre des boutons, silence de la camera,
+carte du correspondant). La branche repart de `main` (`04099aa`).
+
+### Ce qui est deja en production
+
+| Correctif | Web | APK installe |
+|---|---|---|
+| Messagerie (RLS `conversations`) | oui | **oui** (base) |
+| Garde `collected` sur `confirm_delivery` | oui | **oui** (base) |
+| Ordre des boutons / camera / carte du correspondant | oui | non — attend le build 42 |
+
+Les deux correctifs de base valent partout immediatement. Les trois
+changements d'interface n'atteindront le telephone qu'au prochain build,
+et **aucun d'eux ne justifie un build a lui seul** : la garde serveur
+couvre deja le risque de fond.
+
+### Le cycle 1, au complet
+
+```
+cree → accepte → paye especes → (messagerie OK) → delivered
+```
+
+Quatre etapes sur sept reellement exercees. Les trois manquantes —
+**depot, scan QR, prise en charge** — ont ete sautees, ce qui est
+precisement ce qui a revele le defaut le plus grave.
+
+### Le cycle 2, a faire au retour
+
+**Entierement sur le telephone.** Ni la camera ni le scan QR n'existent
+dans un navigateur Chromebook.
+
+1. Nouvel envoi, petit colis **5 kg = 20 €** (et non 80 € : le montant ne
+   sert qu'a limiter les frais Stripe non remboursables, ~0,55 € au lieu
+   de ~1,45 €)
+2. Acceptation par le transporteur
+3. Paiement **par carte** — `pk_live_…`, donc debit reel, rembourse
+   ensuite depuis le tableau de bord Stripe. C'est ce passage qui
+   exercera enfin `create-payment-intent`, le webhook, et le correctif
+   `payment_intent.canceled` jamais eprouve
+4. **Impression de l'etiquette** puis **« J'ai depose le colis »** (photo)
+5. **Scan QR** par le transporteur + photo de prise en charge
+6. Confirmation de reception — elle ne doit apparaitre qu'apres l'etape 5
+7. Evaluation croisee
+
+Le point 6 est le test du correctif de cette nuit : si le bouton apparait
+avant le scan, la garde client a echoue ; s'il apparait et que l'appui
+echoue, c'est la garde serveur qui tient seule.
+
+### Rappels avant l'ouverture au public
+
+- retirer le bloc de diagnostic Google dans `AuthContext.tsx`
+- reverser les **16** comptes verifies a la main (SQL plus haut)
+- coordonnees Play → `support@thlcolis.com` / `https://thlcolis.com`
+- supprimer l'envoi de demonstration `29da0b3d-d275-471a-967c-46c621852ed6`
+- trancher : la verification d'identite de l'expediteur avant publication
+  ou avant paiement ?
+- trancher : **la commission de la plateforme sur les paiements en
+  especes** — aujourd'hui elle n'existe pas
