@@ -528,6 +528,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       shipmentId?: string;
     }): Promise<Conversation> => {
       if (!user) throw new Error('Utilisateur non connecté.');
+      // Une conversation avec soi-meme laissait une ligne orpheline : la
+      // conversation etait creee, le premier participant insere, et le
+      // second — la meme personne — refuse par la cle primaire. L'appelant
+      // qui se trompe de correspondant doit l'apprendre avant l'ecriture.
+      if (params.otherUserId === user.id) {
+        throw new Error('Impossible d’ouvrir une conversation avec soi-même.');
+      }
       const withBoth = conversations.filter(
         (c) => c.participants.includes(user.id) && c.participants.includes(params.otherUserId)
       );

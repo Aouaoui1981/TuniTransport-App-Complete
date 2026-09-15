@@ -1143,6 +1143,15 @@ begin
   if v_shipment.status = 'delivered' then
     raise exception 'La réception de cet envoi est déjà confirmée.';
   end if;
+  -- La prise en charge est le seul moment où quelqu'un d'autre que
+  -- l'expéditeur atteste que le colis existe : elle exige le jeton de
+  -- l'étiquette et une photo. C'est elle, et pas le paiement, qui ouvre la
+  -- porte de la confirmation — sinon on passe de « j'ai payé » à « j'ai
+  -- reçu » sans qu'aucun colis ait bougé.
+  if v_shipment.status not in ('collected', 'in_transit', 'arrived') then
+    raise exception 'Le transporteur n''a pas encore pris ce colis en charge — il doit scanner l''étiquette avant que la réception puisse être confirmée.'
+      using errcode = '22023';
+  end if;
 
   update public.shipments
   set status       = 'delivered',

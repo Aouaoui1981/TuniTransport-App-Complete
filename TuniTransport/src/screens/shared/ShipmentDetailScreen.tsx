@@ -3,7 +3,15 @@
 // Status → Route → Items/Description → Bids → Tracking → Transporter → Actions
 // ──────────────────────────────────────────────────────────────────────────
 import React, { useMemo, useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
@@ -16,10 +24,16 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { IS_LIVE } from '../../services/supabase';
 import { useAppNavigation, RootStackParamList } from '../../navigation/AppNavigator';
-import { Bid } from '../../types';
+import { Bid, ShipmentStatus } from '../../types';
 import { printShippingLabel } from '../../services/shippingLabel';
 import * as ImagePicker from 'expo-image-picker';
 import { declareDropoff, uploadShipmentPhoto } from '../../services/api';
+
+/**
+ * Statuts ou le colis est deja passe entre les mains du transporteur. Tant
+ * que l'envoi n'en est pas la, personne n'a rien a confirmer.
+ */
+const COLLECTED_STATUSES: ShipmentStatus[] = ['collected', 'in_transit', 'arrived'];
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-FR', {
@@ -77,6 +91,18 @@ export default function ShipmentDetailScreen() {
   const isLarge = shipment.type === 'large';
   const shortId = shipment.id.slice(-4).toUpperCase();
 
+  // L'autre partie de cet envoi, vue depuis celui qui regarde l'ecran. La
+  // carte affichait le transporteur a tout le monde, transporteur compris :
+  // il ouvrait alors une discussion avec lui-meme, la cle primaire de
+  // conversation_participants refusait le doublon, et il ne lui restait
+  // aucun moyen d'ecrire a l'expediteur en premier.
+  const viewerIsTheTransporter = isTransporter && shipment.transporterId === user?.id;
+  const counterpartId = viewerIsTheTransporter ? shipment.senderId : shipment.transporterId;
+  const counterpartName = viewerIsTheTransporter ? shipment.senderName : shipment.transporterName;
+  const counterpartRating = viewerIsTheTransporter
+    ? undefined
+    : sortedBids.find((b) => b.id === shipment.selectedBidId)?.transporterRating;
+
   const handleConfirmDelivery = () => {
     if (!shipment) return;
     showAlert(
@@ -117,8 +143,32 @@ export default function ShipmentDetailScreen() {
               showAlert('Permission requise', "Autorisez l'appareil photo pour déclarer le dépôt.");
               return;
             }
-            const shot = await ImagePicker.launchCameraAsync({ quality: 0.6 });
-            if (shot.canceled || !shot.assets?.[0]) return;
+            let shot: ImagePicker.ImagePickerResult;
+            try {
+              shot = await ImagePicker.launchCameraAsync({ quality: 0.6 });
+            } catch (e) {
+              showAlert(
+                'Caméra indisponible',
+                getErrorMessage(
+                  e,
+                  "L'appareil photo n'a pas pu s'ouvrir. Déclarez le dépôt depuis l'application sur votre téléphone."
+                )
+              );
+              return;
+            }
+            if (shot.canceled || !shot.assets?.[0]) {
+              // Sur mobile, annuler est un choix : on se tait. Dans un
+              // navigateur, la camera peut aussi n'avoir jamais existe, et
+              // le bouton semble alors mort. On le dit plutot que de rendre
+              // la main en silence.
+              if (Platform.OS === 'web') {
+                showAlert(
+                  'Photo requise',
+                  "Le dépôt se déclare avec une photo du colis. Si l'appareil photo ne s'est pas ouvert, ouvrez l'application sur votre téléphone."
+                );
+              }
+              return;
+            }
             setDroppingOff(true);
             try {
               const url = await uploadShipmentPhoto(user!.id, shot.assets[0].uri);
@@ -136,12 +186,12 @@ export default function ShipmentDetailScreen() {
     );
   };
 
-  const openChatWithTransporter = async () => {
-    if (!shipment.transporterId || !shipment.transporterName) return;
+  const openChatWithCounterpart = async () => {
+    if (!counterpartId || !counterpartName) return;
     try {
       const conv = await ensureConversation({
-        otherUserId: shipment.transporterId,
-        otherUserName: shipment.transporterName,
+        otherUserId: counterpartId,
+        otherUserName: counterpartName,
         shipmentId: shipment.id,
       });
       navigation.navigate('Chat', { conversationId: conv.id });
@@ -341,35 +391,37 @@ export default function ShipmentDetailScreen() {
           ))}
         </Card>
 
-        {/* 6 — Transporter (if assigned) */}
-        {shipment.transporterId && shipment.transporterName ? (
+        {/* 6 — L'autre partie (des qu'un transporteur est attitre) */}
+        {shipment.transporterId && counterpartId && counterpartName ? (
           <Card style={styles.card}>
-            <Text style={styles.cardHeading}>Transporteur</Text>
+            <Text style={styles.cardHeading}>
+              {viewerIsTheTransporter ? 'Expéditeur' : 'Transporteur'}
+            </Text>
             <View style={styles.transporterRow}>
               <TouchableOpacity
                 style={styles.transporterInfo}
                 activeOpacity={0.7}
                 onPress={() =>
                   navigation.navigate('UserReviews', {
-                    userId: shipment.transporterId!,
-                    userName: shipment.transporterName!,
-                    rating: sortedBids.find((b) => b.id === shipment.selectedBidId)?.transporterRating,
+                    userId: counterpartId,
+                    userName: counterpartName,
+                    rating: counterpartRating,
                   })
                 }
               >
-                <Avatar name={shipment.transporterName} size={46} color={COLORS.secondary} />
+                <Avatar name={counterpartName} size={46} color={COLORS.secondary} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.transporterName}>{shipment.transporterName}</Text>
-                  <RatingStars
-                    rating={
-                      sortedBids.find((b) => b.id === shipment.selectedBidId)?.transporterRating ?? 5
-                    }
-                    size={13}
-                  />
+                  <Text style={styles.transporterName}>{counterpartName}</Text>
+                  {/* Cinq etoiles par defaut sous un expediteur dont personne
+                      n'a encore rien dit serait un avis invente : on ne
+                      montre la note que si elle existe. */}
+                  {counterpartRating != null ? (
+                    <RatingStars rating={counterpartRating} size={13} />
+                  ) : null}
                   <Text style={styles.reviewsLink}>Voir les avis ›</Text>
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.chatBtn} onPress={openChatWithTransporter}>
+              <TouchableOpacity style={styles.chatBtn} onPress={openChatWithCounterpart}>
                 <Ionicons name="chatbubble-ellipses" size={18} color={COLORS.white} />
               </TouchableOpacity>
             </View>
@@ -470,21 +522,6 @@ export default function ShipmentDetailScreen() {
 
           {isSender &&
           shipment.senderId === user?.id &&
-          shipment.paidAt &&
-          shipment.transporterId &&
-          shipment.status !== 'delivered' &&
-          shipment.status !== 'cancelled' ? (
-            <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: COLORS.secondary }]}
-              onPress={handleConfirmDelivery}
-            >
-              <Ionicons name="checkmark-done" size={18} color={COLORS.white} />
-              <Text style={styles.actionText}>Confirmer la réception du colis</Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {isSender &&
-          shipment.senderId === user?.id &&
           shipment.handoverMode === 'point' &&
           shipment.status === 'accepted' ? (
             <TouchableOpacity
@@ -496,6 +533,25 @@ export default function ShipmentDetailScreen() {
               <Text style={styles.actionText}>
                 {droppingOff ? 'Enregistrement…' : "J'ai déposé le colis"}
               </Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {/* La reception ne se confirme qu'une fois le colis reellement
+              entre les mains du transporteur. Sans cette condition, on
+              passait de « j'ai paye » a « j'ai recu » en treize minutes,
+              sans depot, sans scan, sans prise en charge — et l'argent
+              etait donne pour un trajet qui n'avait pas eu lieu. */}
+          {isSender &&
+          shipment.senderId === user?.id &&
+          shipment.paidAt &&
+          shipment.transporterId &&
+          COLLECTED_STATUSES.includes(shipment.status) ? (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: COLORS.secondary }]}
+              onPress={handleConfirmDelivery}
+            >
+              <Ionicons name="checkmark-done" size={18} color={COLORS.white} />
+              <Text style={styles.actionText}>Confirmer la réception du colis</Text>
             </TouchableOpacity>
           ) : null}
 
