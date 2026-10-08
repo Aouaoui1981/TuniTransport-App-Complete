@@ -1346,11 +1346,18 @@ begin
     raise exception 'Non authentifié.';
   end if;
 
-  select coalesce(sum(price), 0) into v_delivered
-  from public.shipments
-  where transporter_id = v_uid
-    and status = 'delivered'
-    and paid_at is not null;
+  -- Le solde se lit dans le grand livre `payments`, seule trace de
+  -- l'argent reellement encaisse par la plateforme :
+  -- `transporter_amount_cents` est le net, commission deduite au taux en
+  -- vigueur le jour du debit. Les especes n'y creent aucune ligne — le
+  -- transporteur les a deja percues de la main de l'expediteur, et les
+  -- compter ici revenait a le payer deux fois.
+  select coalesce(sum(p.transporter_amount_cents), 0) / 100.0 into v_delivered
+  from public.payments p
+  join public.shipments s on s.id = p.shipment_id
+  where s.transporter_id = v_uid
+    and s.status = 'delivered'
+    and p.status = 'succeeded';
 
   select coalesce(sum(amount), 0) into v_requested
   from public.payout_requests
@@ -1360,7 +1367,7 @@ begin
   v_available := v_delivered - v_requested;
 
   if v_available < 10 then
-    raise exception 'Montant disponible insuffisant (minimum 10 €).';
+    raise exception 'Montant disponible insuffisant (minimum 10 €). Les courses réglées en espèces ne sont pas virées : vous avez déjà perçu la somme de la main de l''expéditeur.';
   end if;
 
   select * into v_acct from public.payout_accounts where user_id = v_uid;
