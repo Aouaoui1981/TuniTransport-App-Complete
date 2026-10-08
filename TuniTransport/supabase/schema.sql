@@ -641,17 +641,12 @@ as $$
   );
 $$;
 
-create policy "Must be verified to post a shipment"
-on public.shipments as restrictive for insert
-with check (public.is_identity_verified());
-
-create policy "Must be verified to place a bid"
-on public.bids as restrictive for insert
-with check (public.is_identity_verified());
-
-create policy "Must be verified to post a route"
-on public.routes as restrictive for insert
-with check (public.is_identity_verified());
+-- Les trois policies RESTRICTIVE qui exigeaient une identite verifiee pour
+-- publier un envoi, une offre ou un trajet ont ete levees : la
+-- verification est desormais volontaire, et signalee par un badge au
+-- profil. `is_identity_verified()` reste definie ci-dessus, inutilisee :
+-- refermer la porte ne demandera qu'une migration qui recree ces trois
+-- policies. Voir 20261008140000_identity_verification_becomes_optional.sql.
 
 -- Guard trigger on profiles (declared earlier, created here because the
 -- identity_* columns it inspects are added just above).
