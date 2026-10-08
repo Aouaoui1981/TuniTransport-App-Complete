@@ -2404,3 +2404,85 @@ Le cycle 2 n'a toujours pas eu lieu. Zero envoi depuis le 15 septembre,
 et **zero envoi scanne depuis l'ouverture** : depot, scan QR et prise en
 charge n'ont jamais ete exerces une seule fois. C'est la, et pas
 ailleurs, que se joue la reponse de Google.
+
+---
+
+## 2026-10-08 — La verification d'identite devient volontaire
+
+Decision produit, prise a la demande : la verification cesse d'etre une
+condition d'acces, pour les deux roles.
+
+La question tournait depuis la mi-septembre, notee ici le 14 : la porte se
+refermait au pire endroit. Quelqu'un installe l'application, s'inscrit,
+veut envoyer un colis a sa mere — et on lui demande de photographier une
+piece d'identite avant qu'il ait rien vu du service. En trois semaines,
+**seize comptes** ont ete debloques a la main pour que les tests avancent.
+Une porte qu'on ouvre seize fois a la main ne protege plus personne : elle
+ne decourage que ceux qui n'ont personne pour la leur ouvrir.
+
+### Ce qui est leve
+
+Cote base — trois policies RESTRICTIVE :
+
+```
+shipments  « Must be verified to post a shipment »
+bids       « Must be verified to place a bid »
+routes     « Must be verified to post a route »
+```
+
+Cote client — cinq gardes :
+
+| Ecran | Gardes |
+|---|---|
+| `CreateShipmentScreen` | alerte a la publication + ecran bloquant |
+| `CreateRouteScreen` | alerte a la publication + ecran bloquant |
+| `AvailableShipmentsScreen` | `requireVerifiedIdentity()` (offre + prise en charge) |
+
+`VerificationRequired` n'avait plus d'appelant : supprime.
+
+### Ce qui ne bouge pas, deliberement
+
+- la colonne `identity_status` et tout l'historique KYC ;
+- **le bucket `identity-documents` et ses pieces deja deposees** ;
+- l'ecran de verification, desormais volontaire ;
+- l'ecran d'administration qui valide ou refuse ;
+- `is_identity_verified()`, conservee inutilisee.
+
+Refermer la porte plus tard ne demandera qu'une migration qui recree les
+trois policies — pas de reconstruire la fonctionnalite.
+
+### Les textes, corriges dans le meme lot
+
+C'est la partie qu'on aurait pu oublier. L'application **promettait** la
+verification, et l'une de ces promesses est une page legale :
+
+| Avant | Apres |
+|---|---|
+| « Identites verifiees » / « Chaque membre passe une verification d'identite avant d'expedier ou de transporter. » | « Identite verifiable » / « Chaque membre peut faire verifier son identite ; un badge l'indique sur son profil. » |
+| « Expediez avec des transporteurs **verifies** voyageant en ferry. » | « Expediez avec des transporteurs voyageant en ferry. » |
+| « Identites verifiees pour les transporteurs. » (engagements, page legale) | « Verification d'identite ouverte a tous ; un badge la signale sur le profil. » |
+| Parrainage : « Le parrain et le filleul doivent avoir un compte dont l'identite est verifiee. » | condition retiree — elle n'a plus de sens |
+
+Pages HTML regenerees (`npm run legal:html`). `npx tsc --noEmit` : propre.
+
+### Reste a appliquer
+
+**Le `DROP POLICY` n'a pas pu etre execute** : l'outil Supabase expire a
+chaque ecriture (lectures instantanees, aucun verrou en attente dans
+`pg_stat_activity` — panne cote outil). Les trois policies sont donc
+**toujours en place en base**, et tant qu'elles y sont, le serveur refuse
+ce que le client autorise desormais.
+
+A passer dans l'editeur SQL Supabase :
+
+```sql
+drop policy if exists "Must be verified to post a shipment" on public.shipments;
+drop policy if exists "Must be verified to place a bid"     on public.bids;
+drop policy if exists "Must be verified to post a route"    on public.routes;
+```
+
+### Ce que cela change pour le cycle 2
+
+Plus besoin de verifier un compte a la main avant de tester. Et les seize
+comptes de la liste de reversion n'ont plus a etre reverses : ils sont
+devenus des comptes verifies ordinaires, ce qui est la verite.

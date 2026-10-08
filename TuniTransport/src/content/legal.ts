@@ -277,7 +277,7 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
       {
         heading: 'Nos engagements',
         bullets: [
-          'Identités vérifiées pour les transporteurs.',
+          "Vérification d'identité ouverte à tous ; un badge la signale sur le profil.",
           'Paiement sécurisé via la plateforme.',
           'Suivi des envois en temps réel.',
           'Messagerie intégrée pour un accord direct et transparent.',
@@ -336,7 +336,6 @@ export const LEGAL_PAGES: Record<LegalPageKey, LegalPage> = {
       {
         heading: 'Conditions',
         bullets: [
-          "Le parrain et le filleul doivent avoir un compte dont l'identité est vérifiée.",
           "Le filleul doit être un nouvel utilisateur (adresse e-mail et identité jamais inscrites sur THL).",
           "La première opération doit être réalisée dans un délai d'un (1) mois après l'inscription du filleul ; passé ce délai, la récompense est perdue.",
           "La récompense n'est pas due à la simple inscription : elle dépend d'une première opération réellement confirmée.",

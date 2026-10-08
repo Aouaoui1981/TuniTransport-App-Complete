@@ -72,27 +72,7 @@ export default function AvailableShipmentsScreen() {
     setLegalAccepted(false);
   };
 
-  // Live mode requires a verified identity before bidding or accepting.
-  const requireVerifiedIdentity = (): boolean => {
-    if (IS_LIVE && user?.identityStatus !== 'verified') {
-      showAlert(
-        'Vérification requise',
-        'Vous devez faire vérifier votre identité avant de prendre des envois.',
-        [
-          { text: 'Plus tard', style: 'cancel' },
-          {
-            text: 'Vérifier mon identité',
-            onPress: () => navigation.navigate('IdentityVerification'),
-          },
-        ]
-      );
-      return false;
-    }
-    return true;
-  };
-
   const submitBid = async (shipment: Shipment) => {
-    if (!requireVerifiedIdentity()) return;
     const price = parseFloat(bidPrice.replace(',', '.'));
     if (!price || price <= 0) {
       showAlert('Prix invalide', 'Veuillez saisir un montant en euros.');
@@ -133,7 +113,6 @@ export default function AvailableShipmentsScreen() {
   };
 
   const openAcceptPanel = (shipment: Shipment) => {
-    if (!requireVerifiedIdentity()) return;
     closeBidForm();
     setAcceptingOn(shipment.id);
     setLegalAccepted(false);

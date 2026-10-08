@@ -33,8 +33,8 @@ const TRUST_POINTS: {
 }[] = [
   {
     icon: 'id-card-outline',
-    title: 'Identités vérifiées',
-    text: "Chaque membre passe une vérification d'identité avant d'expédier ou de transporter.",
+    title: 'Identité vérifiable',
+    text: "Chaque membre peut faire vérifier son identité ; un badge l'indique sur son profil.",
   },
   {
     icon: 'shield-checkmark-outline',
@@ -114,7 +114,7 @@ export default function WelcomeScreen() {
             <Text style={styles.heroAccent}>en toute confiance</Text>
           </Text>
           <Text style={styles.heroSub}>
-            Expédiez avec des transporteurs vérifiés voyageant en ferry. Colis légers dès 4€/kg.
+            Expédiez avec des transporteurs voyageant en ferry. Colis légers dès 4€/kg.
           </Text>
 
           {/* Points de confiance — rangée compacte */}

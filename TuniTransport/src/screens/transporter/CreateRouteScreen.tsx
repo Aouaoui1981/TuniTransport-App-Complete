@@ -20,7 +20,6 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../navigation/AppNavigator';
 import { IS_LIVE } from '../../services/supabase';
-import VerificationRequired from '../../components/VerificationRequired';
 
 const FERRY_COMPANIES = ['Corsica Linea', 'CTN', 'GNV'] as const;
 const CROSSING_DAYS = 1; // typical France → Tunisia ferry crossing
@@ -47,20 +46,6 @@ export default function CreateRouteScreen() {
 
   const submit = async () => {
     if (!user) return;
-    if (IS_LIVE && user.identityStatus !== 'verified') {
-      showAlert(
-        'Vérification requise',
-        'Vous devez faire vérifier votre identité avant de publier un trajet.',
-        [
-          { text: 'Plus tard', style: 'cancel' },
-          {
-            text: 'Vérifier mon identité',
-            onPress: () => navigation.navigate('IdentityVerification'),
-          },
-        ]
-      );
-      return;
-    }
     const kg = parseInt(capacity, 10);
     const dep = parseDate(departureDate);
     if (!departureCity.trim() || !arrivalCity.trim()) {
@@ -100,11 +85,6 @@ export default function CreateRouteScreen() {
       setSaving(false);
     }
   };
-
-  // Identité non vérifiée : bloquer AVANT le formulaire d'ajout de trajet.
-  if (IS_LIVE && user && user.identityStatus !== 'verified') {
-    return <VerificationRequired status={user.identityStatus} action="publier un trajet" />;
-  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>

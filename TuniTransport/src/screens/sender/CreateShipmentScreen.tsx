@@ -29,7 +29,6 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../utils/theme';
 import { showAlert } from '../../utils/alert';
 import { Card } from '../../components';
-import VerificationRequired from '../../components/VerificationRequired';
 import { LegalConsent, ConsentCheckbox } from '../../components/LegalConsent';
 import {
   PRICE_PER_KG,
@@ -177,20 +176,6 @@ export default function CreateShipmentScreen() {
       showAlert(
         'Modification impossible',
         "Cet envoi a déjà été pris en charge : l'annonce ne peut plus être modifiée."
-      );
-      return;
-    }
-    // Live mode requires a verified identity (enforced by RLS): guide the
-    // user to the KYC screen instead of letting the insert fail server-side.
-    // (L'édition ne crée pas de ligne : la vérification a déjà eu lieu.)
-    if (!isEditing && IS_LIVE && user?.identityStatus !== 'verified') {
-      showAlert(
-        'Vérification requise',
-        "Vous devez faire vérifier votre identité avant de publier un envoi.",
-        [
-          { text: 'Plus tard', style: 'cancel' },
-          { text: 'Vérifier mon identité', onPress: () => navigation.navigate('IdentityVerification') },
-        ]
       );
       return;
     }
@@ -351,12 +336,6 @@ export default function CreateShipmentScreen() {
         </View>
       </SafeAreaView>
     );
-  }
-
-  // Identité non vérifiée : bloquer AVANT le formulaire (au lieu d'échouer à
-  // la publication). L'édition d'un envoi existant n'est pas concernée.
-  if (!isEditing && IS_LIVE && user && user.identityStatus !== 'verified') {
-    return <VerificationRequired status={user.identityStatus} action="publier un envoi" />;
   }
 
   return (
