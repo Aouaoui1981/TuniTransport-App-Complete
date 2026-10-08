@@ -2304,3 +2304,103 @@ echoue, c'est la garde serveur qui tient seule.
   ou avant paiement ?
 - trancher : **la commission de la plateforme sur les paiements en
   especes** — aujourd'hui elle n'existe pas
+
+---
+
+## 2026-10-08 — Le retrait payait deux fois
+
+En cherchant une strategie de commission sur les paiements en especes,
+j'ai lu `request_payout`. La question de la commission etait secondaire :
+la fonction payait purement et simplement deux fois.
+
+```sql
+select coalesce(sum(price), 0) into v_delivered
+from public.shipments
+where transporter_id = v_uid and status = 'delivered' and paid_at is not null;
+```
+
+`sum(price)` — le prix entier, et **tous** les envois. Deux erreurs dans
+une seule ligne :
+
+1. **Les especes y entraient.** Le transporteur encaisse 80 € de la main
+   de l'expediteur, puis demande les memes 80 € par virement.
+2. **La commission n'etait jamais retranchee.** Meme sur carte, la
+   plateforme reversait 100 % alors qu'elle n'avait encaisse que 90 % :
+   elle rendait la commission qu'elle venait de prelever.
+
+### L'etat au moment de la decouverte
+
+```
+solde virable, tous transporteurs    80,00 €
+dont especes deja en main            80,00 €   ← 100 %
+RIB enregistres                           1
+demandes de retrait                       0    ← pas encore explose
+```
+
+Rien n'empechait la demande sinon que personne n'avait essaye.
+
+### Le correctif
+
+`20261008120000_request_payout_from_payments_ledger.sql`, applique et
+synchronise dans `schema.sql`. Le solde se lit desormais dans le grand
+livre `payments` :
+
+```sql
+select coalesce(sum(p.transporter_amount_cents), 0) / 100.0
+from public.payments p
+join public.shipments s on s.id = p.shipment_id
+where s.transporter_id = v_uid and s.status = 'delivered'
+  and p.status = 'succeeded';
+```
+
+`payments` est la seule trace de l'argent reellement encaisse par la
+plateforme, et `transporter_amount_cents` le net au taux en vigueur le
+jour du debit. Les especes n'y creent aucune ligne : elles sortent du
+calcul sans qu'on ait a les nommer.
+
+### Verification (transaction puis `rollback`)
+
+```
+A. 80 € en especes, deja percus          REFUSE
+B. carte 200 € (commission 20 €)
+   + les memes 80 € en especes           VIRE : 180,00 €
+```
+
+Exactement le net attendu : especes exclues, commission retenue.
+
+### Contrepartie assumee
+
+Un paiement par carte dont le webhook n'aurait jamais ecrit sa ligne
+n'apparait pas au solde. Sous-estimer se corrige a la main ; payer deux
+fois ne se corrige pas.
+
+### Et la strategie de commission ?
+
+Elle reste ouverte, mais le diagnostic a change : l'incitation est
+inversee. En especes le transporteur garde 100 % et la plateforme touche
+0 — les deux parties gagnent a contourner le service. On ne preleve pas
+sur une transaction a laquelle on n'apporte rien : la reponse n'est pas
+de rendre les especes plus cheres, mais le paiement par carte meilleur.
+Il est le seul a offrir la garantie — l'argent retenu, libere a la
+livraison confirmee, protegee depuis la veille par la garde `collected`.
+C'est cela, les 10 % : une assurance, pas des frais de dossier.
+
+Plan en trois temps, inscrit ici pour qu'on s'y tienne :
+
+1. **Maintenant, jusqu'a ~100 transactions** : commission zero sur les
+   especes, assumee. La priorite est la liquidite. Mais **enregistrer la
+   commission theorique** (ligne `payments` avec `provider = 'cash'`) :
+   sans ce chiffre, aucune politique tarifaire ne se decide.
+2. **Ensuite** : commission des especes en dette du transporteur,
+   prelevee sur son premier virement. Valable seulement si le
+   transporteur type repasse ; s'il voyage deux fois par an, la dette ne
+   se recouvre jamais.
+3. **Enfin** : la carte par defaut, les especes offertes en clair comme
+   l'option sans protection.
+
+### Reste a faire — inchange
+
+Le cycle 2 n'a toujours pas eu lieu. Zero envoi depuis le 15 septembre,
+et **zero envoi scanne depuis l'ouverture** : depot, scan QR et prise en
+charge n'ont jamais ete exerces une seule fois. C'est la, et pas
+ailleurs, que se joue la reponse de Google.
